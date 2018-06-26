@@ -23,3 +23,4 @@ chmod +x ServerStatus1Click.sh
 * mojeda: https://github.com/mojeda 
 * mojeda's ServerStatus: https://github.com/mojeda/ServerStatus
 * BlueVM's project: http://www.lowendtalk.com/discussion/comment/169690#Comment_169690
+* 参考了ToyoDAdoubi的一键脚本: https://github.com/ToyoDAdoubi/doubi
