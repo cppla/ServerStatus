@@ -24,7 +24,7 @@
 
 【客户端】：
 ```bash
-wget -N --no-check-certificate https://github.com/cppla/ServerStatus/blob/master/autodeploy/client-auto.sh
+wget -N --no-check-certificate https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/client-auto.sh
 chmod +x client-auto.sh
 ./client-auto.sh
 ```
