@@ -5,10 +5,10 @@
 # 时间: 20180312
 
 
-SERVER = "127.0.0.1"
-PORT = 35601
-USER = "s01"
-PASSWORD = "USER_DEFAULT_PASSWORD"
+SERVER = "sserver"
+PORT = sport
+USER = "suser"
+PASSWORD = "spasswd"
 INTERVAL = 1 #更新间隔
 
 
