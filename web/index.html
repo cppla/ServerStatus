@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!--
+        json字段保持完整, 后期更新会向下兼容
+        可以自定义前端展示
+        ლ(•̀ _ •́ ლ)
+        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
+        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
+        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
+        ლ(•̀ _ •́ ლ)
+-->
+<html>
+	<head>
+		<title>云监控</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="云监控">
+		<meta name="author" content="BotoX">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="css/dark.css" title="dark">
+		<link rel="stylesheet" href="css/light.css" title="light">
+		<style>
+			body {
+				padding-top: 70px;
+				padding-bottom: 30px;
+			}
+		</style>
+		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+		<!--[if lt IE 9]>
+			<script src="//oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="//oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+		<![endif]-->
+	</head>
+	<body>
+		<div role="navigation" class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<div class="navbar-header">
+						<button data-target=".navbar-collapse" data-toggle="collapse" class="navbar-toggle" type="button">
+							<span class="sr-only">Toggle navigation</span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a href="#" class="navbar-brand">云监控</a>
+					</div>
+					<div class="navbar-collapse collapse">
+						<ul class="nav navbar-nav">
+							<li class="dropdown">
+								<a data-toggle="dropdown" class="dropdown-toggle" href="#">风格<b class="caret"></b></a>
+								<ul class="dropdown-menu">
+									<li><a href="#" onclick="setActiveStyleSheet('dark')">黑夜</a></li>
+									<li><a href="#" onclick="setActiveStyleSheet('light')">白天</a></li>
+								</ul>
+							</li>
+						</ul>
+					</div><!--/.nav-collapse -->
+				</div>
+			</div>
+		</div>
+
+		<div class="container content">
+			<div id="loading-notice">
+				<noscript>
+					<div class="alert alert-danger" style="text-align: center;">
+						<strong>Enable JavaScript</strong> you fucking autist neckbeard, it's not gonna hurt you.
+					</div>
+				</noscript>
+				<div class="progress progress-striped active">
+					<div class="progress-bar progress-bar-warning" style="width: 100%;">加载中...</div>
+				</div>
+				<div style="text-align: center;">
+					如果出现此消息，请确保您已启用Javascript! <br />否则云监控主服务没启动或已关闭.
+				</div>
+				<p></p>
+			</div>
+			<table class="table table-striped table-condensed table-hover">
+				<thead>
+				<tr>
+					<th id="status4" style="text-align: center;">IPv4</th>
+					<th id="ipstatus" style="text-align: center;">Flight</th>
+					<th id="name">节点名</th>
+					<th id="type">虚拟化</th>
+					<th id="location">位置</th>
+					<th id="uptime">在线时间</th>
+					<th id="load">负载</th>
+					<th id="network">网络 ↓|↑</th>
+					<th id="traffic">流量 ↓|↑</th>
+					<th id="cpu">处理器</th>
+					<th id="ram">内存</th>
+					<th id="hdd">硬盘</th>
+				</tr>
+				</thead>
+				<tbody id="servers">
+				<!-- Servers here \o/ -->
+				</tbody>
+			</table>
+			<br />
+			<div id="updated">Updating...</div>
+		</div>
+
+		<div class="container">
+			<p style="text-align: center; font-size: 10px;">
+				<a href="https://github.com/cppla/ServerStatus">ServerStatus中文版</a>
+			</p>
+		</div>
+		<script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script src="js/serverstatus.js"></script>
+	</body>
+</html>

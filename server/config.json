@@ -1,0 +1,37 @@
+{"servers":
+	[
+		{
+			"username": "s01",
+			"name": "node1",
+			"type": "xen",
+			"host": "host1",
+			"location": "cn",
+			"password": "USER_DEFAULT_PASSWORD"
+		},
+		{
+			"username": "s02",
+			"name": "node2",
+			"type": "vmware",
+			"host": "host2",
+			"location": "jp",
+			"password": "USER_DEFAULT_PASSWORD"
+		},
+		{
+			"disabled": true,
+			"username": "s03",
+			"name": "node3",
+			"type": "Nothing",
+			"host": "host3",
+			"location": "fr",
+			"password": "USER_DEFAULT_PASSWORD"
+		},
+		{
+			"username": "s04",
+			"name": "node4",
+			"type": "kvm",
+			"host": "host4",
+			"location": "kr",
+			"password": "USER_DEFAULT_PASSWORD"
+		}
+	]
+}
