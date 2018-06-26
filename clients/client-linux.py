@@ -6,7 +6,7 @@
 
 
 SERVER = "sserver"
-PORT = "sport"
+PORT = sport
 USER = "suser"
 PASSWORD = "spasswd"
 INTERVAL = 1 #更新间隔
