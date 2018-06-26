@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #=================================================
-#	System Required: CentOS 6+/Debian 6+/Ubuntu 14.04+
+#	System Required: CentOS 6+/Debian 6+/Ubuntu 14.04+/others(test)
 #	Description: Auto-install the ServerStatus Client
 #	Version: 1.0.1
 #	Author: dovela
@@ -96,7 +96,6 @@ install_env(){
 
 clear
 check_sys
-[[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
 [ $(id -u) != "0" ] && echo -e "Error: You must be root to run this script" && exit 1
 echo -e " 默认端口35601，出现问题请在 https://github.com/dovela/ServerStatus1Click 处提issue
 ————————————
@@ -104,7 +103,7 @@ echo -e " 默认端口35601，出现问题请在 https://github.com/dovela/Serve
   2.运行 client_linux
   3.运行 client_psutil
   4.停止运行
-  5.首次安装依赖，直接安装失败请执行
+  5.首次安装linux依赖，直接安装失败请执行
 ————————————
   输入数字开始，或ctrl + c退出
 "
