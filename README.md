@@ -18,7 +18,18 @@
 * 20170807, 更新平均1，5，15负载
 * 20170607, 去掉无用的IPV6信息，增加服务器总流量监控                           
 
-# 安装教程：     
+# 自动部署：
+
+【服务端】：暂无
+
+【客户端】：
+```bash
+wget -N --no-check-certificate https://github.com/cppla/ServerStatus/blob/master/autodeploy/client-auto.sh
+chmod +x client-auto.sh
+./client-auto.sh
+```
+
+# 手动安装教程：     
    
 【克隆代码】:
 ```
