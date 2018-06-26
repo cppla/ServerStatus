@@ -1,5 +1,40 @@
 #!/bin/bash
-[ $(id -u) != "0" ] && { echo "Error: You must be root to run this script"; exit 1; }
+
+#=================================================
+#	System Required: CentOS 6+/Debian 6+/Ubuntu 14.04+
+#	Description: Auto-install the ServerStatus Client
+#	Version: 1.0.1
+#	Author: dovela
+#=================================================
+
+check_sys(){
+	if [[ -f /etc/redhat-release ]]; then
+		release="centos"
+	elif cat /etc/issue | grep -q -E -i "debian"; then
+		release="debian"
+	elif cat /etc/issue | grep -q -E -i "ubuntu"; then
+		release="ubuntu"
+	elif cat /etc/issue | grep -q -E -i "centos|red hat|redhat"; then
+		release="centos"
+	elif cat /proc/version | grep -q -E -i "debian"; then
+		release="debian"
+	elif cat /proc/version | grep -q -E -i "ubuntu"; then
+		release="ubuntu"
+	elif cat /proc/version | grep -q -E -i "centos|red hat|redhat"; then
+		release="centos"
+    fi
+	bit=`uname -m`
+}
+
+centos_yum(){
+	yum install -y epel-release && yum clean all && yum update
+        yum install -y git lsof python-pip gcc python-devel
+}
+
+debian_apt(){
+	apt-get install -y git lsof python-setuptools python-dev build-essential python-pip
+}
+
 install_sss(){
   	clear
 	stty erase '^H' && read -p " 服务端地址:" sserver
@@ -21,13 +56,13 @@ install_sss(){
 	echo ' 1. 运行 client-linux'
 	echo ' 2. 运行 client-psutil'
 	stty erase '^H' && read -p " 请输入数字 [1-2]:" num
- case "$num" in
- 	1)
-	run_linux
-	;;
-	2)
-	run_psutil
-	;;
+	 case "$num" in
+ 		1)
+		run_linux
+		;;
+		2)
+		run_psutil
+		;;
 esac
 }
 
@@ -43,22 +78,27 @@ run_psutil(){
   	echo 'ServerStatus-psutil客户端已开始运行'
 }
 
+stop_client(){
+	kill -9 $(lsof -i:35601 |awk '{print $2}' | tail -n 1)
+}
+
 install_env(){
 	clear
-	yum install -y git lsof
-	apt-get install -y git lsof
-	yum -y install epel-release
-        yum clean all
-        yum -y install python-pip gcc python-devel
-        apt-get -y install python-setuptools python-dev build-essential python-pip
-        pip install --upgrade
-        pip install psutil
-	clear
+	if [[ ${release} == "centos" ]]; then
+		centos_yum
+	else
+		debian_apt
+	fi
+	pip install --upgrade
+	pip install psutil
 	echo '依赖环境安装完成，请再次运行脚本'
 }
 
 clear
-echo -e " 注意：此脚本基于centos7编写，默认端口35601，出现问题请在 @dovela 处提issue
+check_sys
+[[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
+[ $(id -u) != "0" ] && echo -e "Error: You must be root to run this script" && exit 1
+echo -e " 默认端口35601，出现问题请在 https://github.com/dovela/ServerStatus1Click 处提issue
 ————————————
   1.首次安装并启动 ServerStatus客户端
   2.运行 client_linux
@@ -82,7 +122,7 @@ echo && stty erase '^H' && read -p " 请输入数字[1-5]:" num
 	run_psutil
 	;;
 	4)
-	kill -9 $(lsof -i:35601 |awk '{print $2}' | tail -n 1)
+	stop_client
 	;;
 	5)
 	install_env
