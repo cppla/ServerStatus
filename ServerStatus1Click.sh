@@ -70,6 +70,11 @@ install_sss(){
 esac
 }
 
+delete_sss(){
+	kill -9 $(lsof -i:35601 |awk '{print $2}' | tail -n 1)
+	rm -rf ServerStatus
+}
+
 run_linux(){
 	nohup python client-linux.py >> serverstatus.log 2>&1 &	
    	 cd ../..
@@ -108,10 +113,11 @@ echo -e " 默认端口35601，出现问题请在 https://github.com/dovela/Serve
   3.运行 client_psutil
   4.停止运行
   5.首次安装linux依赖，直接安装失败请执行
+  6.卸载ServerStatus
 ————————————
   输入数字开始，或ctrl + c退出
 "
-echo && stty erase '^H' && read -p " 请输入数字[1-5]:" num
+echo && stty erase '^H' && read -p " 请输入数字[1-6]:" num
  case "$num" in
  	1)
 	install_sss
@@ -129,6 +135,9 @@ echo && stty erase '^H' && read -p " 请输入数字[1-5]:" num
 	;;
 	5)
 	install_env
+	;;
+	6)
+	delete_sss
 	;;
 	*)
 	echo -e "${Error} 请输入正确的数字 [1-5]!"
