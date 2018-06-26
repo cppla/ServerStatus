@@ -5,12 +5,14 @@
 
 # 目录介绍：
 
-* clients  客户端文件
-* server   服务端文件
-* web      网站文件  
+* autodeploy    自动部署脚本
+* clients       客户端文件
+* server        服务端文件
+* web           网站文件  
 
 # 更新说明：
 
+* 20180626, 增加客户端自动部署脚本，代码:https://github.com/dovela/ServerStatus1Click
 * 20180314, 调整前端，置默认密码为，设置ip和user即可上线　　　　　　
 * 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化(container)流量统计异常　　　　　　
 * 20170807, 更新平均1，5，15负载
