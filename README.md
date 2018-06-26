@@ -6,6 +6,7 @@
 <br>脚本在centos7上测试通过，其他发行版未测试。
 <br>理论上其他版本linux也可使用，请测试通过后提issue，谢谢。
 <br>欢迎star、fork，本脚本不定时更新，不定时从@cppla处合并新版本ServerStatus源码。
+<br>不支持window各版本
 
 ## 使用教程
 ````
