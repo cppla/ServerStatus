@@ -138,8 +138,8 @@ if __name__ == '__main__':
             PASSWORD = argc.split('PASSWORD=')[-1]
         elif 'INTERVAL' in argc:
             INTERVAL = int(argc.split('INTERVAL=')[-1])
-	socket.setdefaulttimeout(30)
-	while 1:
+    socket.setdefaulttimeout(30)
+    while 1:
 		try:
 			print("Connecting...")
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
