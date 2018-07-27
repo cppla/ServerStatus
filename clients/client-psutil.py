@@ -127,6 +127,17 @@ def get_network(ip_version):
 	return False
 
 if __name__ == '__main__':
+    for argc in sys.argv:
+        if 'SERVER' in argc:
+            SERVER = argc.split('SERVER=')[-1]
+        elif 'PORT' in argc:
+            PORT = int(argc.split('PORT=')[-1])
+        elif 'USER' in argc:
+            USER = argc.split('USER=')[-1]
+        elif 'PASSWORD' in argc:
+            PASSWORD = argc.split('PASSWORD=')[-1]
+        elif 'INTERVAL' in argc:
+            INTERVAL = int(argc.split('INTERVAL=')[-1])
 	socket.setdefaulttimeout(30)
 	while 1:
 		try:
