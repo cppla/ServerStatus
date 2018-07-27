@@ -1,7 +1,7 @@
 服务端:
 
 curl -sSL https://get.docker.com/ | sh   #一键安装docker
-docker build -f Dockerfile-server -t sss .
+docker build -f Dockerfile -t sss .
 docker run -d --restart=always --name=sss -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 sss
 
 客户端:
