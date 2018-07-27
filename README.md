@@ -5,14 +5,14 @@
 
 # 目录介绍：
 
-* autodeploy    自动部署脚本
+* autodeploy    自动部署
 * clients       客户端文件
 * server        服务端文件
 * web           网站文件  
 
 # 更新说明：
 
-* 20180626, 增加客户端自动部署脚本，代码:https://github.com/dovela/ServerStatus1Click
+* 20180726, 一切皆容器额,查看自动部署或autodeploy/readme
 * 20180314, 调整前端，置默认密码为，设置ip和user即可上线　　　　　　
 * 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化(container)流量统计异常　　　　　　
 * 20170807, 更新平均1，5，15负载
@@ -20,13 +20,16 @@
 
 # 自动部署：
 
-【服务端】：暂无
+【服务端】：
+```bash
+docker pull cppla/serverstatus
+wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
+docker run -d --restart=always --name=serverstatus -v ~/config.json:/ServerStatus/server/config.json -p 80:80 -p 35601:35601 cppla/serverstatus
+```
 
 【客户端】：
 ```bash
-wget -N --no-check-certificate https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/client-auto.sh
-chmod +x client-auto.sh
-./client-auto.sh
+wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
 ```
 
 # 手动安装教程：     
