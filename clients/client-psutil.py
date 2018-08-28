@@ -14,13 +14,12 @@ INTERVAL = 1 # 更新间隔
 
 import socket
 import time
-import string
-import math
 import os
 import json
 import collections
 import psutil
 import sys
+import threading
 
 def get_uptime():
 	return int(time.time() - psutil.boot_time())
@@ -96,7 +95,6 @@ def liuliang():
             NET_OUT += v[0]
     return NET_IN, NET_OUT
 
-# todo: 不确定是否要用多线程or多进程:  效率? 资源?　
 def ip_status():
 	object_check = ['www.10010.com', 'www.189.cn', 'www.10086.cn']
 	ip_check = 0
@@ -125,6 +123,54 @@ def get_network(ip_version):
 	except:
 		pass
 	return False
+
+lostRate = {}
+def _ping_thread(host, mark):
+    output = os.popen('ping %s -t &' % host)
+    lostCount = 0
+    allCount = 0
+    startTime = time.time()
+    output.readline()
+    output.readline()
+    while True:
+        if 'TTL' not in output.readline():
+            lostCount += 1
+        allCount += 1
+        lostRate[mark] = "%.4f" % (float(lostCount) / allCount)
+        endTime = time.time()
+        if endTime-startTime > 3600:
+            lostCount = 0
+            allCount = 0
+            startTime = endTime
+
+def get_packetLostRate():
+	t1 = threading.Thread(
+		target=_ping_thread,
+		kwargs={
+			'host': 'www.10010.com',
+			'mark': '10010'
+		}
+	)
+	t2 = threading.Thread(
+		target=_ping_thread,
+		kwargs={
+			'host': 'www.189.cn',
+			'mark': '189'
+		}
+	)
+	t3 = threading.Thread(
+		target=_ping_thread,
+		kwargs={
+			'host': 'bj.10086.cn',
+			'mark': '10086'
+		}
+	)
+	t1.setDaemon(True)
+	t2.setDaemon(True)
+	t3.setDaemon(True)
+	t1.start()
+	t2.start()
+	t3.start()
 
 if __name__ == '__main__':
     for argc in sys.argv:
