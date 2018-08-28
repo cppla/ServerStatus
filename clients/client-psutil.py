@@ -126,14 +126,14 @@ def get_network(ip_version):
 
 lostRate = {}
 def _ping_thread(host, mark):
-    output = os.popen('ping %s -t &' % host)
+    output = os.popen('ping -O %s &' % host if 'linux' in sys.platform else 'ping %s -t &' % host)
     lostCount = 0
     allCount = 0
     startTime = time.time()
     output.readline()
     output.readline()
     while True:
-        if 'TTL' not in output.readline():
+        if 'TTL' not in output.readline().upper():
             lostCount += 1
         allCount += 1
         lostRate[mark] = "%.4f" % (float(lostCount) / allCount)
