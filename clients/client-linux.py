@@ -171,7 +171,7 @@ def _ping_thread(host, mark):
         if 'ttl' not in output.readline():
             lostCount += 1
         allCount += 1
-        lostRate[mark] = "%.4f" % (float(lostCount) / allCount)
+        lostRate[mark] = float(lostCount) / allCount
         endTime = time.time()
         if endTime-startTime > 3600:
             lostCount = 0
@@ -252,6 +252,7 @@ if __name__ == '__main__':
 
             traffic = Traffic()
             traffic.get()
+            get_packetLostRate()
             while 1:
                 CPU = get_cpu()
                 NetRx, NetTx = traffic.get()
