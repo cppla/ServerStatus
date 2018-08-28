@@ -162,6 +162,7 @@ def _ping_thread(host, mark):
     lostCount = 0
     allCount = 0
     startTime = time.time()
+    output.readline()
     while True:
         if 'ttl' not in output.readline():
             lostCount += 1
