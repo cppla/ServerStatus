@@ -168,7 +168,10 @@ def _ping_thread(host, mark):
     startTime = time.time()
     output.readline()
     while True:
-        if 'ttl' not in output.readline():
+        buffer = output.readline()
+        if len(buffer) == 0:
+            return
+        if 'ttl' not in buffer:
             lostCount += 1
         allCount += 1
         # 防止吓人
