@@ -171,7 +171,11 @@ def _ping_thread(host, mark):
         if 'ttl' not in output.readline():
             lostCount += 1
         allCount += 1
-        lostRate[mark] = float(lostCount) / allCount
+        # 防止吓人
+        if allCount < 100:
+            lostRate[mark] = 0.00
+        else:
+            lostRate[mark] = float(lostCount) / allCount
         endTime = time.time()
         if endTime-startTime > 3600:
             lostCount = 0
