@@ -186,21 +186,21 @@ def get_packetLostRate():
     t1 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'www.10010.com',
+            'host': 'cu.tz.cloudcpp.com',
             'mark': '10010'
         }
     )
     t2 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'www.189.cn',
+            'host': 'ct.tz.cloudcpp.com',
             'mark': '189'
         }
     )
     t3 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'bj.10086.cn',
+            'host': 'cm.tz.cloudcpp.com',
             'mark': '10086'
         }
     )
