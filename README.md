@@ -12,17 +12,16 @@
 
 # 更新说明：
 
+* 20180829, 网络情况：主机到三网(CU,CT,CM)每小时丢包率的检测
 * 20180726, 一切皆容器额,查看自动部署或autodeploy/readme
 * 20180314, 调整前端，置默认密码为，设置ip和user即可上线　　　　　　
 * 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化(container)流量统计异常　　　　　　
-* 20170807, 更新平均1，5，15负载
-* 20170607, 去掉无用的IPV6信息，增加服务器总流量监控                           
+* 20170807, 更新平均1，5，15负载, 去掉无用的IPV6信息，增加服务器总流量监控                           
 
 # 自动部署：
 
 【服务端】：
 ```bash
-docker pull cppla/serverstatus
 wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
 docker run -d --restart=always --name=serverstatus -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 cppla/serverstatus
 
