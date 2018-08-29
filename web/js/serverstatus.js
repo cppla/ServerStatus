@@ -97,6 +97,7 @@ function uptime() {
 						"<td id=\"cpu\"><div class=\"progress progress-striped active\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"memory\"><div class=\"progress progress-striped active\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"hdd\"><div class=\"progress progress-striped active\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
+						"<td id=\"ping\"><div class=\"progress progress-striped active\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 					"</tr>" +
 					"<tr class=\"expandRow " + hack + "\"><td colspan=\"12\"><div class=\"accordian-body collapse\" id=\"rt" + i + "\">" +
 						"<div id=\"expand_mem\">加载中</div>" +
@@ -165,6 +166,9 @@ function uptime() {
 					TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["hdd"].children[0].children[0].style.width = "100%";
 					TableRow.children["hdd"].children[0].children[0].innerHTML = "<small>关闭</small>";
+					TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
+					TableRow.children["ping"].children[0].children[0].style.width = "100%";
+					TableRow.children["ping"].children[0].children[0].innerHTML = "<small>关闭</small>";
 					if(ExpandRow.hasClass("in")) {
 						ExpandRow.collapse("hide");
 					}
@@ -267,6 +271,16 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].innerHTML = HDD + "%";
 				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
 
+                // ping
+                var PING_10010 = result.servers[i].ping_10010.toFixed(2);
+                var PING_189 = result.servers[i].ping_189.toFixed(2);
+                var PING_10086 = result.servers[i].ping_10086.toFixed(2);
+                if (PING_10010 >= 5.0 || PING_189 >= 5.0 || PING_10086 >= 5.0)
+                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
+                else
+                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "% 💻 " + PING_189 + "% 💻 " + PING_10086 + "%";
+
 				// Custom
 				if (result.servers[i].custom) {
 					ExpandRow[0].children["expand_custom"].innerHTML = result.servers[i].custom
@@ -302,6 +316,9 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["hdd"].children[0].children[0].style.width = "100%";
 				TableRow.children["hdd"].children[0].children[0].innerHTML = "<small>错误</small>";
+				TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-error";
+				TableRow.children["ping"].children[0].children[0].style.width = "100%";
+				TableRow.children["ping"].children[0].children[0].innerHTML = "<small>错误</small>";
 				if(ExpandRow.hasClass("in")) {
 					ExpandRow.collapse("hide");
 				}
