@@ -137,7 +137,10 @@ def _ping_thread(host, mark):
     output.readline()
     output.readline()
     while True:
-        if 'TTL' not in output.readline().upper():
+        buffer = output.readline()
+        if len(buffer) == 0:
+            return
+        if 'TTL' not in buffer.upper():
             lostCount += 1
         allCount += 1
         # 防止吓人
