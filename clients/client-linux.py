@@ -174,10 +174,7 @@ def _ping_thread(host, mark):
         if 'ttl' not in buffer:
             lostCount += 1
         allCount += 1
-        # 防止吓人
-        if allCount < 100:
-            lostRate[mark] = 0.00
-        else:
+        if allCount > 100:
             lostRate[mark] = float(lostCount) / allCount
         endTime = time.time()
         if endTime-startTime > 3600:
