@@ -193,6 +193,7 @@ if __name__ == '__main__':
         elif 'INTERVAL' in argc:
             INTERVAL = int(argc.split('INTERVAL=')[-1])
     socket.setdefaulttimeout(30)
+    get_packetLostRate()
     while 1:
         try:
             print("Connecting...")
@@ -225,7 +226,6 @@ if __name__ == '__main__':
 
             traffic = Traffic()
             traffic.get()
-            get_packetLostRate()
             while 1:
                 CPU = get_cpu()
                 NetRx, NetTx = traffic.get()
