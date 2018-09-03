@@ -119,10 +119,10 @@ def get_network(ip_version):
         HOST = "ipv6.google.com"
     try:
         s = socket.create_connection((HOST, 80), 2)
+        s.close()
         return True
     except:
-        pass
-    return False
+        return False
 
 lostRate = {
     '10010': 0.0,
