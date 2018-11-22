@@ -231,8 +231,10 @@ function uptime() {
 					trafficstr += (result.servers[i].network_out/1024).toFixed(0) + "K";
 				else if(result.servers[i].network_out < 1024*1024*1024)
 					trafficstr += (result.servers[i].network_out/1024/1024).toFixed(1) + "M";
+				else if(result.servers[i].network_out < 1024*1024*1024*1024)
+				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
 				else
-					trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
+					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["traffic"].innerHTML = trafficstr;
 
 				// CPU
