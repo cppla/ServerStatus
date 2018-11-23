@@ -95,6 +95,24 @@ def liuliang():
             NET_OUT += v[0]
     return NET_IN, NET_OUT
 
+def tupd():
+    '''
+    tcp, udp, process, thread count: for view ddcc attack , then send warning
+    :return:
+    '''
+    if 'linux' in sys.platform:
+        t = int(os.popen('ss -t|wc -l').read()[:-1])-1
+        u = int(os.popen('ss -u|wc -l').read()[:-1])-1
+        p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
+        d = int(os.popen('ps -xH|wc -l').read()[:-1])-2
+    else:
+        t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
+        u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
+        p = len(psutil.pids())
+        # cpu?
+        d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
+    return t,u,p,d
+
 def ip_status():
     object_check = ['www.10010.com', 'www.189.cn', 'www.10086.cn']
     ip_check = 0
@@ -271,6 +289,7 @@ if __name__ == '__main__':
                 array['ping_10010'] = lostRate.get('10010') * 100
                 array['ping_189'] = lostRate.get('189') * 100
                 array['ping_10086'] = lostRate.get('10086') * 100
+                array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
 
                 s.send("update " + json.dumps(array) + "\n")
         except KeyboardInterrupt:
