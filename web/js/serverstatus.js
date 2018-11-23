@@ -273,6 +273,10 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].innerHTML = HDD + "%";
 				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
 
+                // delay time
+
+				// tcp connect
+
                 // ping
                 var PING_10010 = result.servers[i].ping_10010.toFixed(0);
                 var PING_189 = result.servers[i].ping_189.toFixed(0);
