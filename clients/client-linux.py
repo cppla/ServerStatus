@@ -127,6 +127,21 @@ def liuliang():
                     NET_OUT += int(netinfo[0][9])
     return NET_IN, NET_OUT
 
+def tupd():
+    '''
+    tcp, udp, process, thread count: for view ddcc attack , then send warning
+    :return:
+    '''
+    s = subprocess.check_output("ss -t|wc -l", shell=True)
+    t = int(s[:-1])-1
+    s = subprocess.check_output("ss -u|wc -l", shell=True)
+    u = int(s[:-1])-1
+    s = subprocess.check_output("ps -ef|wc -l", shell=True)
+    p = int(s[:-1])-2
+    s = subprocess.check_output("ps -xH|wc -l", shell=True)
+    d = int(s[:-1])-2
+    return t,u,p,d
+
 def ip_status():
     object_check = ['www.10010.com', 'www.189.cn', 'www.10086.cn']
     ip_check = 0
@@ -302,6 +317,7 @@ if __name__ == '__main__':
                 array['ping_10010'] = lostRate.get('10010') * 100
                 array['ping_189'] = lostRate.get('189') * 100
                 array['ping_10086'] = lostRate.get('10086') * 100
+                array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
 
                 s.send("update " + json.dumps(array) + "\n")
         except KeyboardInterrupt:
