@@ -62,6 +62,10 @@ class CMain
 			int64_t m_SwapUsed;
 			int64_t m_HDDTotal;
 			int64_t m_HDDUsed;
+			int64_t m_tcpCount;
+			int64_t m_udpCount;
+			int64_t m_processCount;
+			int64_t m_threadCount;
 			double m_CPU;
 			char m_aCustom[512];
 			// Options

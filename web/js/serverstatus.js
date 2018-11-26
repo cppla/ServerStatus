@@ -275,7 +275,9 @@ function uptime() {
 
                 // delay time
 
-				// tcp connect
+				// tcp, udp, process, thread count
+				ExpandRow[0].children["expand_tupd"].innerHTML = "TUPD: " + result.servers[i].tcp + " / " + result.servers[i].udp + " / " + result.servers[i].process+ " / " + result.servers[i].thread;
+
 
                 // ping
                 var PING_10010 = result.servers[i].ping_10010.toFixed(0);
