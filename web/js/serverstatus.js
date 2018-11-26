@@ -223,8 +223,10 @@ function uptime() {
 					trafficstr += (result.servers[i].network_in/1024).toFixed(0) + "K";
 				else if(result.servers[i].network_in < 1024*1024*1024)
 					trafficstr += (result.servers[i].network_in/1024/1024).toFixed(1) + "M";
-				else
+				else if(result.servers[i].network_in < 1024*1024*1024*1024)
 					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
+                else
+                    trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				trafficstr += " | "
 				if(result.servers[i].network_out < 1024)
 					trafficstr += result.servers[i].network_out.toFixed(0) + "B";
