@@ -103,6 +103,7 @@ function uptime() {
 						"<div id=\"expand_mem\">加载中</div>" +
 						"<div id=\"expand_swap\">加载中</div>" +
 						"<div id=\"expand_hdd\">加载中</div>" +
+						"<div id=\"expand_tupd\">加载中</div>" +
 						"<div id=\"expand_custom\">加载中</div>" +
 					"</div></td></tr>"
 				);
@@ -276,7 +277,7 @@ function uptime() {
                 // delay time
 
 				// tcp, udp, process, thread count
-				ExpandRow[0].children["expand_tupd"].innerHTML = "TUPD: " + result.servers[i].tcp + " / " + result.servers[i].udp + " / " + result.servers[i].process+ " / " + result.servers[i].thread;
+				ExpandRow[0].children["expand_tupd"].innerHTML = "TCP/UDP/进/线: " + result.servers[i].tcp_count + " / " + result.servers[i].udp_count + " / " + result.servers[i].process_count+ " / " + result.servers[i].thread_count;
 
 
                 // ping
