@@ -15,6 +15,7 @@ tr.even.expandRow > :hover { background: #F9F9F9 !important; }
 tr.odd.expandRow > :hover { background: #FFF !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
 #cpu, #ram, #hdd, #network { min-width: 55px; max-width: 100px; }
+#ping { min-width: 55px; max-width: 130px; }
 
 @media only screen and (max-width: 992px) {
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
