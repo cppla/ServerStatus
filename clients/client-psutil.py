@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Update by : https://github.com/cppla/ServerStatus
 # 依赖于psutil跨平台库：
