@@ -13,7 +13,8 @@ import requests
 import time
 from prettytable import PrettyTable
 
-cp = 'clear' if 'linux' in sys.platform else 'cls'
+scroll = False
+clear = lambda: os.system('clear' if 'linux' in sys.platform else 'cls')
 
 def sscmd(address):
     while True:
@@ -57,7 +58,8 @@ def sscmd(address):
                     "%d%%" % (float(i["hdd_used"]) / i["hdd_total"] * 100),
                 ]
             )
-        os.system(cp)
+        if scroll is True:
+            clear()
         print(ss)
         time.sleep(1)
 
