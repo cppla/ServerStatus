@@ -13,7 +13,8 @@ import requests
 import time
 from prettytable import PrettyTable
 
-scroll = False
+# todo: 程序在非gui环境下目前有闪屏的bug
+scroll = True
 clear = lambda: os.system('clear' if 'linux' in sys.platform else 'cls')
 
 def sscmd(address):
