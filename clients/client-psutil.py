@@ -15,6 +15,7 @@ INTERVAL = 1 # 更新间隔
 
 import socket
 import time
+import timeit
 import os
 import json
 import collections
@@ -110,7 +111,7 @@ def tupd():
         t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
         u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
         p = len(psutil.pids())
-        # cpu?
+        # cpu is high, wait fix
         d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
     return t,u,p,d
 
@@ -148,6 +149,11 @@ lostRate = {
     '189': 0.0,
     '10086': 0.0
 }
+pingTime = {
+    '10010': 0,
+    '189': 0,
+    '10086': 0
+}
 def _ping_thread(host, mark, port):
     lostPacket = 0
     allPacket = 0
@@ -157,7 +163,9 @@ def _ping_thread(host, mark, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
         try:
+            b = timeit.default_timer()
             s.connect((host, port))
+            pingTime[mark] = int((timeit.default_timer() - b) * 1000)
         except:
             lostPacket += 1
         finally:
@@ -290,6 +298,9 @@ if __name__ == '__main__':
                 array['ping_10010'] = lostRate.get('10010') * 100
                 array['ping_189'] = lostRate.get('189') * 100
                 array['ping_10086'] = lostRate.get('10086') * 100
+                array['time_10010'] = pingTime.get('10010')
+                array['time_189'] = pingTime.get('189')
+                array['time_10086'] = pingTime.get('10086')
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
 
                 s.send("update " + json.dumps(array) + "\n")
