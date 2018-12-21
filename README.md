@@ -12,7 +12,8 @@
 
 # 更新说明：
 
-* 20181126，add tupd(tcp, udp, process ,thread) count for view ddcc attack    
+* 20181221, 增加实时到三网的延迟, 鼠标移到丢包率列,tips显示        
+* 20181126, add tupd(tcp, udp, process ,thread) count for view ddcc attack    
 * 20180829, 网络情况：主机到三网(CU,CT,CM)每小时丢包率的检测
 * 20180726, 一切皆容器额,查看自动部署或autodeploy/readme
 * 20180314, 调整前端，置默认密码为，设置ip和user即可上线　　　　　　
