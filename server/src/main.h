@@ -52,6 +52,9 @@ class CMain
 			double m_ping_10010;
 			double m_ping_189;
 			double m_ping_10086;
+			int64_t m_time_10010;
+			int64_t m_time_189;
+			int64_t m_time_10086;
 			int64_t m_NetworkRx;
 			int64_t m_NetworkTx;
 			int64_t m_NetworkIN;
