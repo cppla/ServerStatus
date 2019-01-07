@@ -77,7 +77,7 @@ function uptime() {
 		if(result.reload)
 			setTimeout(function() { location.reload(true) }, 1000);
 
-		for (var i = 0; i < result.servers.length; i++) {
+		for (var i = 0, rlen=result.servers.length; i < rlen; i++) {
 			var TableRow = $("#servers tr#r" + i);
 			var ExpandRow = $("#servers #rt" + i);
 			var hack; // fuck CSS for making me do this
