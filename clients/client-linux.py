@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 # Update by : https://github.com/cppla/ServerStatus
 # 支持Python版本：2.7 to 3.5
 # 支持操作系统： Linux, OSX, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间: 20180828
+# 时间: 20190128
 
 
 SERVER = "127.0.0.1"
@@ -37,7 +37,7 @@ def get_memory():
     for line in open('/proc/meminfo'):
         match = re_parser.match(line)
         if not match:
-            continue;
+            continue
         key, value = match.groups(['key', 'value'])
         result[key] = int(value)
 
@@ -90,9 +90,10 @@ class Traffic:
 
         for dev in net_dev[2:]:
             dev = dev.split(':')
-            if dev[0].strip() == "lo" or dev[0].find("tun") > -1 \
-                    or dev[0].find("docker") > -1 or dev[0].find("veth") > -1 \
-                    or dev[0].find("br-") > -1:
+            if "lo" in dev[0] or "tun" in dev[0] \
+                or "docker" in dev[0] or "veth" in dev[0] \
+                or "br-" in dev[0] or "vmbr" in dev[0] \
+                or "vnet" in dev[0]:
                 continue
             dev = dev[1].split()
             avgrx += int(dev[0])
