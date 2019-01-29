@@ -65,7 +65,7 @@ class Traffic:
             if "lo" in name or "tun" in name \
                 or "docker" in name or "veth" in name \
                 or "br-" in name or "vmbr" in name \
-                or "vnet" in name:
+                or "vnet" in name or "kube" in name:
                 continue
             avgrx += stats.bytes_recv
             avgtx += stats.bytes_sent
@@ -89,9 +89,10 @@ def liuliang():
     NET_OUT = 0
     net = psutil.net_io_counters(pernic=True)
     for k, v in net.items():
-        if k == 'lo' or 'tun' in k \
-                or 'br-' in k \
-                or 'docker' in k or 'veth' in k:
+        if 'lo' in k or 'tun' in k \
+                or 'docker' in k or 'veth' in k \
+                or 'br-' in k or 'vmbr' in k \
+                or 'vnet' in k or 'kube' in k:
             continue
         else:
             NET_IN += v[1]
