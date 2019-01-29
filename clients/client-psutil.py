@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 # Update by : https://github.com/cppla/ServerStatus
 # 依赖于psutil跨平台库：
-# 支持Python版本：2.6 to 3.5 (users of Python 2.4 and 2.5 may use 2.1.3 version)
+# 支持Python版本：2.7 to 3.5
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间： 20180828
+# 时间： 20190128
 
 SERVER = "127.0.0.1"
 PORT = 35601
@@ -62,9 +62,10 @@ class Traffic:
     def get(self):
         avgrx = 0; avgtx = 0
         for name, stats in psutil.net_io_counters(pernic=True).iteritems():
-            if name == "lo" or name.find("tun") > -1 \
-                    or name.find("docker") > -1 or name.find("veth") > -1 \
-                    or name.find("br-") > -1:
+            if "lo" in name or "tun" in name \
+                or "docker" in name or "veth" in name \
+                or "br-" in name or "vmbr" in name \
+                or "vnet" in name:
                 continue
             avgrx += stats.bytes_recv
             avgtx += stats.bytes_sent
