@@ -12,6 +12,7 @@
 
 # 更新说明：
 
+* 20190129, 降低CPU占用            
 * 20181221, 增加实时到三网的延迟, 鼠标移到丢包率列,tips显示        
 * 20181126, add tupd(tcp, udp, process ,thread) count for view ddcc attack    
 * 20180829, 网络情况：主机到三网(CU,CT,CM)每小时丢包率的检测
