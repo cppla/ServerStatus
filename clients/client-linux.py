@@ -91,9 +91,9 @@ class Traffic:
         for dev in net_dev[2:]:
             dev = dev.split(':')
             if "lo" in dev[0] or "tun" in dev[0] \
-                or "docker" in dev[0] or "veth" in dev[0] \
-                or "br-" in dev[0] or "vmbr" in dev[0] \
-                or "vnet" in dev[0]:
+                    or "docker" in dev[0] or "veth" in dev[0] \
+                    or "br-" in dev[0] or "vmbr" in dev[0] \
+                    or "vnet" in dev[0] or "kube" in dev[0]:
                 continue
             dev = dev[1].split()
             avgrx += int(dev[0])
@@ -122,7 +122,8 @@ def liuliang():
             if netinfo:
                 if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
                         or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \
-                        or 'br-' in netinfo[0][0] \
+                        or 'br-' in netinfo[0][0] or 'vmbr' in netinfo[0][0] \
+                        or 'vnet' in netinfo[0][0] or 'kube' in netinfo[0][0] \
                         or netinfo[0][1]=='0' or netinfo[0][9]=='0':
                     continue
                 else:
