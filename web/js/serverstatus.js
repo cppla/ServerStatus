@@ -187,7 +187,7 @@ function uptime() {
 
 				// Load: default load_1, you can change show: load_1, load_5, load_15
 				if(result.servers[i].load == -1) {
-					TableRow.children["load"].innerHTML = "–";
+				    TableRow.children["load"].innerHTML = "–";
 				} else {
 				    TableRow.children["load"].innerHTML = result.servers[i].load_1.toFixed(2);
 				}
