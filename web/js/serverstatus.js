@@ -185,17 +185,11 @@ function uptime() {
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
 
-				// Load
+				// Load: default load_1, you can change show: load_1, load_5, load_15
 				if(result.servers[i].load == -1) {
 					TableRow.children["load"].innerHTML = "–";
 				} else {
-				    var loadstr = ""
-				    loadstr += result.servers[i].load_1.toFixed(2);
-				    loadstr += " | "
-				    loadstr += result.servers[i].load_5.toFixed(2);
-				    loadstr += " | "
-				    loadstr += result.servers[i].load_15.toFixed(2);
-					TableRow.children["load"].innerHTML = loadstr
+				    TableRow.children["load"].innerHTML = result.servers[i].load_1.toFixed(2);
 				}
 
 				// Network
