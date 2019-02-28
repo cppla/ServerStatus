@@ -249,7 +249,7 @@ def get_packetLostRate():
 if __name__ == '__main__':
     for argc in sys.argv:
         if 'SERVER' in argc:
-            SERVER = argc.split('SERVER=')[-1]
+            SERVER = socket.gethostbyname(argc.split('SERVER=')[-1])
         elif 'PORT' in argc:
             PORT = int(argc.split('PORT=')[-1])
         elif 'USER' in argc:
