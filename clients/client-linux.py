@@ -57,7 +57,7 @@ def get_hdd():
     return int(size), int(used)
 
 def get_time():
-    stat_file = file("/proc/stat", "r")
+    stat_file = open("/proc/stat", "r")
     time_list = stat_file.readline().split(' ')[2:6]
     stat_file.close()
     for i in range(len(time_list))  :
@@ -265,10 +265,11 @@ if __name__ == '__main__':
             print("Connecting...")
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((SERVER, PORT))
-            data = s.recv(1024)
+            data = s.recv(1024).decode()
             if data.find("Authentication required") > -1:
-                s.send(USER + ':' + PASSWORD + '\n')
-                data = s.recv(1024)
+                authinfo = USER + ':' + PASSWORD + '\n'
+                s.send(authinfo.encode('utf-8'))
+                data = s.recv(1024).decode()
                 if data.find("Authentication successful") < 0:
                     print(data)
                     raise socket.error
@@ -277,7 +278,7 @@ if __name__ == '__main__':
                 raise socket.error
 
             print(data)
-            data = s.recv(1024)
+            data = s.recv(1024).decode()
             print(data)
 
             timer = 0
@@ -333,7 +334,8 @@ if __name__ == '__main__':
                 array['time_10086'] = pingTime.get('10086')
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
 
-                s.send("update " + json.dumps(array) + "\n")
+                updateinfo = "update " + json.dumps(array) + "\n"
+                s.send(updateinfo.encode('utf-8'))
         except KeyboardInterrupt:
             raise
         except socket.error:
