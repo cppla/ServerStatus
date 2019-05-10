@@ -113,8 +113,9 @@ def tupd():
         t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
         u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
         p = len(psutil.pids())
-        # cpu is high, wait fix
-        d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
+        d = 0
+        # cpu is high, default: 0
+        # d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
     return t,u,p,d
 
 def ip_status():
