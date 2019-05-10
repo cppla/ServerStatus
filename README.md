@@ -5,7 +5,7 @@
 
 # 目录介绍：
 
-* autodeploy    自动部署
+* autodeploy    自动部署.
 * clients       客户端文件
 * server        服务端文件
 * web           网站文件  
