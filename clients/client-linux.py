@@ -40,11 +40,11 @@ def get_memory():
             continue
         key, value = match.groups(['key', 'value'])
         result[key] = int(value)
-
+    # mem used refer to: htop software
+    # https://stackoverflow.com/questions/41224738/how-to-calculate-system-memory-usage-from-proc-meminfo-like-htop
     MemTotal = float(result['MemTotal'])
-    MemFree = float(result['MemFree'])
-    Cached = float(result['Cached'])
-    MemUsed = MemTotal - (Cached + MemFree)
+    MemExactCache = float(result['Cached'])+float(result['SReclaimable'])-float(result['Shmem'])
+    MemUsed = MemTotal-float(result['MemFree'])-(float(result['Buffers'])+MemExactCache)
     SwapTotal = float(result['SwapTotal'])
     SwapFree = float(result['SwapFree'])
     return int(MemTotal), int(MemUsed), int(SwapTotal), int(SwapFree)

@@ -28,11 +28,7 @@ def get_uptime():
 
 def get_memory():
     Mem = psutil.virtual_memory()
-    try:
-        MemUsed = Mem.total - (Mem.cached + Mem.free)
-    except:
-        MemUsed = Mem.total - Mem.free
-    return int(Mem.total/1024.0), int(MemUsed/1024.0)
+    return int(Mem.total / 1024.0), int(Mem.used / 1024.0)
 
 def get_swap():
     Mem = psutil.swap_memory()
