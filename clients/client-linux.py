@@ -4,13 +4,19 @@
 # 支持Python版本：2.7 to 3.5
 # 支持操作系统： Linux, OSX, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
 # 时间: 20190128
-
+# 说明: 默认情况下修改server和user就可以了。
 
 SERVER = "127.0.0.1"
-PORT = 35601
 USER = "s01"
+
+
+PORT = 35601
 PASSWORD = "USER_DEFAULT_PASSWORD"
-INTERVAL = 1 #更新间隔
+INTERVAL = 1
+PORBEPORT = 80
+CU = "cu.tz.cloudcpp.com"
+CT = "ct.tz.cloudcpp.com"
+CM = "cm.tz.cloudcpp.com"
 
 import socket
 import time
@@ -54,7 +60,7 @@ def get_hdd():
     return int(size), int(used)
 
 def get_time():
-    stat_file = file("/proc/stat", "r")
+    stat_file = open("/proc/stat", "r")
     time_list = stat_file.readline().split(' ')[2:6]
     stat_file.close()
     for i in range(len(time_list))  :
@@ -144,13 +150,12 @@ def tupd():
     return t,u,p,d
 
 def ip_status():
-    object_check = ['www.10010.com', 'www.189.cn', 'www.10086.cn']
     ip_check = 0
-    for i in object_check:
+    for i in [CU, CT, CM]:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
         try:
-            s.connect((i, 80))
+            s.connect((i, PORBEPORT))
         except:
             ip_check += 1
         s.close()
@@ -215,25 +220,25 @@ def get_packetLostRate():
     t1 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'cu.tz.cloudcpp.com',
+            'host': CU,
             'mark': '10010',
-            'port': 443
+            'port': PORBEPORT
         }
     )
     t2 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'ct.tz.cloudcpp.com',
+            'host': CT,
             'mark': '189',
-            'port': 443
+            'port': PORBEPORT
         }
     )
     t3 = threading.Thread(
         target=_ping_thread,
         kwargs={
-            'host': 'cm.tz.cloudcpp.com',
+            'host': CM,
             'mark': '10086',
-            'port': 443
+            'port': PORBEPORT
         }
     )
     t1.setDaemon(True)
