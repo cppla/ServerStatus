@@ -2,9 +2,9 @@
 # coding: utf-8
 # Update by : https://github.com/cppla/ServerStatus
 # 依赖于psutil跨平台库
-# 支持Python版本：2.7 to 3.5
+# 支持Python版本：2.7 to 3.7
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间： 20190128
+# 时间： 20191224
 # 说明: 默认情况下修改server和user就可以了。
 
 
@@ -49,7 +49,7 @@ def get_hdd():
     for disk in psutil.disk_partitions():
         if not disk.device in disks and disk.fstype.lower() in valid_fs:
             disks[disk.device] = disk.mountpoint
-    for disk in disks.itervalues():
+    for disk in disks.values():
         usage = psutil.disk_usage(disk)
         size += usage.total
         used += usage.used
@@ -64,7 +64,7 @@ class Traffic:
         self.tx = collections.deque(maxlen=10)
     def get(self):
         avgrx = 0; avgtx = 0
-        for name, stats in psutil.net_io_counters(pernic=True).iteritems():
+        for name, stats in psutil.net_io_counters(pernic=True).items():
             if "lo" in name or "tun" in name \
                 or "docker" in name or "veth" in name \
                 or "br-" in name or "vmbr" in name \
@@ -220,6 +220,19 @@ def get_packetLostRate():
     t2.start()
     t3.start()
 
+def byte_str(object):
+    '''
+    bytes to str, str to bytes
+    :param object:
+    :return:
+    '''
+    if isinstance(object, str):
+        return object.encode(encoding="utf-8")
+    elif isinstance(object, bytes):
+        return bytes.decode(object)
+    else:
+        print(type(object))
+
 if __name__ == '__main__':
     for argc in sys.argv:
         if 'SERVER' in argc:
@@ -239,10 +252,10 @@ if __name__ == '__main__':
             print("Connecting...")
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((SERVER, PORT))
-            data = s.recv(1024)
+            data = byte_str(s.recv(1024))
             if data.find("Authentication required") > -1:
-                s.send(USER + ':' + PASSWORD + '\n')
-                data = s.recv(1024)
+                s.send(byte_str(USER + ':' + PASSWORD + '\n'))
+                data = byte_str(s.recv(1024))
                 if data.find("Authentication successful") < 0:
                     print(data)
                     raise socket.error
@@ -251,7 +264,7 @@ if __name__ == '__main__':
                 raise socket.error
 
             print(data)
-            data = s.recv(1024)
+            data = byte_str(s.recv(1024))
             print(data)
 
             timer = 0
@@ -308,7 +321,7 @@ if __name__ == '__main__':
                 array['time_10086'] = pingTime.get('10086')
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
 
-                s.send("update " + json.dumps(array) + "\n")
+                s.send(byte_str("update " + json.dumps(array) + "\n"))
         except KeyboardInterrupt:
             raise
         except socket.error:
