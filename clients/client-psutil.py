@@ -111,7 +111,7 @@ def tupd():
         t = int(os.popen('ss -t|wc -l').read()[:-1])-1
         u = int(os.popen('ss -u|wc -l').read()[:-1])-1
         p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
-        d = int(os.popen('ps -xH|wc -l').read()[:-1])-2
+        d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
     else:
         t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
         u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
