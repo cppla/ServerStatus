@@ -66,6 +66,7 @@ def get_time():
     for i in range(len(time_list))  :
         time_list[i] = int(time_list[i])
     return time_list
+
 def delta_time():
     x = get_time()
     time.sleep(INTERVAL)
@@ -73,13 +74,14 @@ def delta_time():
     for i in range(len(x)):
         y[i]-=x[i]
     return y
+
 def get_cpu():
     t = delta_time()
     st = sum(t)
     if st == 0:
         st = 1
     result = 100-(t[len(t)-1]*100.00/st)
-    return round(result)
+    return round(result, 1)
 
 class Traffic:
     def __init__(self):
