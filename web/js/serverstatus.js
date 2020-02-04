@@ -86,6 +86,7 @@ function moneyText2money(moneyText){
                 "3year" : 0.333333,
                 "hyr" : 0.333333,
                 "annually" : 1,
+                "semi-annually" : 0.5,
                 "semi annually" : 0.5,
                 "mon" : 12,
                 "month" : 12,
@@ -146,8 +147,8 @@ function uptime() {
 						"<td id=\"name\">加载中</td>" +
 						"<td id=\"type\">加载中</td>" +
 						"<td id=\"location\">加载中</td>" +
-                    	"<td id=\"priceExtra\">加载中</td>" +
 						"<td id=\"uptime\">加载中</td>" +
+                    	"<td id=\"priceExtra\">加载中</td>" +
 						"<td id=\"load\">加载中</td>" +
 						"<td id=\"network\">加载中</td>" +
 						"<td id=\"traffic\">加载中</td>" +
@@ -361,7 +362,7 @@ function uptime() {
 			}
 		};
 
-        $("#totalPrice").html("续费金额: " + totalPrice.toFixed(2));
+        $("#totalPrice").html(`共 <span class="orange">${result.servers.length}</span> 个，年续费成本 ≈ <span class="orange">${totalPrice.toFixed(2)}</span> 元`);
 
 		d = new Date(result.updated*1000);
 		error = 0;
