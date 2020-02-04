@@ -36,6 +36,11 @@ class CMain
 		char m_aHost[128];
 		char m_aLocation[128];
 		char m_aPassword[128];
+		
+		// add several extra data
+		char m_aExtra1[128];
+		char m_aExtra2[128];
+		char m_aExtra3[128];
 
 		int64 m_TimeConnected;
 		int64 m_LastUpdate;
