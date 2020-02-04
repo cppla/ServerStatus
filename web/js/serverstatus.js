@@ -30,8 +30,7 @@ function timeSince(date) {
 		return "几秒前.";
 }
 
-function bytesToSize(bytes, precision, si)
-{
+function bytesToSize(bytes, precision, si){
 	var ret;
 	si = typeof si !== 'undefined' ? si : 0;
 	if(si != 0) {
@@ -71,11 +70,68 @@ function bytesToSize(bytes, precision, si)
 	}
 }
 
+function moneyText2money(moneyText){
+	try{
+        let data = moneyText.split("/");
+        let time_ratio = 1;
+        let money_ratio = 1;
+
+        if(data.length > 1){
+            // 计算时间倍数
+            let timeText = data[1]; // yr
+            let timeKV = {
+                "yr" : 1,
+                "3yr" : 0.333333,
+                "year" : 1,
+                "3year" : 0.333333,
+                "hyr" : 0.333333,
+                "annually" : 1,
+                "semi annually" : 0.5,
+                "mon" : 12,
+                "month" : 12,
+                "qua" : 4,
+                "quater" : 4,
+                "day": 365,
+
+                "年" : 1,
+                "3年" : 0.333333,
+                "半年" : 0.5,
+                "月" : 12,
+                "季" : 4,
+                "季度" :4,
+                "天" : 365
+            };
+            let timeKey = Object.keys(timeKV).filter(function(one){return one == timeText.toLowerCase();});
+            time_ratio = timeKV[timeKey[0]];
+        }
+
+        // 计算汇率倍数
+        let price = data[0];  // 99$
+        let moneyKV = {
+            "":1,
+            "y" : 1,
+            "￥" : 1,
+            "元" : 1,
+            "$": 6.9952,
+            "o": 7.7388,
+            "r": 0.1102
+        };
+        let money = parseFloat(price); // 得到实际数据
+        let rateText = price.substring((money+"").length);
+        let moneyKey = Object.keys(moneyKV).filter(function(one){return one == rateText.toLowerCase();});
+        money_ratio = moneyKV[moneyKey[0]];
+        return time_ratio * money_ratio * money;
+	}catch (e) {
+		return NaN;
+    }
+}
+
 function uptime() {
 	$.getJSON("json/stats.json", function(result) {
 		$("#loading-notice").remove();
 		if(result.reload)
 			setTimeout(function() { location.reload(true) }, 1000);
+		var totalPrice = 0; // 续费总价格
 
 		for (var i = 0, rlen=result.servers.length; i < rlen; i++) {
 			var TableRow = $("#servers tr#r" + i);
@@ -90,6 +146,7 @@ function uptime() {
 						"<td id=\"name\">加载中</td>" +
 						"<td id=\"type\">加载中</td>" +
 						"<td id=\"location\">加载中</td>" +
+                    	"<td id=\"priceExtra\">加载中</td>" +
 						"<td id=\"uptime\">加载中</td>" +
 						"<td id=\"load\">加载中</td>" +
 						"<td id=\"network\">加载中</td>" +
@@ -152,6 +209,11 @@ function uptime() {
 
 			// Location
 			TableRow.children["location"].innerHTML = result.servers[i].location;
+
+			TableRow.children["priceExtra"].innerHTML = result.servers[i].extra1;
+
+            totalPrice += moneyText2money(result.servers[i].extra1);
+
 			if (!result.servers[i].online4 && !result.servers[i].online6) {
 				if (server_status[i]) {
 					TableRow.children["uptime"].innerHTML = "–";
@@ -298,6 +360,8 @@ function uptime() {
 				}
 			}
 		};
+
+        $("#totalPrice").html("续费金额: " + totalPrice.toFixed(2));
 
 		d = new Date(result.updated*1000);
 		error = 0;
