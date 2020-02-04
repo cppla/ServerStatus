@@ -80,27 +80,37 @@ function moneyText2money(moneyText){
             // 计算时间倍数
             let timeText = data[1]; // yr
             let timeKV = {
+                "y" : 1,
                 "yr" : 1,
+                "2yr" : 0.5,
                 "3yr" : 0.333333,
+
                 "year" : 1,
+                "2year" : 0.5,
                 "3year" : 0.333333,
-                "hyr" : 0.333333,
+
                 "annually" : 1,
-                "semi-annually" : 0.5,
-                "semi annually" : 0.5,
-                "mon" : 12,
-                "month" : 12,
+                "semi-annually" : 2,
+                "semi annually" : 2,
                 "qua" : 4,
                 "quater" : 4,
+                "m" : 12,
+                "mon" : 12,
+                "month" : 12,
+                "d": 365,
                 "day": 365,
+				"h": 8760,
+				"hour": 8760,
 
                 "年" : 1,
+                "2年" : 0.5,
                 "3年" : 0.333333,
-                "半年" : 0.5,
-                "月" : 12,
+                "半年" : 2,
                 "季" : 4,
                 "季度" :4,
-                "天" : 365
+                "月" : 12,
+                "天" : 365,
+				"小时":8760
             };
             let timeKey = Object.keys(timeKV).filter(function(one){return one == timeText.toLowerCase();});
             time_ratio = timeKV[timeKey[0]];
@@ -113,9 +123,17 @@ function moneyText2money(moneyText){
             "y" : 1,
             "￥" : 1,
             "元" : 1,
+            "人民币" : 1,
+            "RMB" : 1,
             "$": 6.9952,
+            "美元": 6.9952,
             "o": 7.7388,
-            "r": 0.1102
+            "欧元": 7.7388,
+            "r": 0.1102,
+            "卢布": 0.1102,
+            "hkd": 0.9003,
+            "円": 0.06421,
+            "日元": 0.06421
         };
         let money = parseFloat(price); // 得到实际数据
         let rateText = price.substring((money+"").length);
