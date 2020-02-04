@@ -6,7 +6,10 @@
 			"type": "xen",
 			"host": "host1",
 			"location": "cn",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"extra1":"",
+			"extra2":"",
+			"extra3":""
 		},
 		{
 			"username": "s02",
@@ -14,7 +17,10 @@
 			"type": "vmware",
 			"host": "host2",
 			"location": "jp",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"extra1":"",
+			"extra2":"",
+			"extra3":""
 		},
 		{
 			"disabled": true,
@@ -23,7 +29,10 @@
 			"type": "Nothing",
 			"host": "host3",
 			"location": "fr",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"extra1":"",
+			"extra2":"",
+			"extra3":""
 		},
 		{
 			"username": "s04",
@@ -31,7 +40,10 @@
 			"type": "kvm",
 			"host": "host4",
 			"location": "kr",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"extra1":"",
+			"extra2":"",
+			"extra3":""
 		}
 	]
 }
