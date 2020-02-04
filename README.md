@@ -77,8 +77,8 @@ make
 }       
 ```
 其中extra1暂时用于设置服务器价格参数
-    日期支持yr/semi year/year/mon/month/day/h/hour/quater/年/月/日/半年/2年/3年/季度/天/小时  不分大小写
-    金币支持￥/r/$/o/r 不分大小写
+1、日期支持y/yr/semi year/year/mon/month/day/h/hour/qua/quater/年/月/日/半年/2年/3年/季度/天/小时  不分大小写
+2、金币支持￥/y/RMB/元/$/o/r/hkd/美元/日元/円 不分大小写
 
 三、拷贝ServerStatus/status到你的网站目录        
 例如：
