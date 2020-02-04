@@ -68,11 +68,17 @@ make
 			"type": "Dedicated Server",
 			"host": "GenericServerHost123",
 			"location": "Austria",
-			"password": "some-hard-to-guess-copy-paste-password"
+			"password": "some-hard-to-guess-copy-paste-password",
+			"extra1": "17$/yr",
+			"extra2": "未使用",
+			"extra3":""
 		},
 	]
 }       
 ```
+其中extra1暂时用于设置服务器价格参数
+    日期支持yr/semi year/year/mon/month/day/h/hour/quater/年/月/日/半年/2年/3年/季度/天/小时  不分大小写
+    金币支持￥/r/$/o/r 不分大小写
 
 三、拷贝ServerStatus/status到你的网站目录        
 例如：
