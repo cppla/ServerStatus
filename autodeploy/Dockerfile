@@ -12,7 +12,7 @@ RUN make
 RUN pwd && ls -a
 
 # glibc env run 
-FROM nginx:1.17-alpine
+FROM nginx:latest
 
 RUN mkdir -p /ServerStatus/server/
 
