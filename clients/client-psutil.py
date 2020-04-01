@@ -4,12 +4,12 @@
 # 依赖于psutil跨平台库
 # 支持Python版本：2.7 to 3.7
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间： 20191224
-# 说明: 默认情况下修改server和user就可以了。
-
+# 时间： 20200401
+# 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
 SERVER = "127.0.0.1"
 USER = "s01"
+
 
 
 PORT = 35601
