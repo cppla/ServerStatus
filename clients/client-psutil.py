@@ -4,7 +4,7 @@
 # 依赖于psutil跨平台库
 # 支持Python版本：2.7 to 3.7
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间： 20200401
+# 时间： 20200407
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
 SERVER = "127.0.0.1"
@@ -58,10 +58,23 @@ def get_hdd():
 def get_cpu():
     return psutil.cpu_percent(interval=INTERVAL)
 
+traffic_clock = time.time()
+traffic_diff = 0
+def TCLOCK(func):
+    def wrapper(*args, **kwargs):
+        global traffic_clock, traffic_diff
+        now_clock = time.time()
+        traffic_diff = now_clock - traffic_clock
+        traffic_clock = now_clock
+        return func(*args, **kwargs)
+    return wrapper
+
 class Traffic:
     def __init__(self):
         self.rx = collections.deque(maxlen=10)
         self.tx = collections.deque(maxlen=10)
+
+    @TCLOCK
     def get(self):
         avgrx = 0; avgtx = 0
         for name, stats in psutil.net_io_counters(pernic=True).items():
@@ -82,8 +95,8 @@ class Traffic:
             avgrx += self.rx[x+1] - self.rx[x]
             avgtx += self.tx[x+1] - self.tx[x]
 
-        avgrx = int(avgrx / l / INTERVAL)
-        avgtx = int(avgtx / l / INTERVAL)
+        avgrx = int(avgrx / l / traffic_diff)
+        avgtx = int(avgtx / l / traffic_diff)
 
         return avgrx, avgtx
 
