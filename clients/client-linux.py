@@ -27,7 +27,6 @@ import os
 import sys
 import json
 import subprocess
-import collections
 import threading
 
 def get_uptime():
@@ -79,54 +78,6 @@ def get_cpu():
         st = 1
     result = 100-(t[len(t)-1]*100.00/st)
     return round(result, 1)
-
-traffic_clock = time.time()
-traffic_diff = 0
-def TCLOCK(func):
-    def wrapper(*args, **kwargs):
-        global traffic_clock, traffic_diff
-        now_clock = time.time()
-        traffic_diff = now_clock - traffic_clock
-        traffic_clock = now_clock
-        return func(*args, **kwargs)
-    return wrapper
-
-class Traffic:
-    def __init__(self):
-        self.rx = collections.deque(maxlen=10)
-        self.tx = collections.deque(maxlen=10)
-
-    @TCLOCK
-    def get(self):
-        f = open('/proc/net/dev', 'r')
-        net_dev = f.readlines()
-        f.close()
-        avgrx = 0; avgtx = 0
-
-        for dev in net_dev[2:]:
-            dev = dev.split(':')
-            if "lo" in dev[0] or "tun" in dev[0] \
-                    or "docker" in dev[0] or "veth" in dev[0] \
-                    or "br-" in dev[0] or "vmbr" in dev[0] \
-                    or "vnet" in dev[0] or "kube" in dev[0]:
-                continue
-            dev = dev[1].split()
-            avgrx += int(dev[0])
-            avgtx += int(dev[8])
-
-        self.rx.append(avgrx)
-        self.tx.append(avgtx)
-        avgrx = 0; avgtx = 0
-
-        l = len(self.rx)
-        for x in range(l - 1):
-            avgrx += self.rx[x+1] - self.rx[x]
-            avgtx += self.tx[x+1] - self.tx[x]
-
-        avgrx = int(avgrx / l / traffic_diff)
-        avgtx = int(avgtx / l / traffic_diff)
-
-        return avgrx, avgtx
 
 def liuliang():
     NET_IN = 0
@@ -199,6 +150,15 @@ pingTime = {
     '189': 0,
     '10086': 0
 }
+netSpeed = {
+    'netrx': 0.0,
+    'nettx': 0.0,
+    'clock': 0.0,
+    'diff': 0.0,
+    'avgrx': 0,
+    'avgtx': 0
+}
+
 def _ping_thread(host, mark, port):
     lostPacket = 0
     allPacket = 0
@@ -226,9 +186,34 @@ def _ping_thread(host, mark, port):
             allPacket = 0
             startTime = endTime
 
-        time.sleep(1)
+        time.sleep(INTERVAL)
 
-def get_packetLostRate():
+def _net_speed():
+    while True:
+        with open("/proc/net/dev", "r") as f:
+            net_dev = f.readlines()
+            avgrx = 0
+            avgtx = 0
+            for dev in net_dev[2:]:
+                dev = dev.split(':')
+                if "lo" in dev[0] or "tun" in dev[0] \
+                        or "docker" in dev[0] or "veth" in dev[0] \
+                        or "br-" in dev[0] or "vmbr" in dev[0] \
+                        or "vnet" in dev[0] or "kube" in dev[0]:
+                    continue
+                dev = dev[1].split()
+                avgrx += int(dev[0])
+                avgtx += int(dev[8])
+            now_clock = time.time()
+            netSpeed["diff"] = now_clock - netSpeed["clock"]
+            netSpeed["clock"] = now_clock
+            netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
+            netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
+            netSpeed["avgrx"] = avgrx
+            netSpeed["avgtx"] = avgtx
+        time.sleep(INTERVAL)
+
+def get_realtime_date():
     t1 = threading.Thread(
         target=_ping_thread,
         kwargs={
@@ -253,12 +238,17 @@ def get_packetLostRate():
             'port': PORBEPORT
         }
     )
+    t4 = threading.Thread(
+        target=_net_speed,
+    )
     t1.setDaemon(True)
     t2.setDaemon(True)
     t3.setDaemon(True)
+    t4.setDaemon(True)
     t1.start()
     t2.start()
     t3.start()
+    t4.start()
 
 def byte_str(object):
     '''
@@ -286,7 +276,7 @@ if __name__ == '__main__':
         elif 'INTERVAL' in argc:
             INTERVAL = int(argc.split('INTERVAL=')[-1])
     socket.setdefaulttimeout(30)
-    get_packetLostRate()
+    get_realtime_date()
     while True:
         try:
             print("Connecting...")
@@ -317,11 +307,8 @@ if __name__ == '__main__':
                 print(data)
                 raise socket.error
 
-            traffic = Traffic()
-            traffic.get()
             while True:
                 CPU = get_cpu()
-                NetRx, NetTx = traffic.get()
                 NET_IN, NET_OUT = liuliang()
                 Uptime = get_uptime()
                 Load_1, Load_5, Load_15 = os.getloadavg()
@@ -347,8 +334,8 @@ if __name__ == '__main__':
                 array['hdd_total'] = HDDTotal
                 array['hdd_used'] = HDDUsed
                 array['cpu'] = CPU
-                array['network_rx'] = NetRx
-                array['network_tx'] = NetTx
+                array['network_rx'] = netSpeed.get("netrx")
+                array['network_tx'] = netSpeed.get("nettx")
                 array['network_in'] = NET_IN
                 array['network_out'] = NET_OUT
                 array['ip_status'] = IP_STATUS
