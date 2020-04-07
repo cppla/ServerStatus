@@ -194,19 +194,19 @@ function uptime() {
 
 				// Network
 				var netstr = "";
-				if(result.servers[i].network_rx < 1000)
+				if(result.servers[i].network_rx < 1024)
 					netstr += result.servers[i].network_rx.toFixed(0) + "B";
-				else if(result.servers[i].network_rx < 1000*1000)
-					netstr += (result.servers[i].network_rx/1000).toFixed(0) + "K";
+				else if(result.servers[i].network_rx < 1024*1024)
+					netstr += (result.servers[i].network_rx/1024).toFixed(0) + "K";
 				else
-					netstr += (result.servers[i].network_rx/1000/1000).toFixed(1) + "M";
+					netstr += (result.servers[i].network_rx/1024/1024).toFixed(1) + "M";
 				netstr += " | "
-				if(result.servers[i].network_tx < 1000)
+				if(result.servers[i].network_tx < 1024)
 					netstr += result.servers[i].network_tx.toFixed(0) + "B";
-				else if(result.servers[i].network_tx < 1000*1000)
-					netstr += (result.servers[i].network_tx/1000).toFixed(0) + "K";
+				else if(result.servers[i].network_tx < 1024*1024)
+					netstr += (result.servers[i].network_tx/1024).toFixed(0) + "K";
 				else
-					netstr += (result.servers[i].network_tx/1000/1000).toFixed(1) + "M";
+					netstr += (result.servers[i].network_tx/1024/1024).toFixed(1) + "M";
 				TableRow.children["network"].innerHTML = netstr;
 
 				//Traffic
