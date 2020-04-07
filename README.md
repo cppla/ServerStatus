@@ -12,6 +12,7 @@
 
 # 更新说明：
 
+* 20200407, 网速计算不严谨，fixed    
 * 20190129, 降低CPU占用            
 * 20181221, 增加实时到三网的延迟, 鼠标移到丢包率列,tips显示        
 * 20181126, add tupd(tcp, udp, process ,thread) count for view ddcc attack    
