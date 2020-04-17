@@ -171,7 +171,7 @@ def _net_speed():
     while True:
         avgrx = 0
         avgtx = 0
-        for name, stats in psutil.net_io_counters(pernic=True).iteritems():
+        for name, stats in psutil.net_io_counters(pernic=True).items():
             if "lo" in name or "tun" in name \
                     or "docker" in name or "veth" in name \
                     or "br-" in name or "vmbr" in name \
