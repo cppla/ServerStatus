@@ -169,27 +169,23 @@ def _ping_thread(host, mark, port):
 
 def _net_speed():
     while True:
-        with open("/proc/net/dev", "r") as f:
-            net_dev = f.readlines()
-            avgrx = 0
-            avgtx = 0
-            for dev in net_dev[2:]:
-                dev = dev.split(':')
-                if "lo" in dev[0] or "tun" in dev[0] \
-                        or "docker" in dev[0] or "veth" in dev[0] \
-                        or "br-" in dev[0] or "vmbr" in dev[0] \
-                        or "vnet" in dev[0] or "kube" in dev[0]:
-                    continue
-                dev = dev[1].split()
-                avgrx += int(dev[0])
-                avgtx += int(dev[8])
-            now_clock = time.time()
-            netSpeed["diff"] = now_clock - netSpeed["clock"]
-            netSpeed["clock"] = now_clock
-            netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
-            netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
-            netSpeed["avgrx"] = avgrx
-            netSpeed["avgtx"] = avgtx
+        avgrx = 0
+        avgtx = 0
+        for name, stats in psutil.net_io_counters(pernic=True).iteritems():
+            if "lo" in name or "tun" in name \
+                    or "docker" in name or "veth" in name \
+                    or "br-" in name or "vmbr" in name \
+                    or "vnet" in name or "kube" in name:
+                continue
+            avgrx += stats.bytes_recv
+            avgtx += stats.bytes_sent
+        now_clock = time.time()
+        netSpeed["diff"] = now_clock - netSpeed["clock"]
+        netSpeed["clock"] = now_clock
+        netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
+        netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
+        netSpeed["avgrx"] = avgrx
+        netSpeed["avgtx"] = avgtx
         time.sleep(INTERVAL)
 
 def get_realtime_date():
