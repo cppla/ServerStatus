@@ -294,8 +294,9 @@ if __name__ == '__main__':
                 raise socket.error
 
             print(data)
-            data = byte_str(s.recv(1024))
-            print(data)
+            if data.find("You are connecting via") < 0:
+                data = byte_str(s.recv(1024))
+                print(data)
 
             timer = 0
             check_ip = 0
