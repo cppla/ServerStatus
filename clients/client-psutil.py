@@ -77,19 +77,24 @@ def tupd():
     tcp, udp, process, thread count: for view ddcc attack , then send warning
     :return:
     '''
-    if 'linux' in sys.platform:
-        t = int(os.popen('ss -t|wc -l').read()[:-1])-1
-        u = int(os.popen('ss -u|wc -l').read()[:-1])-1
-        p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
-        d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
-    else:
-        t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
-        u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
-        p = len(psutil.pids())
-        d = 0
-        # cpu is high, default: 0
-        # d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
-    return t,u,p,d
+    try:
+        if 'linux' in sys.platform:
+            t = int(os.popen('ss -t|wc -l').read()[:-1])-1
+            u = int(os.popen('ss -u|wc -l').read()[:-1])-1
+            p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
+            d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
+        elif 'win' in sys.platform:
+            t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
+            u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
+            p = len(psutil.pids())
+            d = 0
+            # cpu is high, default: 0
+            # d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
+        else:
+            t,u,p,d = 0,0,0,0
+        return t,u,p,d
+    except:
+        return 0,0,0,0
 
 def ip_status():
     ip_check = 0
