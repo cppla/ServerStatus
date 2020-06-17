@@ -280,8 +280,7 @@ if __name__ == '__main__':
     while True:
         try:
             print("Connecting...")
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((SERVER, PORT))
+            s = socket.create_connection((SERVER, PORT))
             data = byte_str(s.recv(1024))
             if data.find("Authentication required") > -1:
                 s.send(byte_str(USER + ':' + PASSWORD + '\n'))
