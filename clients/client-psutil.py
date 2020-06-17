@@ -99,14 +99,12 @@ def tupd():
 def ip_status():
     ip_check = 0
     for i in [CU, CT, CM]:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1)
         try:
-            s.connect((i, PORBEPORT))
+            s = socket.create_connection((i, PORBEPORT), timeout=1)
+            s.close()
+            del s
         except:
             ip_check += 1
-        s.close()
-        del s
     if ip_check >= 2:
         return False
     else:
