@@ -325,10 +325,11 @@ if __name__ == '__main__':
             raise
         except socket.error:
             print("Disconnected...")
-            # keep on trying after a disconnect
-            s.close()
+            if 's' in locals().keys():
+                del s
             time.sleep(3)
         except Exception as e:
             print("Caught Exception:", e)
-            s.close()
+            if 's' in locals().keys():
+                del s
             time.sleep(3)
