@@ -3,6 +3,13 @@
 * ServerStatus中文版是一个酷炫高逼格的云探针、云监控、服务器云监控、多服务器探针~。
 * 在线演示：https://tz.cloudcpp.com    
 
+[![Build Status](https://img.shields.io/travis/otale/tale.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
+[![Python Support](https://img.shields.io/badge/python-2.7%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
+[![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
+[![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
+
+![Latest Version](http://dl.cpp.la/Archive/serverstatus.png)
+
 # 目录介绍：
 
 * autodeploy    自动部署.
@@ -12,15 +19,15 @@
 
 # 更新说明：
 
-* 20200629, 优化IPv6,优化前端。 注意docker默认是不支持IPv6的, 如使用docker需要手动开启ipv6        
+* 20200629, 优化IPv6,优化前端。注意docker默认是不支持IPv6的, 如使用docker需要手动开启ipv6        
 * 20200407, 网速计算不严谨，fixed    
 * 20190129, 降低CPU占用            
 * 20181221, 增加实时到三网的延迟       
 * 20181126, add tupd(tcp, udp, process ,thread) count for view ddcc attack    
 * 20180829, 网络情况：主机到三网(CU,CT,CM)每小时丢包率的检测
 * 20180726, 一切皆容器额,查看自动部署或autodeploy/readme
-* 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化(container)流量统计异常　　　　　　
-* 20170807, 更新平均1，5，15负载, 去掉无用的IPV6信息，增加服务器总流量监控                           
+* 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化流量统计异常　　　　　　
+* 20170807, 更新平均1，5，15负载, 增加服务器总流量监控                           
 
 # 自动部署：
 
