@@ -104,6 +104,7 @@ function uptime() {
 						"<div id=\"expand_swap\">加载中</div>" +
 						"<div id=\"expand_hdd\">加载中</div>" +
 						"<div id=\"expand_tupd\">加载中</div>" +
+						"<div id=\"expand_ping\">加载中</div>" +
 						"<div id=\"expand_custom\">加载中</div>" +
 					"</div></td></tr>"
 				);
@@ -118,9 +119,15 @@ function uptime() {
 			}
 
 			// Online4
-			if (result.servers[i].online4) {
+			if (result.servers[i].online4 && !result.servers[i].online6) {
 				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>开启</small>";
+				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>IPv4</small>";
+			} else if (result.servers[i].online4 && result.servers[i].online6) {
+				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>双栈</small>";
+			} else if (!result.servers[i].online4 && result.servers[i].online6) {
+			    TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>IPv6</small>";
 			} else {
 				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-danger";
 				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>关闭</small>";
@@ -136,6 +143,7 @@ function uptime() {
 			//}
 
 			// Ipstatus
+			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
 			if (result.servers[i].ip_status) {
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-success";
 				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
@@ -274,21 +282,17 @@ function uptime() {
 
 				// tcp, udp, process, thread count
 				ExpandRow[0].children["expand_tupd"].innerHTML = "TCP/UDP/进/线: " + result.servers[i].tcp_count + " / " + result.servers[i].udp_count + " / " + result.servers[i].process_count+ " / " + result.servers[i].thread_count;
-
+				ExpandRow[0].children["expand_ping"].innerHTML = "联通/电信/移动: " + result.servers[i].time_10010 + "ms / " + result.servers[i].time_189 + "ms / " + result.servers[i].time_10086 + "ms"
 
                 // ping
                 var PING_10010 = result.servers[i].ping_10010.toFixed(0);
                 var PING_189 = result.servers[i].ping_189.toFixed(0);
                 var PING_10086 = result.servers[i].ping_10086.toFixed(0);
-                var pingTime = result.servers[i].time_10010 + "ms💻" + result.servers[i].time_189 + "ms💻" + result.servers[i].time_10086 + "ms"
-                if (PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10)
+                if (PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20)
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
                 else
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-success";
-                    TableRow.children["ping"].children[0].children[0].setAttribute("data-toggle", "tooltip");
-                    TableRow.children["ping"].children[0].children[0].setAttribute("data-placement", "right");
-                    TableRow.children["ping"].children[0].children[0].setAttribute("title", pingTime);
-				TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%💻" + PING_189 + "%💻" + PING_10086 + "%";
+	            TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%💻" + PING_189 + "%💻" + PING_10086 + "%";
 
 				// Custom
 				if (result.servers[i].custom) {
