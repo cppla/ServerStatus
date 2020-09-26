@@ -2,14 +2,14 @@ FROM debian:latest as builder
 
 MAINTAINER cppla https://cpp.la
 
-RUN apt-get update
-RUN apt-get -y install gcc g++ make git
-RUN git clone https://github.com/cppla/ServerStatus
+RUN apt-get update && \
+    apt-get -y install gcc g++ make git && \
+    git clone https://github.com/cppla/ServerStatus
 
 WORKDIR /ServerStatus/server
 
-RUN make
-RUN pwd && ls -a
+RUN make && \
+    pwd && ls -a
 
 # glibc env run 
 FROM nginx:latest
