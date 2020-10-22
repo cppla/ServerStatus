@@ -3,7 +3,6 @@
 * ServerStatus中文版是一个酷炫高逼格的云探针、云监控、服务器云监控、多服务器探针~。
 * 在线演示：https://tz.cloudcpp.com    
 
-[![Build Status](https://img.shields.io/travis/otale/tale.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
 [![Python Support](https://img.shields.io/badge/python-2.7%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
@@ -126,7 +125,7 @@ pip install psutil
 
 打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python client-linux.py &  
 
-如何快速跟随系统启动呢？其实好多人都搞复杂化了        
+### 如何快速跟随系统启动呢？其实好多人都搞复杂化了          
 1、chmod 755 /root/client-linux.py    
 2、vim /etc/crontab，尾部追加    
 ```diff
