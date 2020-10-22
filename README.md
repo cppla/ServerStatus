@@ -124,7 +124,14 @@ pip install psutil
 安装即可
 ```
 
-打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python client-linux.py &      
+打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python client-linux.py &  
+
+如何快速跟随系统启动呢？其实好多人都搞复杂化了        
+1、chmod 755 /root/client-linux.py    
+2、vim /etc/crontab，尾部追加    
+```diff
+@reboot root /root/client-linux.py SERVER=$server USER=$user
+```
 
 # 为什么会有ServerStatus中文版：
 
