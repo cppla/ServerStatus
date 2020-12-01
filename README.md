@@ -118,9 +118,9 @@ apt-get -y install python-setuptools python-dev build-essential
 apt-get -y install python-pip
 pip install psutil
 ### for Windows:
-打开网址：https://pypi.python.org/pypi?:action=display&name=psutil#downloads
-下载psutil for windows程序包
-安装即可
+安装 Python，并添加到环境变量
+pip3 install psutil
+嫌慢可以用阿里镜像 pip3 install psutil -i https://mirrors.aliyun.com/pypi/simple/
 ```
 
 打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python client-linux.py &  

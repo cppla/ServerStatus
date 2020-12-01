@@ -55,6 +55,9 @@
 									<li><a href="#" onclick="setActiveStyleSheet('light')">白天</a></li>
 								</ul>
 							</li>
+							<li class="dropdown">
+								<a href="#"  class="dropdown-toggle" onclick="json2Excel()">下载统计报表</a>
+							</li>
 						</ul>
 					</div><!--/.nav-collapse -->
 				</div>
@@ -73,11 +76,12 @@
 				</div>
 				<p></p>
 			</div>
-			<table class="table table-striped table-condensed table-hover">
+			<table class="table table-striped table-condensed table-hover" id="info">
 				<thead>
 				<tr>
 					<th id="status4" style="text-align: center;">协议</th>
-					<th id="ipstatus" style="text-align: center;">Flight</th>
+					<th id="host" style="text-align: center;">地址</th>
+					<th id="ipstatus" style="text-align: center;">连接状态</th>
 					<th id="name">节点名</th>
 					<th id="type">虚拟化</th>
 					<th id="location">位置</th>
@@ -107,5 +111,6 @@
 		<script src="js/jquery.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
 		<script src="js/serverstatus.js"></script>
+		<script src="js/xlsx.full.min.js"></script>
 	</body>
 </html>
