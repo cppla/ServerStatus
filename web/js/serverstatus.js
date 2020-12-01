@@ -465,7 +465,7 @@ function json2Excel() {
 	//4、changeData() 将数据处理成需要输出的格式
 	saveAs(new Blob([changeData(XLSX.write(workBook, wopts))], { type: 'application/octet-stream' }))
 	Array.prototype.forEach.call(elements1, function (element) {
-		element.style = 'block';	
+		element.style = '';	
    });
    Array.prototype.forEach.call(elements2, function (element) {
 		element.style = '';	
