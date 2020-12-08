@@ -95,6 +95,158 @@ func NewDefaultClientInfo() ClientInfo {
 	}
 }
 
+func trafficCount()  {
+	netInfo, err := nnet.IOCounters(true)
+	if err != nil {
+		fmt.Println("Get traffic count error:",err)
+	}
+	var bytesSent uint64 = 0
+	var bytesRecv uint64 = 0
+	for _, v := range netInfo {
+		if strings.Index(v.Name,"lo") > -1 ||
+			strings.Index(v.Name,"tun") > -1 ||
+			strings.Index(v.Name,"docker") > -1 ||
+			strings.Index(v.Name,"veth") > -1 ||
+			strings.Index(v.Name,"br-") > -1 ||
+			strings.Index(v.Name,"vmbr") > -1 ||
+			strings.Index(v.Name,"vnet") > -1 ||
+			strings.Index(v.Name,"kube") > -1 {
+			continue
+		}
+		bytesSent += v.BytesSent
+		bytesRecv += v.BytesRecv
+	}
+	clientInfo.NetworkIn = bytesRecv
+	clientInfo.NetworkOut = bytesSent
+}
+
+func spaceCount() {
+	// golang 没有类似于在 python 的 dict 或 tuple 的 in 查找关键字，自己写多重判断实现
+	diskList, _ := disk.Partitions(false)
+	var total uint64 = 0
+	var used uint64 = 0
+	for _,d := range diskList {
+		fsType := strings.ToLower(d.Fstype)
+		if fsType != "ext4" &&
+			fsType != "ext3" &&
+			fsType != "ext2" &&
+			fsType  != "reiserfs" &&
+			fsType  != "jfs" &&
+			fsType  != "btrfs" &&
+			fsType  != "fuseblk" &&
+			fsType  != "zfs" &&
+			fsType  != "simfs" &&
+			fsType  != "ntfs" &&
+			fsType  != "fat32" &&
+			fsType  != "exfat" &&
+			fsType  != "xfs" {
+			//if(d.Device == "A") { //特殊盘符自己写处理
+				continue
+			//}
+		}
+		diskUsageOf, _ := disk.Usage(d.Mountpoint)
+		used += diskUsageOf.Used
+		total += diskUsageOf.Total
+	}
+	clientInfo.HddUsed = used / 1024.0 / 1024.0
+	clientInfo.HddTotal = total / 1024.0 / 1024.0
+}
+
+func getLoad() {
+	// linux or freebsd only
+	if host.Info().OS == "linux" || host.Info().OS == "freebsd" {
+		l, err :=	load.Avg()
+		if err != nil {
+			fmt.Println("Get CPU Loads failed:",err)
+		} else  {
+			clientInfo.Load1 = l.Load1
+			clientInfo.Load5 = l.Load5
+			clientInfo.Load15 = l.Load15
+		}
+	} else {
+		clientInfo.Load1 = 0.0
+		clientInfo.Load5 = 0.0
+		clientInfo.Load15 = 0.0
+	}
+}
+
+func tupd()  {
+	//if sys.platform.startswith("linux") is True:
+	//t = int(os.popen('ss -t|wc -l').read()[:-1])-1
+	//u = int(os.popen('ss -u|wc -l').read()[:-1])-1
+	//p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
+	//d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
+	//elif sys.platform.startswith("win") is True:
+	//t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
+	//u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
+	//p = len(psutil.pids())
+	//d = 0
+	if host.Info().OS == "linux" {
+		byte1 ,err := exec.Command("ss -t|wc -l").Output()
+		if err != nil {
+			clientInfo.TCP = 0
+			fmt.Println("Get TCP count error:",err)
+		} else {
+			result := bytes2str(byte1)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.TCP = uint64(intNum)
+		}
+		byte2 ,err := exec.Command("ss -u|wc -l").Output()
+		if err != nil {
+			clientInfo.UDP = 0
+			fmt.Println("Get UDP count error:",err)
+		} else {
+			result := bytes2str(byte2)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.UDP = uint64(intNum)
+		}
+		byte3 ,err := exec.Command("ps -ef|wc -l").Output()
+		if err != nil {
+			clientInfo.Process = 0
+			fmt.Println("Get process count error:",err)
+		} else {
+			result := bytes2str(byte3)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.Process = uint64(intNum)
+		}
+		byte4 ,err := exec.Command("ps -eLf|wc -l").Output()
+		if err != nil {
+			clientInfo.Process = 0
+			fmt.Println("Get threads count error:",err)
+		} else {
+			result := bytes2str(byte4)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.Process = uint64(intNum)
+		}
+	} else if host.Info().OS == "windows" {
+		// 不知道为何，tcp和udp数量没法获取
+		byte1 ,err := exec.Command("cmd", "/C","netstat -an|find \"TCP\" /c").Output()
+		if err != nil {
+			clientInfo.TCP = 0
+			fmt.Println("Get TCP count error:",err)
+		} else {
+			result := bytes2str(byte1)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.TCP = uint64(intNum)
+		}
+		byte2 ,err := exec.Command("cmd", "/C","netstat -an|find \"UDP\" /c").Output()
+		if err != nil {
+			clientInfo.UDP = 0
+			fmt.Println("Get UDP count error:",err)
+		} else {
+			result := bytes2str(byte2)
+			intNum, _ := strconv.Atoi(result)
+			clientInfo.UDP = uint64(intNum)
+		}
+		pids, err := process.Processes()
+		if err != nil {
+			fmt.Println("Get process count error:",err)
+		} else {
+			clientInfo.Process = uint64(len(pids))
+		}
+		clientInfo.Thread = 0
+	}
+}
 
 func str2bytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))
@@ -105,6 +257,8 @@ func str2bytes(s string) []byte {
 func bytes2str(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
+
+var clientInfo ClientInfo
 
 func main() {
 	for _,  args := range os.Args {
@@ -172,7 +326,7 @@ func main() {
 			fmt.Println(str)
 		}
 		fmt.Println(checkIP)
-		var clientInfo = NewDefaultClientInfo()
+		clientInfo = NewDefaultClientInfo()
 
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
@@ -184,9 +338,14 @@ func main() {
 			swapMemory, _ := mem.SwapMemory()
 			clientInfo.SwapTotal = swapMemory.Total / 1024 // 需要转单位
 			clientInfo.SwapUsed = swapMemory.Used / 1024 // 需要转单位
-
+			getLoad()
+			tupd()
+			trafficCount()
+			spaceCount()
+			//TODO:三网延迟，三网丢包，tcp/udp连接数，实时网络速度
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)
+			//fmt.Println(data)
 			if err != nil {
 				fmt.Println("transformation error: ", err)
 			}
