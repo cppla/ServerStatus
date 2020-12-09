@@ -74,6 +74,26 @@ type ClientInfo struct {
 	HddUsed uint64`json:"hdd_used"`
 }
 
+type NetSpeed struct {
+	netrx float64
+	nettx float64
+	clock float64
+	diff float64
+	avgrx uint64
+	avgtx uint64
+}
+
+func NewNetSpeed() NetSpeed{
+	return NetSpeed{
+		netrx: 0.0,
+		nettx: 0.0,
+		clock: 0.0,
+		diff:  0.0,
+		avgrx: 0,
+		avgtx: 0,
+	}
+}
+
 func NewDefaultClientInfo() ClientInfo {
 	return ClientInfo {
 		Load1: 0.0,
@@ -130,6 +150,40 @@ func trafficCount()  {
 	clientInfo.NetworkOut = bytesSent
 }
 
+//func getNetworkSpeed() {
+//	for {
+//		var bytesSent uint64 = 0
+//		var bytesRecv uint64 = 0
+//		netInfo, err := nnet.IOCounters(true)
+//		if err != nil {
+//			fmt.Println("Get network speed error:",err)
+//		}
+//		for _, v := range netInfo {
+//			if strings.Index(v.Name,"lo") > -1 ||
+//				strings.Index(v.Name,"tun") > -1 ||
+//				strings.Index(v.Name,"docker") > -1 ||
+//				strings.Index(v.Name,"veth") > -1 ||
+//				strings.Index(v.Name,"br-") > -1 ||
+//				strings.Index(v.Name,"vmbr") > -1 ||
+//				strings.Index(v.Name,"vnet") > -1 ||
+//				strings.Index(v.Name,"kube") > -1 {
+//				continue
+//			}
+//			bytesSent += v.BytesSent
+//			bytesRecv += v.BytesRecv
+//		}
+//		timeUnix:= float64(time.Now().Unix())
+//		netSpeed.diff = timeUnix - netSpeed.clock
+//		netSpeed.clock = timeUnix
+//		netSpeed.netrx = float64(bytesRecv - netSpeed.avgrx)/netSpeed.diff
+//		netSpeed.nettx = float64(bytesSent - netSpeed.avgtx)/netSpeed.diff
+//		clientInfo.NetworkTx = uint64(netSpeed.nettx)
+//		clientInfo.NetworkRx = uint64(netSpeed.netrx)
+//		time.Sleep(time.Duration(INTERVAL)*time.Second)
+//	}
+//}
+
+
 func spaceCount() {
 	// golang 没有类似于在 python 的 dict 或 tuple 的 in 查找关键字，自己写多重判断实现
 	diskList, _ := disk.Partitions(false)
@@ -183,6 +237,7 @@ func getLoad() {
 }
 
 func Command(name, args string) (*exec.Cmd, error) {
+	// TODO: 这段 Linux 下编译不通过正在研究
 	// golang 使用 exec.Comand 运行含管道的 cmd 命令会产生问题（如 netstat -an | find "TCP" /c），因此使用此办法调用
 	// 参考：https://studygolang.com/topics/10284
 	if filepath.Base(name) == name {
@@ -198,18 +253,7 @@ func Command(name, args string) (*exec.Cmd, error) {
 	}, nil
 }
 
-
 func tupd()  {
-	//if sys.platform.startswith("linux") is True:
-	//t = int(os.popen('ss -t|wc -l').read()[:-1])-1
-	//u = int(os.popen('ss -u|wc -l').read()[:-1])-1
-	//p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
-	//d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
-	//elif sys.platform.startswith("win") is True:
-	//t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
-	//u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
-	//p = len(psutil.pids())
-	//d = 0
 	if host.Info().OS == "linux" {
 		byte1 ,err := exec.Command("bash", "-c","ss -t|wc -l").Output()
 		if err != nil {
@@ -304,6 +348,41 @@ func tupd()  {
 	}
 }
 
+func getNetworkStatus()  {
+	defaulttimeout  :=  1 * time.Second
+	count := 0
+
+	conn , err := net.DialTimeout("tcp", CU + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("Error try to connect China unicom :", err)
+		count += 1
+	} else {
+		conn.Close()
+	}
+	conn , err = net.DialTimeout("tcp", CT + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("Error try to connect China telecom :", err)
+		count += 1
+	} else {
+		conn.Close()
+	}
+	conn , err = net.DialTimeout("tcp", CM + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	defer conn.Close()
+	if err != nil {
+		fmt.Println("Error try to connect China mobile :", err)
+		count += 1
+	} else {
+		conn.Close()
+	}
+	if count >= 2 {
+		clientInfo.IpStatus = false
+	} else {
+		clientInfo.IpStatus = true
+	}
+}
+
 func str2bytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))
 	b := [3]uintptr{x[0], x[1], x[1]}
@@ -315,6 +394,7 @@ func bytes2str(b []byte) string {
 }
 
 var clientInfo ClientInfo
+var netSpeed NetSpeed
 
 func main() {
 	for _,  args := range os.Args {
@@ -383,7 +463,7 @@ func main() {
 		}
 		fmt.Println(checkIP)
 		clientInfo = NewDefaultClientInfo()
-
+		netSpeed = NewNetSpeed()
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
 			clientInfo.MemoryUsed = ram.Info().Usage / 1024 // 需要转单位
@@ -398,7 +478,9 @@ func main() {
 			tupd()
 			trafficCount()
 			spaceCount()
-			//TODO:三网延迟，三网丢包，实时网络速度，网络联通
+			getNetworkStatus()
+			//getNetworkSpeed()
+			//TODO:三网延迟，三网丢包，网络链接速度
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
@@ -414,5 +496,6 @@ func main() {
 		}
 	}
 
-
 }
+
+
