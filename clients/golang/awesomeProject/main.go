@@ -10,11 +10,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/shirou/gopsutil/process"
+	"os/exec"
+	"path/filepath"
+	"syscall"
+
+	//下面这是已经封装好的轮子
 	"github.com/bitcav/nitr-core/cpu"
 	"github.com/bitcav/nitr-core/host"
 	"github.com/bitcav/nitr-core/ram"
 	"github.com/json-iterator/go"
+	//没轮子的自己封装
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	nnet "github.com/shirou/gopsutil/net"
 	"net"
 	"os"
 	"strconv"
@@ -127,26 +137,28 @@ func spaceCount() {
 	var used uint64 = 0
 	for _,d := range diskList {
 		fsType := strings.ToLower(d.Fstype)
-		if fsType != "ext4" &&
-			fsType != "ext3" &&
-			fsType != "ext2" &&
-			fsType  != "reiserfs" &&
-			fsType  != "jfs" &&
-			fsType  != "btrfs" &&
-			fsType  != "fuseblk" &&
-			fsType  != "zfs" &&
-			fsType  != "simfs" &&
-			fsType  != "ntfs" &&
-			fsType  != "fat32" &&
-			fsType  != "exfat" &&
-			fsType  != "xfs" {
+		//fmt.Println(d.Fstype)
+		if strings.Index(fsType, "ext4") < 0 &&
+			strings.Index(fsType, "ext3") < 0  &&
+			strings.Index(fsType, "ext2") < 0  &&
+			strings.Index(fsType, "reiserfs") < 0  &&
+			strings.Index(fsType, "jfs") < 0  &&
+			strings.Index(fsType, "btrfs") < 0  &&
+			strings.Index(fsType, "fuseblk") < 0  &&
+			strings.Index(fsType, "zfs") < 0  &&
+			strings.Index(fsType, "simfs") < 0  &&
+			strings.Index(fsType, "ntfs")< 0 &&
+			strings.Index(fsType, "fat32") < 0  &&
+			strings.Index(fsType, "exfat") < 0  &&
+			strings.Index(fsType, "xfs") < 0 {
 			//if(d.Device == "A") { //特殊盘符自己写处理
 				continue
 			//}
+		}  else  {
+			diskUsageOf, _ := disk.Usage(d.Mountpoint)
+			used += diskUsageOf.Used
+			total += diskUsageOf.Total
 		}
-		diskUsageOf, _ := disk.Usage(d.Mountpoint)
-		used += diskUsageOf.Used
-		total += diskUsageOf.Total
 	}
 	clientInfo.HddUsed = used / 1024.0 / 1024.0
 	clientInfo.HddTotal = total / 1024.0 / 1024.0
@@ -170,6 +182,23 @@ func getLoad() {
 	}
 }
 
+func Command(name, args string) (*exec.Cmd, error) {
+	// golang 使用 exec.Comand 运行含管道的 cmd 命令会产生问题（如 netstat -an | find "TCP" /c），因此使用此办法调用
+	// 参考：https://studygolang.com/topics/10284
+	if filepath.Base(name) == name {
+		lp, err := exec.LookPath(name)
+		if err != nil {
+			return nil, err
+		}
+		name = lp
+	}
+	return &exec.Cmd{
+		Path:        name,
+		SysProcAttr: &syscall.SysProcAttr{CmdLine: name + " " + args},
+	}, nil
+}
+
+
 func tupd()  {
 	//if sys.platform.startswith("linux") is True:
 	//t = int(os.popen('ss -t|wc -l').read()[:-1])-1
@@ -182,60 +211,87 @@ func tupd()  {
 	//p = len(psutil.pids())
 	//d = 0
 	if host.Info().OS == "linux" {
-		byte1 ,err := exec.Command("ss -t|wc -l").Output()
+		byte1 ,err := exec.Command("bash", "-c","ss -t|wc -l").Output()
 		if err != nil {
 			clientInfo.TCP = 0
 			fmt.Println("Get TCP count error:",err)
 		} else {
 			result := bytes2str(byte1)
-			intNum, _ := strconv.Atoi(result)
+			result = strings.Replace(result, "\n", "", -1) 
+			intNum, err := strconv.Atoi(result)
+			if err != nil {
+				fmt.Println("Get TCP count error::",err)
+			}
 			clientInfo.TCP = uint64(intNum)
 		}
-		byte2 ,err := exec.Command("ss -u|wc -l").Output()
+		byte2 ,err := exec.Command("bash", "-c","ss -u|wc -l").Output()
 		if err != nil {
 			clientInfo.UDP = 0
 			fmt.Println("Get UDP count error:",err)
 		} else {
 			result := bytes2str(byte2)
-			intNum, _ := strconv.Atoi(result)
+			result = strings.Replace(result, "\n", "", -1) 
+			intNum, err := strconv.Atoi(result)
+			if err != nil {
+				fmt.Println("Get UDP count error:",err)
+			}
 			clientInfo.UDP = uint64(intNum)
 		}
-		byte3 ,err := exec.Command("ps -ef|wc -l").Output()
+		byte3 ,err := exec.Command("bash", "-c","ps -ef|wc -l").Output()
 		if err != nil {
 			clientInfo.Process = 0
 			fmt.Println("Get process count error:",err)
 		} else {
 			result := bytes2str(byte3)
-			intNum, _ := strconv.Atoi(result)
+			result = strings.Replace(result, "\n", "", -1) 
+			intNum, err := strconv.Atoi(result)
+			if err != nil {
+				fmt.Println("Get process count error:",err)
+			}
 			clientInfo.Process = uint64(intNum)
 		}
-		byte4 ,err := exec.Command("ps -eLf|wc -l").Output()
+		byte4 ,err := exec.Command("bash", "-c","ps -eLf|wc -l").Output()
 		if err != nil {
 			clientInfo.Process = 0
 			fmt.Println("Get threads count error:",err)
 		} else {
 			result := bytes2str(byte4)
-			intNum, _ := strconv.Atoi(result)
-			clientInfo.Process = uint64(intNum)
+			result = strings.Replace(result, "\n", "", -1) 
+			intNum, err := strconv.Atoi(result) 
+			if err != nil {
+				fmt.Println("Get threads count error:",err)
+			}
+			clientInfo.Thread = uint64(intNum)
 		}
 	} else if host.Info().OS == "windows" {
-		// 不知道为何，tcp和udp数量没法获取
-		byte1 ,err := exec.Command("cmd", "/C","netstat -an|find \"TCP\" /c").Output()
+		cmd ,err := Command("cmd","/c netstat -an|find \"TCP\" /c")
 		if err != nil {
 			clientInfo.TCP = 0
 			fmt.Println("Get TCP count error:",err)
 		} else {
+			byte1, err := cmd.Output()
 			result := bytes2str(byte1)
-			intNum, _ := strconv.Atoi(result)
+			result = strings.Replace(result, "\r", "", -1)
+			result = strings.Replace(result, "\n", "", -1)
+			intNum, err := strconv.Atoi(result)
+			if err != nil {
+				fmt.Println("Get TCP count error:",err)
+			}
 			clientInfo.TCP = uint64(intNum)
 		}
-		byte2 ,err := exec.Command("cmd", "/C","netstat -an|find \"UDP\" /c").Output()
+		cmd2 ,err := Command("cmd", "/c netstat -an|find \"UDP\" /c")
 		if err != nil {
 			clientInfo.UDP = 0
 			fmt.Println("Get UDP count error:",err)
 		} else {
+			byte2, err := cmd2.Output()
 			result := bytes2str(byte2)
-			intNum, _ := strconv.Atoi(result)
+			result = strings.Replace(result, "\r", "", -1)
+			result = strings.Replace(result, "\n", "", -1)
+			intNum, err := strconv.Atoi(result)
+			if err != nil {
+				fmt.Println("Get UDP count error:",err)
+			}
 			clientInfo.UDP = uint64(intNum)
 		}
 		pids, err := process.Processes()
@@ -342,18 +398,18 @@ func main() {
 			tupd()
 			trafficCount()
 			spaceCount()
-			//TODO:三网延迟，三网丢包，tcp/udp连接数，实时网络速度
+			//TODO:三网延迟，三网丢包，实时网络速度，网络联通
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
 			if err != nil {
-				fmt.Println("transformation error: ", err)
+				fmt.Println("Transformation Error: ", err)
 			}
 			info := "update " + data + "\n"
 			//fmt.Println(info)
 			_ , err = conn.Write(str2bytes(info))
 			if err != nil {
-				fmt.Println("Error Sending auth info:", err)
+				fmt.Println("Error Sending Data Info:", err)
 			}
 		}
 	}
