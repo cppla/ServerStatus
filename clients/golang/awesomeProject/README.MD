@@ -2,6 +2,11 @@
 
 懒得改项目名了，需要的话自己改。
 
+### 编译环境
+
+CentOS7: go version go1.15.5 linux/amd64
+Windows10: go version go1.15.5 windows/amd64
+
 ### 使用方法
 可选：更改源码中的连接信息
 ```
