@@ -10,11 +10,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/shirou/gopsutil/process"
-	"os/exec"
-	"path/filepath"
-	"syscall"
-
 	//下面这是已经封装好的轮子
 	"github.com/bitcav/nitr-core/cpu"
 	"github.com/bitcav/nitr-core/host"
@@ -236,123 +231,14 @@ func getLoad() {
 	}
 }
 
-func Command(name, args string) (*exec.Cmd, error) {
-	// TODO: 这段 Linux 下编译不通过正在研究
-	// golang 使用 exec.Comand 运行含管道的 cmd 命令会产生问题（如 netstat -an | find "TCP" /c），因此使用此办法调用
-	// 参考：https://studygolang.com/topics/10284
-	if filepath.Base(name) == name {
-		lp, err := exec.LookPath(name)
-		if err != nil {
-			return nil, err
-		}
-		name = lp
-	}
-	return &exec.Cmd{
-		Path:        name,
-		SysProcAttr: &syscall.SysProcAttr{CmdLine: name + " " + args},
-	}, nil
-}
-
-func tupd()  {
-	if host.Info().OS == "linux" {
-		byte1 ,err := exec.Command("bash", "-c","ss -t|wc -l").Output()
-		if err != nil {
-			clientInfo.TCP = 0
-			fmt.Println("Get TCP count error:",err)
-		} else {
-			result := bytes2str(byte1)
-			result = strings.Replace(result, "\n", "", -1) 
-			intNum, err := strconv.Atoi(result)
-			if err != nil {
-				fmt.Println("Get TCP count error::",err)
-			}
-			clientInfo.TCP = uint64(intNum)
-		}
-		byte2 ,err := exec.Command("bash", "-c","ss -u|wc -l").Output()
-		if err != nil {
-			clientInfo.UDP = 0
-			fmt.Println("Get UDP count error:",err)
-		} else {
-			result := bytes2str(byte2)
-			result = strings.Replace(result, "\n", "", -1) 
-			intNum, err := strconv.Atoi(result)
-			if err != nil {
-				fmt.Println("Get UDP count error:",err)
-			}
-			clientInfo.UDP = uint64(intNum)
-		}
-		byte3 ,err := exec.Command("bash", "-c","ps -ef|wc -l").Output()
-		if err != nil {
-			clientInfo.Process = 0
-			fmt.Println("Get process count error:",err)
-		} else {
-			result := bytes2str(byte3)
-			result = strings.Replace(result, "\n", "", -1) 
-			intNum, err := strconv.Atoi(result)
-			if err != nil {
-				fmt.Println("Get process count error:",err)
-			}
-			clientInfo.Process = uint64(intNum)
-		}
-		byte4 ,err := exec.Command("bash", "-c","ps -eLf|wc -l").Output()
-		if err != nil {
-			clientInfo.Process = 0
-			fmt.Println("Get threads count error:",err)
-		} else {
-			result := bytes2str(byte4)
-			result = strings.Replace(result, "\n", "", -1) 
-			intNum, err := strconv.Atoi(result) 
-			if err != nil {
-				fmt.Println("Get threads count error:",err)
-			}
-			clientInfo.Thread = uint64(intNum)
-		}
-	} else if host.Info().OS == "windows" {
-		cmd ,err := Command("cmd","/c netstat -an|find \"TCP\" /c")
-		if err != nil {
-			clientInfo.TCP = 0
-			fmt.Println("Get TCP count error:",err)
-		} else {
-			byte1, err := cmd.Output()
-			result := bytes2str(byte1)
-			result = strings.Replace(result, "\r", "", -1)
-			result = strings.Replace(result, "\n", "", -1)
-			intNum, err := strconv.Atoi(result)
-			if err != nil {
-				fmt.Println("Get TCP count error:",err)
-			}
-			clientInfo.TCP = uint64(intNum)
-		}
-		cmd2 ,err := Command("cmd", "/c netstat -an|find \"UDP\" /c")
-		if err != nil {
-			clientInfo.UDP = 0
-			fmt.Println("Get UDP count error:",err)
-		} else {
-			byte2, err := cmd2.Output()
-			result := bytes2str(byte2)
-			result = strings.Replace(result, "\r", "", -1)
-			result = strings.Replace(result, "\n", "", -1)
-			intNum, err := strconv.Atoi(result)
-			if err != nil {
-				fmt.Println("Get UDP count error:",err)
-			}
-			clientInfo.UDP = uint64(intNum)
-		}
-		pids, err := process.Processes()
-		if err != nil {
-			fmt.Println("Get process count error:",err)
-		} else {
-			clientInfo.Process = uint64(len(pids))
-		}
-		clientInfo.Thread = 0
-	}
-}
+var CU_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
+var CT_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
+var CM_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
 
 func getNetworkStatus()  {
 	defaulttimeout  :=  1 * time.Second
 	count := 0
-
-	conn , err := net.DialTimeout("tcp", CU + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
 	defer conn.Close()
 	if err != nil {
 		fmt.Println("Error try to connect China unicom :", err)
@@ -360,7 +246,7 @@ func getNetworkStatus()  {
 	} else {
 		conn.Close()
 	}
-	conn , err = net.DialTimeout("tcp", CT + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	conn , err = net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
 	defer conn.Close()
 	if err != nil {
 		fmt.Println("Error try to connect China telecom :", err)
@@ -368,7 +254,7 @@ func getNetworkStatus()  {
 	} else {
 		conn.Close()
 	}
-	conn , err = net.DialTimeout("tcp", CM + ":" + strconv.Itoa(PORBEPORT),defaulttimeout)
+	conn , err = net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
 	defer conn.Close()
 	if err != nil {
 		fmt.Println("Error try to connect China mobile :", err)
