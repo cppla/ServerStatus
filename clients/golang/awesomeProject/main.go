@@ -29,10 +29,10 @@ import (
 )
 
 var (
-	SERVER string = "172.16.172.2"
+	SERVER string = "127.0.0.1"
 	USER  string = "test"
 	PORT int = 35601
-	PASSWORD string = "test1234"
+	PASSWORD string = "123456"
 	INTERVAL int = 1
 	PORBEPORT int = 80
 	CU string = "cu.tz.cloudcpp.com"
@@ -246,7 +246,7 @@ func main() {
 			USER = strArr[len(strArr)-1]
 		} else if strings.Index(args,"PASSWORD") > -1 {
 			strArr :=  strings.Split(args,"PASSWORD=")
-			USER = strArr[len(strArr)-1]
+			PASSWORD = strArr[len(strArr)-1]
 		} else if strings.Index( args,"INTERVAL")  > -1{
 			strArr :=  strings.Split(args,"INTERVAL=")
 			INTERVAL, _ = strconv.Atoi(strArr[len(strArr)-1])
