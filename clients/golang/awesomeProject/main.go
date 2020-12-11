@@ -4,7 +4,7 @@ package main
 * Author: chn-student & cppla
 * 依赖于 gopstil 跨平台库
 * 编译版本:go 1.15.5
-* 时间: 20201202 （未完工）
+* 时间: 20201211
 * 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 ****************************/
 
@@ -54,9 +54,9 @@ type ClientInfo struct {
 	Ping10010 float64 `json:"ping_10010"`
 	Ping10086 float64 `json:"ping_10086"`
 	Ping189 float64 `json:"ping_189"`
-	Time10010 float64 `json:"time_10010"`
-	Time10086 float64 `json:"time_10086"`
-	Time189 float64 `json:"time_189"`
+	Time10010 uint64 `json:"time_10010"`
+	Time10086 uint64 `json:"time_10086"`
+	Time189 uint64 `json:"time_189"`
 	TCP uint64 `json:"tcp"`
 	UDP uint64 `json:"udp"`
 	CPU float64 `json:"cpu"`
@@ -85,9 +85,9 @@ func NewDefaultClientInfo() ClientInfo {
 		Ping10010: 0.0,
 		Ping10086: 0.0,
 		Ping189: 0.0,
-		Time10010: 0.0,
-		Time10086: 0.0,
-		Time189: 0.0,
+		Time10010: 0,
+		Time10086: 0,
+		Time189: 0,
 		TCP: 0,
 		UDP: 0,
 		CPU: 0.0,
@@ -217,6 +217,7 @@ func getNetworkStatus()  {
 	} else {
 		clientInfo.IpStatus = true
 	}
+	count = 0
 }
 
 func str2bytes(s string) []byte {
@@ -303,9 +304,9 @@ func main() {
 		pingValueCU := NewPingValue()
 		pingValueCT := NewPingValue()
 		pingValueCM := NewPingValue()
-		pingValueCU.Get()
-		pingValueCT.Get()
-		pingValueCM.Get()
+		pingValueCU.RunCU()
+		pingValueCT.RunCT()
+		pingValueCM.RunCM()
 		netSpeed.Run()
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
@@ -326,7 +327,6 @@ func main() {
 			clientInfo.Ping10086, clientInfo.Time10086 = pingValueCM.Get()
 			clientInfo.Ping189, clientInfo.Time189 = pingValueCT.Get()
 			clientInfo.Ping10010, clientInfo.Time10010 = pingValueCU.Get()
-			//TODO:三网延迟和丢包率算法存在问题
 			//fmt.Println(clientInfo.Time10086)
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)

@@ -86,6 +86,7 @@ function uptime() {
 				$("#servers").append(
 					"<tr id=\"r" + i + "\" data-toggle=\"collapse\" data-target=\"#rt" + i + "\" class=\"accordion-toggle " + hack + "\">" +
 						"<td id=\"online4\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
+						"<td id=\"host\">加载中</td>" +
 						"<td id=\"ip_status\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"name\">加载中</td>" +
 						"<td id=\"type\">加载中</td>" +
@@ -146,10 +147,10 @@ function uptime() {
 			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
 			if (result.servers[i].ip_status) {
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
+				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>Normal</small>";
 			} else {
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-danger";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH370</small>";
+				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>Lost</small>";
 			}
 
 			// Name
@@ -157,6 +158,9 @@ function uptime() {
 
 			// Type
 			TableRow.children["type"].innerHTML = result.servers[i].type;
+
+			//Host
+			TableRow.children["host"].innerHTML = result.servers[i].host;
 
 			// Location
 			TableRow.children["location"].innerHTML = result.servers[i].location;
@@ -425,3 +429,77 @@ window.onunload = function(e) {
 var cookie = readCookie("style");
 var title = cookie ? cookie : getPreferredStyleSheet();
 setActiveStyleSheet(title);
+
+// Excel 报表导出，参考https://www.cnblogs.com/zhenggaowei/p/11732170.html
+var fileName = '';
+
+
+function json2Excel() {
+  var wopts = {
+	bookType: 'xlsx',
+	bookSST: false,
+	type: 'binary'
+  };
+  var workBook = {
+	SheetNames: ['Sheet1'],
+	Sheets: {},
+	Props: {}
+  };
+   /** 
+   		TODO: 
+   		多余信息现在隐藏不导出，后期再优化 
+   		Author:CHN-STUDENT <chn-student@outlook.com> 2020.12.01
+   */
+  
+   var elements1 =  document.getElementsByClassName("expandRow even");
+   var elements2 =document.getElementsByClassName("expandRow odd");
+   console.log(elements2)
+   Array.prototype.forEach.call(elements1, function (element) {
+		element.style.display = 'none';	
+   });
+   Array.prototype.forEach.call(elements2, function (element) {
+		element.style.display = 'none';	
+   });
+   workBook.Sheets['Sheet1'] =  XLSX.utils.table_to_sheet(document.getElementById('info'),{display:true});
+    
+	//3、XLSX.write() 开始编写Excel表格
+	//4、changeData() 将数据处理成需要输出的格式
+	saveAs(new Blob([changeData(XLSX.write(workBook, wopts))], { type: 'application/octet-stream' }))
+	Array.prototype.forEach.call(elements1, function (element) {
+		element.style = '';	
+   });
+   Array.prototype.forEach.call(elements2, function (element) {
+		element.style = '';	
+   });
+}
+function changeData(s) {
+  //如果存在ArrayBuffer对象(es6) 最好采用该对象
+  if (typeof ArrayBuffer !== 'undefined') {
+
+	//1、创建一个字节长度为s.length的内存区域
+	var buf = new ArrayBuffer(s.length);
+
+	//2、创建一个指向buf的Unit8视图，开始于字节0，直到缓冲区的末尾
+	var view = new Uint8Array(buf);
+
+	//3、返回指定位置的字符的Unicode编码
+	for (var i = 0; i != s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+	return buf;
+
+  } else {
+	var buf = new Array(s.length);
+	for (var i = 0; i != s.length; ++i) buf[i] = s.charCodeAt(i) & 0xFF;
+	return buf;
+  }
+}
+function saveAs(obj, fileName) {//当然可以自定义简单的下载文件实现方式
+	var tmpa = document.createElement("a");
+	tmpa.download = fileName ? fileName + '.xlsx' : new Date().getTime() + '.xlsx';
+	tmpa.href = URL.createObjectURL(obj); //绑定a标签
+	tmpa.click(); //模拟点击实现下载
+
+	setTimeout(function () { //延时释放
+	URL.revokeObjectURL(obj); //用URL.revokeObjectURL()来释放这个object URL
+	}, 100);
+}
+

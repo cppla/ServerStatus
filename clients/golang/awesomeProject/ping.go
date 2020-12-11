@@ -8,7 +8,7 @@ import (
 )
 
 type PingValue struct {
-	ping float64
+	ping uint64
 	lostRate float64
 	stop chan struct{}
 	mtx sync.Mutex
@@ -36,6 +36,7 @@ func (pingValue *PingValue) RunCU() {
 				t.Stop()
 				return
 			case <-t.C:
+				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
 				defer conn.Close()
@@ -53,7 +54,7 @@ func (pingValue *PingValue) RunCU() {
 				if allPacket > 100 {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
-				pingValue.ping = float64(diffTime * time.Second)
+				pingValue.ping = uint64(diffTime/time.Millisecond)
 				resetTime := uint64(time.Since(startTime) * time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
@@ -80,6 +81,7 @@ func (pingValue *PingValue) RunCT() {
 				t.Stop()
 				return
 			case <-t.C:
+				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
 				defer conn.Close()
@@ -95,7 +97,7 @@ func (pingValue *PingValue) RunCT() {
 				if allPacket > 100 {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
-				pingValue.ping = float64(diffTime * time.Second)
+				pingValue.ping = uint64(diffTime/time.Millisecond)
 				resetTime := uint64(time.Since(startTime) * time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
@@ -122,6 +124,7 @@ func (pingValue *PingValue) RunCM() {
 				t.Stop()
 				return
 			case <-t.C:
+				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
 				defer conn.Close()
@@ -137,7 +140,7 @@ func (pingValue *PingValue) RunCM() {
 				if allPacket > 100 {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
-				pingValue.ping = float64(diffTime * time.Second)
+				pingValue.ping = uint64(diffTime/time.Millisecond)
 				resetTime := uint64(time.Since(startTime) * time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
@@ -154,7 +157,7 @@ func (pingValue *PingValue) Stop() {
 	close(pingValue.stop)
 }
 
-func (pingValue *PingValue) Get() (float64,float64) {
+func (pingValue *PingValue) Get() (float64,uint64) {
 	pingValue.mtx.Lock()
 	defer pingValue.mtx.Unlock()
 	return pingValue.lostRate,pingValue.ping
