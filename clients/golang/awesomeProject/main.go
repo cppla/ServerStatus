@@ -69,25 +69,6 @@ type ClientInfo struct {
 	HddUsed uint64`json:"hdd_used"`
 }
 
-type NetSpeed struct {
-	netrx float64
-	nettx float64
-	clock float64
-	diff float64
-	avgrx uint64
-	avgtx uint64
-}
-
-func NewNetSpeed() NetSpeed{
-	return NetSpeed{
-		netrx: 0.0,
-		nettx: 0.0,
-		clock: 0.0,
-		diff:  0.0,
-		avgrx: 0,
-		avgtx: 0,
-	}
-}
 
 func NewDefaultClientInfo() ClientInfo {
 	return ClientInfo {
@@ -144,40 +125,6 @@ func trafficCount()  {
 	clientInfo.NetworkIn = bytesRecv
 	clientInfo.NetworkOut = bytesSent
 }
-
-//func getNetworkSpeed() {
-//	for {
-//		var bytesSent uint64 = 0
-//		var bytesRecv uint64 = 0
-//		netInfo, err := nnet.IOCounters(true)
-//		if err != nil {
-//			fmt.Println("Get network speed error:",err)
-//		}
-//		for _, v := range netInfo {
-//			if strings.Index(v.Name,"lo") > -1 ||
-//				strings.Index(v.Name,"tun") > -1 ||
-//				strings.Index(v.Name,"docker") > -1 ||
-//				strings.Index(v.Name,"veth") > -1 ||
-//				strings.Index(v.Name,"br-") > -1 ||
-//				strings.Index(v.Name,"vmbr") > -1 ||
-//				strings.Index(v.Name,"vnet") > -1 ||
-//				strings.Index(v.Name,"kube") > -1 {
-//				continue
-//			}
-//			bytesSent += v.BytesSent
-//			bytesRecv += v.BytesRecv
-//		}
-//		timeUnix:= float64(time.Now().Unix())
-//		netSpeed.diff = timeUnix - netSpeed.clock
-//		netSpeed.clock = timeUnix
-//		netSpeed.netrx = float64(bytesRecv - netSpeed.avgrx)/netSpeed.diff
-//		netSpeed.nettx = float64(bytesSent - netSpeed.avgtx)/netSpeed.diff
-//		clientInfo.NetworkTx = uint64(netSpeed.nettx)
-//		clientInfo.NetworkRx = uint64(netSpeed.netrx)
-//		time.Sleep(time.Duration(INTERVAL)*time.Second)
-//	}
-//}
-
 
 func spaceCount() {
 	// golang 没有类似于在 python 的 dict 或 tuple 的 in 查找关键字，自己写多重判断实现
@@ -283,7 +230,7 @@ func bytes2str(b []byte) string {
 }
 
 var clientInfo ClientInfo
-var netSpeed NetSpeed
+
 
 func main() {
 	for _,  args := range os.Args {
@@ -352,7 +299,14 @@ func main() {
 		}
 		fmt.Println(checkIP)
 		clientInfo = NewDefaultClientInfo()
-		netSpeed = NewNetSpeed()
+		netSpeed := NewNetSpeed()
+		pingValueCU := NewPingValue()
+		pingValueCT := NewPingValue()
+		pingValueCM := NewPingValue()
+		pingValueCU.Get()
+		pingValueCT.Get()
+		pingValueCM.Get()
+		netSpeed.Run()
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
 			clientInfo.MemoryUsed = ram.Info().Usage / 1024 // 需要转单位
@@ -368,8 +322,12 @@ func main() {
 			trafficCount()
 			spaceCount()
 			getNetworkStatus()
-			//getNetworkSpeed()
-			//TODO:三网延迟，三网丢包，网络链接速度
+			netSpeed.Get()
+			clientInfo.Ping10086, clientInfo.Time10086 = pingValueCM.Get()
+			clientInfo.Ping189, clientInfo.Time189 = pingValueCT.Get()
+			clientInfo.Ping10010, clientInfo.Time10010 = pingValueCU.Get()
+			//TODO:三网延迟和丢包率算法存在问题
+			//fmt.Println(clientInfo.Time10086)
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
