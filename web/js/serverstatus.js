@@ -453,7 +453,6 @@ function json2Excel() {
   
    var elements1 =  document.getElementsByClassName("expandRow even");
    var elements2 =document.getElementsByClassName("expandRow odd");
-   console.log(elements2)
    Array.prototype.forEach.call(elements1, function (element) {
 		element.style.display = 'none';	
    });
@@ -501,5 +500,6 @@ function saveAs(obj, fileName) {//当然可以自定义简单的下载文件实�
 	setTimeout(function () { //延时释放
 	URL.revokeObjectURL(obj); //用URL.revokeObjectURL()来释放这个object URL
 	}, 100);
+
 }
 
