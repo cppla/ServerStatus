@@ -238,29 +238,32 @@ var CM_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
 func getNetworkStatus()  {
 	defaulttimeout  :=  1 * time.Second
 	count := 0
-	conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-	defer conn.Close()
-	if err != nil {
-		fmt.Println("Error try to connect China unicom :", err)
+	conn1 , err1 := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
+	defer conn1.Close()
+	if err1 != nil {
+		fmt.Println("Error try to connect China unicom :", err1)
 		count += 1
+		conn1.Close()
 	} else {
-		conn.Close()
+		conn1.Close()
 	}
-	conn , err = net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
-	defer conn.Close()
-	if err != nil {
-		fmt.Println("Error try to connect China telecom :", err)
+	conn2 , err2 :=  net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
+	defer conn2.Close()
+	if err2 != nil {
+		fmt.Println("Error try to connect China telecom :", err2)
 		count += 1
+		conn2.Close()
 	} else {
-		conn.Close()
+		conn2.Close()
 	}
-	conn , err = net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
-	defer conn.Close()
-	if err != nil {
-		fmt.Println("Error try to connect China mobile :", err)
+	conn3 , err3 :=  net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
+	defer conn3.Close()
+	if err3 != nil {
+		fmt.Println("Error try to connect China mobile :", err3)
 		count += 1
+		conn3.Close()
 	} else {
-		conn.Close()
+		conn3.Close()
 	}
 	if count >= 2 {
 		clientInfo.IpStatus = false
