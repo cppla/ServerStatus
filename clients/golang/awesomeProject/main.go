@@ -179,8 +179,8 @@ func getLoad() {
 }
 
 var CU_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
-var CT_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
-var CM_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
+var CT_ADDR = CT + ":" + strconv.Itoa(PORBEPORT)
+var CM_ADDR = CM + ":" + strconv.Itoa(PORBEPORT)
 
 func getNetworkStatus()  {
 	defaulttimeout  :=  1 * time.Second

@@ -39,13 +39,13 @@ func (pingValue *PingValue) RunCU() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-				defer conn.Close()
+				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China unicom :", err)
-					conn.Close()
+					_ = conn.Close()
 					lostPacket += 1
 				} else {
-					conn.Close()
+					_ = conn.Close()
 				}
 				diffTime := time.Since(t)
 				//TODO:三网延迟和丢包率算法存在问题
@@ -55,7 +55,7 @@ func (pingValue *PingValue) RunCU() {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
 				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0
@@ -84,13 +84,13 @@ func (pingValue *PingValue) RunCT() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
-				defer conn.Close()
+				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China Telecom :", err)
-					conn.Close()
+					_ = conn.Close()
 					lostPacket += 1
 				} else {
-					conn.Close()
+					_ = conn.Close()
 				}
 				diffTime := time.Since(t)
 				allPacket += 1
@@ -98,7 +98,7 @@ func (pingValue *PingValue) RunCT() {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
 				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0
@@ -126,14 +126,14 @@ func (pingValue *PingValue) RunCM() {
 			case <-t.C:
 				pingValue.mtx.Lock()
 				t := time.Now()
-				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
-				defer conn.Close()
+				conn , err := net.DialTimeout("tcp",CM_ADDR,defaulttimeout)
+				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China mobile :", err)
-					conn.Close()
+					_ = conn.Close()
 					lostPacket += 1
 				} else {
-					conn.Close()
+					_ = conn.Close()
 				}
 				diffTime := time.Since(t)
 				allPacket += 1
@@ -141,7 +141,7 @@ func (pingValue *PingValue) RunCM() {
 					pingValue.lostRate = float64(lostPacket/allPacket)
 				}
 				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0
