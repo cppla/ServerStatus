@@ -10,6 +10,9 @@ package main
 
 import (
 	"fmt"
+	"os/signal"
+	"syscall"
+
 	//下面这是已经封装好的轮子
 	"github.com/bitcav/nitr-core/cpu"
 	"github.com/bitcav/nitr-core/host"
@@ -35,9 +38,9 @@ var (
 	PASSWORD string = "123456"
 	INTERVAL int = 1
 	PORBEPORT int = 80
-	CU string = "cu.tz.cloudcpp.com"
-	CT string = "ct.tz.cloudcpp.com"
-	CM string = "cm.tz.cloudcpp.com"
+	CU string = "cu.tz.cloudcpp.com" //120.52.99.224 河北联通
+	CT string = "ct.tz.cloudcpp.com" //183.78.182.66 北京电信
+	CM string = "cm.tz.cloudcpp.com" //211.139.145.129 广州移动
 )
 
 type ClientInfo struct {
@@ -147,13 +150,14 @@ func spaceCount() {
 			strings.Index(fsType, "fat32") < 0  &&
 			strings.Index(fsType, "exfat") < 0  &&
 			strings.Index(fsType, "xfs") < 0 {
-			//if(d.Device == "A") { //特殊盘符自己写处理
-				continue
-			//}
 		}  else  {
-			diskUsageOf, _ := disk.Usage(d.Mountpoint)
-			used += diskUsageOf.Used
-			total += diskUsageOf.Total
+			if strings.Index(d.Device, "Z:") > -1 { //特殊盘符自己写处理
+				continue
+			} else {
+				diskUsageOf, _ := disk.Usage(d.Mountpoint)
+				used += diskUsageOf.Used
+				total += diskUsageOf.Total
+			}
 		}
 	}
 	clientInfo.HddUsed = used / 1024.0 / 1024.0
@@ -186,32 +190,26 @@ func getNetworkStatus()  {
 	defaulttimeout  :=  1 * time.Second
 	count := 0
 	conn1 , err1 := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-	defer conn1.Close()
 	if err1 != nil {
 		fmt.Println("Error try to connect China unicom :", err1)
 		count += 1
-		conn1.Close()
-	} else {
-		conn1.Close()
+		return
 	}
+	defer conn1.Close()
 	conn2 , err2 :=  net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
-	defer conn2.Close()
 	if err2 != nil {
 		fmt.Println("Error try to connect China telecom :", err2)
 		count += 1
-		conn2.Close()
-	} else {
-		conn2.Close()
+		return
 	}
+	defer conn2.Close()
 	conn3 , err3 :=  net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
-	defer conn3.Close()
 	if err3 != nil {
 		fmt.Println("Error try to connect China mobile :", err3)
 		count += 1
-		conn3.Close()
-	} else {
-		conn3.Close()
+		return
 	}
+	defer conn3.Close()
 	if count >= 2 {
 		clientInfo.IpStatus = false
 	} else {
@@ -232,8 +230,33 @@ func bytes2str(b []byte) string {
 
 var clientInfo ClientInfo
 
+func SetupCloseHandler() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("\r- Ctrl+C pressed in Terminal,Stop client program")
+		if mainConnect != nil {
+			pingValueCU.Stop()
+			pingValueCT.Stop()
+			pingValueCM.Stop()
+			netSpeed.Stop()
+			mainConnect.Close()
+		}
+		os.Exit(0)
+	}()
+}
+
+var mainConnect net.Conn
+var netSpeed *NetSpeed
+var pingValueCU *PingValue
+var pingValueCT *PingValue
+var pingValueCM *PingValue
 
 func main() {
+	// Setup our Ctrl+C handler
+	SetupCloseHandler()
+
 	for _,  args := range os.Args {
 		if strings.Index(args,"SERVER") > -1 {
 			strArr :=  strings.Split(args,"SERVER=")
@@ -253,25 +276,37 @@ func main() {
 		}
 	}
 	defaulttimeout  :=  30 * time.Second
+	clientInfo = NewDefaultClientInfo()
+	netSpeed = NewNetSpeed()
+	pingValueCU = NewPingValue()
+	pingValueCT = NewPingValue()
+	pingValueCM = NewPingValue()
+	//pingValueCU.RunCU()
+	//pingValueCT.RunCT()
+	//pingValueCM.RunCM()
+	netSpeed.Run()
 	for {
-		conn , err := net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
+		var err error
+		mainConnect , err = net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
 		if err != nil {
 			fmt.Println("Error listening:", err)
 		}
-		defer conn.Close()
+		defer mainConnect.Close()
 		buff := make([]byte, 1024)
-		conn.Read(buff)
+		mainConnect.Read(buff)
 		str := bytes2str(buff)
 		if strings.Index(str,"Authentication required") > -1 {
 			auth := str2bytes(USER + ":" + PASSWORD + "\n")
-			_ , err = conn.Write(auth)
+			_ , err = mainConnect.Write(auth)
 			if err != nil {
 				fmt.Println("Error Sending auth info:", err)
+				return
 			}
 			buff = make([]byte, 1024)
-			_ , err = conn.Read(buff)
+			_ , err = mainConnect.Read(buff)
 			if err != nil {
 				fmt.Println("Error Getting Server Data:", err)
+				return
 			}
 			str = bytes2str(buff)
 			if strings.Index(str,"Authentication required") < 0 {
@@ -283,9 +318,10 @@ func main() {
 		fmt.Println(str)
 		if strings.Index(str,"You are connecting via") < 0 {
 			buff = make([]byte, 1024)
-			_ , err = conn.Read(buff)
+			_ , err = mainConnect.Read(buff)
 			if err != nil {
 				fmt.Println("Error Getting Server Data:", err)
+				return
 			}
 			str = bytes2str(buff)
 			fmt.Println(str)
@@ -299,21 +335,11 @@ func main() {
 			fmt.Println(str)
 		}
 		fmt.Println(checkIP)
-		clientInfo = NewDefaultClientInfo()
-		netSpeed := NewNetSpeed()
-		pingValueCU := NewPingValue()
-		pingValueCT := NewPingValue()
-		pingValueCM := NewPingValue()
-		pingValueCU.RunCU()
-		pingValueCT.RunCT()
-		pingValueCM.RunCM()
-		netSpeed.Run()
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
 			clientInfo.MemoryUsed = ram.Info().Usage / 1024 // 需要转单位
 			clientInfo.CPU = cpu.Info().Usage
 			clientInfo.Uptime = host.Info().Uptime
-
 			//swap 没有造好的轮子，自己加的
 			swapMemory, _ := mem.SwapMemory()
 			clientInfo.SwapTotal = swapMemory.Total / 1024 // 需要转单位
@@ -322,7 +348,7 @@ func main() {
 			tupd()
 			trafficCount()
 			spaceCount()
-			getNetworkStatus()
+			//getNetworkStatus()
 			netSpeed.Get()
 			clientInfo.Ping10086, clientInfo.Time10086 = pingValueCM.Get()
 			clientInfo.Ping189, clientInfo.Time189 = pingValueCT.Get()
@@ -333,12 +359,14 @@ func main() {
 			//fmt.Println(data)
 			if err != nil {
 				fmt.Println("Transformation Error: ", err)
+				return
 			}
 			info := "update " + data + "\n"
 			//fmt.Println(info)
-			_ , err = conn.Write(str2bytes(info))
+			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
 				fmt.Println("Error Sending Data Info:", err)
+				return
 			}
 		}
 	}

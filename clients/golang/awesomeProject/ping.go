@@ -39,14 +39,12 @@ func (pingValue *PingValue) RunCU() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China unicom :", err)
-					_ = conn.Close()
 					lostPacket += 1
-				} else {
-					_ = conn.Close()
+					return
 				}
+				defer conn.Close()
 				diffTime := time.Since(t)
 				//TODO:三网延迟和丢包率算法存在问题
 				//fmt.Println(diffTime)
@@ -84,14 +82,12 @@ func (pingValue *PingValue) RunCT() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
-				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China Telecom :", err)
-					_ = conn.Close()
 					lostPacket += 1
-				} else {
-					_ = conn.Close()
+					return
 				}
+				defer conn.Close()
 				diffTime := time.Since(t)
 				allPacket += 1
 				if allPacket > 100 {
@@ -127,14 +123,12 @@ func (pingValue *PingValue) RunCM() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CM_ADDR,defaulttimeout)
-				//defer conn.Close()
 				if err != nil {
 					fmt.Println("Error try to connect China mobile :", err)
-					_ = conn.Close()
 					lostPacket += 1
-				} else {
-					_ = conn.Close()
+					return
 				}
+				defer conn.Close()
 				diffTime := time.Since(t)
 				allPacket += 1
 				if allPacket > 100 {

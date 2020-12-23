@@ -37,40 +37,41 @@ func (netSpeed *NetSpeed) Run()  {
 		t := time.NewTicker(t1)
 		for {
 			select {
-			case <- netSpeed.stop:
-				t.Stop()
-				return
-			case <-t.C:
-				netSpeed.mtx.Lock()
-				var bytesSent uint64 = 0
-				var bytesRecv uint64 = 0
-				netInfo, err := nnet.IOCounters(true)
-				if err != nil {
-					fmt.Println("Get network speed error:",err)
-				}
-				for _, v := range netInfo {
-					if strings.Index(v.Name,"lo") > -1 ||
-						strings.Index(v.Name,"tun") > -1 ||
-						strings.Index(v.Name,"docker") > -1 ||
-						strings.Index(v.Name,"veth") > -1 ||
-						strings.Index(v.Name,"br-") > -1 ||
-						strings.Index(v.Name,"vmbr") > -1 ||
-						strings.Index(v.Name,"vnet") > -1 ||
-						strings.Index(v.Name,"kube") > -1 {
-						continue
+
+				case <- netSpeed.stop:
+					t.Stop()
+					return
+				case <-t.C:
+					netSpeed.mtx.Lock()
+					var bytesSent uint64 = 0
+					var bytesRecv uint64 = 0
+					netInfo, err := nnet.IOCounters(true)
+					if err != nil {
+						fmt.Println("Get network speed error:",err)
 					}
-					bytesSent += v.BytesSent
-					bytesRecv += v.BytesRecv
+					for _, v := range netInfo {
+						if strings.Index(v.Name,"lo") > -1 ||
+							strings.Index(v.Name,"tun") > -1 ||
+							strings.Index(v.Name,"docker") > -1 ||
+							strings.Index(v.Name,"veth") > -1 ||
+							strings.Index(v.Name,"br-") > -1 ||
+							strings.Index(v.Name,"vmbr") > -1 ||
+							strings.Index(v.Name,"vnet") > -1 ||
+							strings.Index(v.Name,"kube") > -1 {
+							continue
+						}
+						bytesSent += v.BytesSent
+						bytesRecv += v.BytesRecv
+					}
+					timeUnix:= float64(time.Now().Unix())
+					netSpeed.diff = timeUnix - netSpeed.clock
+					netSpeed.clock = timeUnix
+					netSpeed.netrx = float64(bytesRecv - netSpeed.avgrx)/netSpeed.diff
+					netSpeed.nettx = float64(bytesSent - netSpeed.avgtx)/netSpeed.diff
+					netSpeed.avgtx = bytesSent
+					netSpeed.avgrx = bytesRecv
+					netSpeed.mtx.Unlock()
 				}
-				timeUnix:= float64(time.Now().Unix())
-				netSpeed.diff = timeUnix - netSpeed.clock
-				netSpeed.clock = timeUnix
-				netSpeed.netrx = float64(bytesRecv - netSpeed.avgrx)/netSpeed.diff
-				netSpeed.nettx = float64(bytesSent - netSpeed.avgtx)/netSpeed.diff
-				netSpeed.avgtx = bytesSent
-				netSpeed.avgrx = bytesRecv
-				netSpeed.mtx.Unlock()
-			}
 		}
 	}()
 }
