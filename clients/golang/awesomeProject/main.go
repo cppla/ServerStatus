@@ -191,25 +191,40 @@ func getNetworkStatus()  {
 	count := 0
 	conn1 , err1 := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
 	if err1 != nil {
-		fmt.Println("Error try to connect China unicom :", err1)
+		fmt.Println("[getNetworkStatus]Error try to connect China unicom :", err1)
 		count += 1
-		return
 	}
-	defer conn1.Close()
+	tcpconn1, ok := conn1.(*net.TCPConn)
+	if ok {
+		tcpconn1.SetLinger(0)
+	}
+	if conn1 != nil {
+		conn1.Close()
+	}
 	conn2 , err2 :=  net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
 	if err2 != nil {
-		fmt.Println("Error try to connect China telecom :", err2)
+		fmt.Println("[getNetworkStatus]Error try to connect China telecom :", err2)
 		count += 1
-		return
 	}
-	defer conn2.Close()
+	tcpconn2, ok := conn2.(*net.TCPConn)
+	if ok {
+		tcpconn2.SetLinger(0)
+	}
+	if conn2 != nil {
+		conn2.Close()
+	}
 	conn3 , err3 :=  net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
 	if err3 != nil {
-		fmt.Println("Error try to connect China mobile :", err3)
+		fmt.Println("[getNetworkStatus]Error try to connect China mobile :", err3)
 		count += 1
-		return
 	}
-	defer conn3.Close()
+	tcpconn3, ok := conn2.(*net.TCPConn)
+	if ok {
+		tcpconn3.SetLinger(0)
+	}
+	if conn3 != nil {
+		conn3.Close()
+	}
 	if count >= 2 {
 		clientInfo.IpStatus = false
 	} else {
@@ -281,9 +296,9 @@ func main() {
 	pingValueCU = NewPingValue()
 	pingValueCT = NewPingValue()
 	pingValueCM = NewPingValue()
-	//pingValueCU.RunCU()
-	//pingValueCT.RunCT()
-	//pingValueCM.RunCM()
+	pingValueCU.RunCU()
+	pingValueCT.RunCT()
+	pingValueCM.RunCM()
 	netSpeed.Run()
 	for {
 		var err error
@@ -348,25 +363,23 @@ func main() {
 			tupd()
 			trafficCount()
 			spaceCount()
-			//getNetworkStatus()
+			getNetworkStatus()
 			netSpeed.Get()
 			clientInfo.Ping10086, clientInfo.Time10086 = pingValueCM.Get()
 			clientInfo.Ping189, clientInfo.Time189 = pingValueCT.Get()
 			clientInfo.Ping10010, clientInfo.Time10010 = pingValueCU.Get()
-			//fmt.Println(clientInfo.Time10086)
 			//结构体转json字符串
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
 			if err != nil {
 				fmt.Println("Transformation Error: ", err)
-				return
+				break
 			}
 			info := "update " + data + "\n"
-			//fmt.Println(info)
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
 				fmt.Println("Error Sending Data Info:", err)
-				return
+				break
 			}
 		}
 	}
