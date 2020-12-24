@@ -28,6 +28,7 @@ func (pingValue *PingValue) RunCU() {
 		t := time.NewTicker(t1)
 		var lostPacket = 0
 		var allPacket = 0
+		var lostConnect = false
 		startTime := time.Now()
 		defaulttimeout  :=  1 * time.Second
 		for {
@@ -39,12 +40,16 @@ func (pingValue *PingValue) RunCU() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-				defer conn.Close()
 				if err != nil {
-					fmt.Println("Error try to connect China unicom :", err)
-					conn.Close()
+					fmt.Println("[ping]Error try to connect China unicom :", err)
+					lostConnect = true
 					lostPacket += 1
-				} else {
+				}
+				tcpconn, ok := conn.(*net.TCPConn)
+				if ok {
+					tcpconn.SetLinger(0)
+				}
+				if conn != nil {
 					conn.Close()
 				}
 				diffTime := time.Since(t)
@@ -52,10 +57,17 @@ func (pingValue *PingValue) RunCU() {
 				//fmt.Println(diffTime)
 				allPacket += 1
 				if allPacket > 100 {
-					pingValue.lostRate = float64(lostPacket/allPacket)
+					pingValue.lostRate = float64(lostPacket/allPacket) * 100
 				}
-				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				//fmt.Println("ALL     LOST    RATE")
+				//fmt.Printf("%10d  %10d %10f\n",allPacket,lostPacket,pingValue.lostRate)
+				if lostConnect {
+					pingValue.ping = 0
+				} else {
+					pingValue.ping = uint64(diffTime/time.Millisecond)
+				}
+				lostConnect = false
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0
@@ -73,6 +85,7 @@ func (pingValue *PingValue) RunCT() {
 		t := time.NewTicker(t1)
 		var lostPacket = 0
 		var allPacket = 0
+		var lostConnect = false
 		startTime := time.Now()
 		defaulttimeout  :=  1 * time.Second
 		for {
@@ -84,21 +97,30 @@ func (pingValue *PingValue) RunCT() {
 				pingValue.mtx.Lock()
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
-				defer conn.Close()
 				if err != nil {
-					fmt.Println("Error try to connect China Telecom :", err)
-					conn.Close()
+					fmt.Println("[ping]Error try to connect China Telecom :", err)
+					lostConnect = true
 					lostPacket += 1
-				} else {
+				}
+				tcpconn, ok := conn.(*net.TCPConn)
+				if ok {
+					tcpconn.SetLinger(0)
+				}
+				if conn != nil {
 					conn.Close()
 				}
 				diffTime := time.Since(t)
 				allPacket += 1
 				if allPacket > 100 {
-					pingValue.lostRate = float64(lostPacket/allPacket)
+					pingValue.lostRate = float64(lostPacket/allPacket) * 100
 				}
-				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				if lostConnect {
+					pingValue.ping = 0
+				} else {
+					pingValue.ping = uint64(diffTime/time.Millisecond)
+				}
+				lostConnect = false
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0
@@ -116,6 +138,7 @@ func (pingValue *PingValue) RunCM() {
 		t := time.NewTicker(t1)
 		var lostPacket = 0
 		var allPacket = 0
+		var lostConnect = false
 		startTime := time.Now()
 		defaulttimeout  :=  1 * time.Second
 		for {
@@ -126,22 +149,31 @@ func (pingValue *PingValue) RunCM() {
 			case <-t.C:
 				pingValue.mtx.Lock()
 				t := time.Now()
-				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
-				defer conn.Close()
+				conn , err := net.DialTimeout("tcp",CM_ADDR,defaulttimeout)
 				if err != nil {
-					fmt.Println("Error try to connect China mobile :", err)
-					conn.Close()
+					fmt.Println("[ping]Error try to connect China mobile :", err)
+					lostConnect = true
 					lostPacket += 1
-				} else {
+				}
+				tcpconn, ok := conn.(*net.TCPConn)
+				if ok {
+					tcpconn.SetLinger(0)
+				}
+				if conn != nil {
 					conn.Close()
 				}
 				diffTime := time.Since(t)
 				allPacket += 1
 				if allPacket > 100 {
-					pingValue.lostRate = float64(lostPacket/allPacket)
+					pingValue.lostRate = float64(lostPacket/allPacket) * 100
 				}
-				pingValue.ping = uint64(diffTime/time.Millisecond)
-				resetTime := uint64(time.Since(startTime) * time.Second)
+				if lostConnect {
+					pingValue.ping = 0
+				} else {
+					pingValue.ping = uint64(diffTime/time.Millisecond)
+				}
+				lostConnect = false
+				resetTime := uint64(time.Since(startTime) / time.Second)
 				if resetTime > 3600 {
 					lostPacket = 0
 					allPacket = 0

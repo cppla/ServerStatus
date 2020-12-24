@@ -2,12 +2,6 @@
 
 懒得改项目名了，需要的话自己改。
 
-### 编译环境
-
-CentOS7: go version go1.15.5 linux/amd64
-
-Windows10: go version go1.15.5 windows/amd64
-
 ### 使用方法
 可选：更改源码中的连接信息
 ```
@@ -19,7 +13,10 @@ go build .
 ```
 
 ### TODO
-- IPV4 和 IPV6 状态
+
+- 外网连接状态
+- 三网丢包计算
+- 三网延迟计算
 - 其他算法优化
 
 ### 鸣谢
