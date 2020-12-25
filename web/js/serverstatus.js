@@ -266,9 +266,9 @@ function uptime() {
 					TableRow.children["memory"].children[0].children[0].className = "progress-bar progress-bar-success";
 				TableRow.children["memory"].children[0].children[0].style.width = Mem + "%";
 				TableRow.children["memory"].children[0].children[0].innerHTML = Mem + "%";
-				ExpandRow[0].children["expand_mem"].innerHTML = "内存: " + bytesToSize(result.servers[i].memory_used*1024, 2) + " / " + bytesToSize(result.servers[i].memory_total*1024, 2);
+				ExpandRow[0].children["expand_mem"].innerHTML = "内存: " + bytesToSize(result.servers[i].memory_used*1024, 2) + "  已用 / " +bytesToSize(result.servers[i].memory_total*1024-result.servers[i].memory_used*1024, 2) + " 可用 / " + bytesToSize(result.servers[i].memory_total*1024, 2) + " 总共 ";
 				// Swap
-				ExpandRow[0].children["expand_swap"].innerHTML = "交换分区: " + bytesToSize(result.servers[i].swap_used*1024, 2) + " / " + bytesToSize(result.servers[i].swap_total*1024, 2);
+				ExpandRow[0].children["expand_swap"].innerHTML = "交换分区: " + bytesToSize(result.servers[i].swap_used*1024, 2) + " 已用 / " + bytesToSize(result.servers[i].swap_total*1024-result.servers[i].swap_used*1024, 2)+ "  可用 / "+  bytesToSize(result.servers[i].swap_total*1024, 2) + " 总共 ";
 
 				// HDD
 				var HDD = ((result.servers[i].hdd_used/result.servers[i].hdd_total)*100.0).toFixed(0);
@@ -280,7 +280,7 @@ function uptime() {
 					TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-success";
 				TableRow.children["hdd"].children[0].children[0].style.width = HDD + "%";
 				TableRow.children["hdd"].children[0].children[0].innerHTML = HDD + "%";
-				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
+				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " 已用 / " + bytesToSize(result.servers[i].hdd_total*1024*1024-result.servers[i].hdd_used*1024*1024, 2)+ "  可用 / "+ bytesToSize(result.servers[i].hdd_total*1024*1024, 2) +"  总共"
 
                 // delay time
 
@@ -452,7 +452,8 @@ function json2Excel() {
    */
   
    var elements1 =  document.getElementsByClassName("expandRow even");
-   var elements2 =document.getElementsByClassName("expandRow odd");
+   var elements2 = document.getElementsByClassName("expandRow odd");
+   console.log(elements2)
    Array.prototype.forEach.call(elements1, function (element) {
 		element.style.display = 'none';	
    });
@@ -500,6 +501,5 @@ function saveAs(obj, fileName) {//当然可以自定义简单的下载文件实�
 	setTimeout(function () { //延时释放
 	URL.revokeObjectURL(obj); //用URL.revokeObjectURL()来释放这个object URL
 	}, 100);
-
 }
 
