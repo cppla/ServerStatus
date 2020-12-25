@@ -1,0 +1,11 @@
+{
+    "server":"127.0.0.1",
+    "user":"test",
+    "password":"123456",
+    "port":35601,
+    "porbeport":80,
+    "interval":1,
+    "cu":"cu.tz.cloudcpp.com",
+    "ct":"ct.tz.cloudcpp.com",
+    "cm":"cm.tz.cloudcpp.com"
+}

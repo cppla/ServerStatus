@@ -10,7 +10,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	//下面这是已经封装好的轮子
@@ -42,6 +44,32 @@ var (
 	CT string = "ct.tz.cloudcpp.com" //183.78.182.66 北京电信
 	CM string = "cm.tz.cloudcpp.com" //211.139.145.129 广州移动
 )
+
+type Config struct {
+	Server string `json:"server"`
+	User string `json:"user"`
+	Port int `json:"port"`
+	Password string `json:"password"`
+	Interval int `json:"interval"`
+	Porbeport int `json:"porbeport"`
+	Cu string `json:"cu"`
+	Ct string `json:"cu"`
+	Cm string `json:"cm"`
+}
+
+func NewConfig() Config {
+	return Config{
+		Server:    SERVER,
+		User:      USER,
+		Port:      PORT,
+		Password:  PASSWORD,
+		Interval:  INTERVAL,
+		Porbeport: PORBEPORT,
+		Cu:        CU,
+		Ct:        CT,
+		Cm:        CM,
+	}
+}
 
 type ClientInfo struct {
 	Load1 float64 `json:"load_1"`
@@ -107,7 +135,7 @@ func NewDefaultClientInfo() ClientInfo {
 func trafficCount()  {
 	netInfo, err := nnet.IOCounters(true)
 	if err != nil {
-		fmt.Println("Get traffic count error:",err)
+		fmt.Println("[trafficCount]Get traffic count error:",err)
 	}
 	var bytesSent uint64 = 0
 	var bytesRecv uint64 = 0
@@ -169,7 +197,7 @@ func getLoad() {
 	if host.Info().OS == "linux" || host.Info().OS == "freebsd" {
 		l, err :=	load.Avg()
 		if err != nil {
-			fmt.Println("Get CPU Loads failed:",err)
+			fmt.Println("[getLoad]Get CPU Loads failed:",err)
 		} else  {
 			clientInfo.Load1 = l.Load1
 			clientInfo.Load5 = l.Load5
@@ -250,7 +278,7 @@ func SetupCloseHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\r- Ctrl+C pressed in Terminal,Stop client program")
+		fmt.Println("\r[main] Ctrl+C pressed in Terminal,Stop client program")
 		if mainConnect != nil {
 			pingValueCU.Stop()
 			pingValueCT.Stop()
@@ -268,10 +296,53 @@ var pingValueCU *PingValue
 var pingValueCT *PingValue
 var pingValueCM *PingValue
 
+func getCurrentDirectory() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println("[main] Get Current Directory Error")
+		os.Exit(-1)
+	}
+	return dir
+}
+
 func main() {
 	// Setup our Ctrl+C handler
 	SetupCloseHandler()
-
+	config := NewConfig()
+	path :=  getCurrentDirectory() + "\\config.json"
+	fmt.Printf("[main]Try to Load Config File From %s\n",path)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Printf("[main]Read Config File Error:%s\n",err)
+	}
+	err = jsoniter.Unmarshal(data, &config)
+	if err != nil {
+		fmt.Printf("[main]Parse Config File Error:%s\n",err)
+	}
+	if config.User != "" {
+		USER = config.User
+	}
+	if config.Password != "" {
+		PASSWORD = config.Password
+	}
+	if config.Cm != "" {
+		CM = config.Cm
+	}
+	if config.Cu != "" {
+		CU = config.Cu
+	}
+	if config.Ct != "" {
+		CT = config.Ct
+	}
+	if config.Port >=0 && config.Port <= 65535 {
+		PORT = config.Port
+	}
+	if config.Porbeport >=0 && config.Porbeport <= 65535 {
+		PORBEPORT = config.Porbeport
+	}
+	if config.Interval > 0 {
+		INTERVAL = config.Interval
+	}
 	for _,  args := range os.Args {
 		if strings.Index(args,"SERVER") > -1 {
 			strArr :=  strings.Split(args,"SERVER=")
@@ -304,38 +375,38 @@ func main() {
 		var err error
 		mainConnect , err = net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
 		if err != nil {
-			fmt.Println("Error listening:", err)
+			fmt.Println("[main]Error listening:", err)
 		}
 		defer mainConnect.Close()
 		buff := make([]byte, 1024)
 		mainConnect.Read(buff)
 		str := bytes2str(buff)
-		if strings.Index(str,"Authentication required") > -1 {
+		if strings.Index(str,"[main]Authentication required") > -1 {
 			auth := str2bytes(USER + ":" + PASSWORD + "\n")
 			_ , err = mainConnect.Write(auth)
 			if err != nil {
-				fmt.Println("Error Sending auth info:", err)
+				fmt.Println("[main]Error Sending auth info:", err)
 				return
 			}
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("Error Getting Server Data:", err)
+				fmt.Println("[main]Error Getting Server Data:", err)
 				return
 			}
 			str = bytes2str(buff)
-			if strings.Index(str,"Authentication required") < 0 {
+			if strings.Index(str,"[main]Authentication required") < 0 {
 				fmt.Println(str)
 			}
 		} else {
 			fmt.Println(str)
 		}
 		fmt.Println(str)
-		if strings.Index(str,"You are connecting via") < 0 {
+		if strings.Index(str,"[main]You are connecting via") < 0 {
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("Error Getting Server Data:", err)
+				fmt.Println("[main]Error Getting Server Data:", err)
 				return
 			}
 			str = bytes2str(buff)
@@ -372,13 +443,13 @@ func main() {
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
 			if err != nil {
-				fmt.Println("Transformation Error: ", err)
+				fmt.Println("[main]Transformation Error: ", err)
 				break
 			}
 			info := "update " + data + "\n"
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
-				fmt.Println("Error Sending Data Info:", err)
+				fmt.Println("[main]Error Sending Data Info:", err)
 				break
 			}
 		}
