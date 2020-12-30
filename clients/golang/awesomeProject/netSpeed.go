@@ -37,7 +37,6 @@ func (netSpeed *NetSpeed) Run()  {
 		t := time.NewTicker(t1)
 		for {
 			select {
-
 				case <- netSpeed.stop:
 					t.Stop()
 					return

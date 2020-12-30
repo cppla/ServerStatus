@@ -135,7 +135,7 @@ func NewDefaultClientInfo() ClientInfo {
 func trafficCount()  {
 	netInfo, err := nnet.IOCounters(true)
 	if err != nil {
-		fmt.Println("[trafficCount]Get traffic count error:",err)
+		fmt.Println("[trafficCount]Getting traffic count error:",err)
 	}
 	var bytesSent uint64 = 0
 	var bytesRecv uint64 = 0
@@ -197,7 +197,7 @@ func getLoad() {
 	if host.Info().OS == "linux" || host.Info().OS == "freebsd" {
 		l, err :=	load.Avg()
 		if err != nil {
-			fmt.Println("[getLoad]Get CPU Loads failed:",err)
+			fmt.Println("[getLoad]Get CPU loads failed:",err)
 		} else  {
 			clientInfo.Load1 = l.Load1
 			clientInfo.Load5 = l.Load5
@@ -299,7 +299,7 @@ var pingValueCM *PingValue
 func getCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		fmt.Println("[main] Get Current Directory Error")
+		fmt.Println("[main] Get current directory error")
 		os.Exit(-1)
 	}
 	return dir
@@ -310,14 +310,14 @@ func main() {
 	SetupCloseHandler()
 	config := NewConfig()
 	path :=  getCurrentDirectory() + "\\config.json"
-	fmt.Printf("[main]Try to Load Config File From %s\n",path)
+	fmt.Printf("[main]Try to load config file from %s\n",path)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Printf("[main]Read Config File Error:%s\n",err)
+		fmt.Printf("[main]Read config file error:%s\n",err)
 	}
 	err = jsoniter.Unmarshal(data, &config)
 	if err != nil {
-		fmt.Printf("[main]Parse Config File Error:%s\n",err)
+		fmt.Printf("[main]Parse config file error:%s\n",err)
 	}
 	if config.User != "" {
 		USER = config.User
@@ -342,6 +342,9 @@ func main() {
 	}
 	if config.Interval > 0 {
 		INTERVAL = config.Interval
+	}
+	if config.Server != "" {
+		SERVER = config.Server
 	}
 	for _,  args := range os.Args {
 		if strings.Index(args,"SERVER") > -1 {
@@ -378,49 +381,61 @@ func main() {
 			fmt.Println("[main]Error listening:", err)
 		}
 		defer mainConnect.Close()
+		fmt.Println("[main]Listening done,get server info now")
 		buff := make([]byte, 1024)
 		mainConnect.Read(buff)
 		str := bytes2str(buff)
-		if strings.Index(str,"[main]Authentication required") > -1 {
+		if strings.Index(str,"Authentication required") > -1 {
+			fmt.Println("[main]Authentication required,send it to server")
 			auth := str2bytes(USER + ":" + PASSWORD + "\n")
 			_ , err = mainConnect.Write(auth)
 			if err != nil {
-				fmt.Println("[main]Error Sending auth info:", err)
+				fmt.Println("[main]Error sending auth info:", err)
 				return
 			}
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("[main]Error Getting Server Data:", err)
+				fmt.Println("[main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
-			if strings.Index(str,"[main]Authentication required") < 0 {
-				fmt.Println(str)
+			if strings.Index(str,"Authentication required") < 0 {
+				if strings.Index(str,"Wrong username and/or password.") > -1 {
+					fmt.Println("[main]Wrong username and/or password.")
+					return
+				}else if strings.Index(str,"Authentication successful. Access granted.") > -1 {
+					fmt.Println("[main]Authentication successful. Access granted.")
+				} else {
+					fmt.Println(str)
+					return
+				}
 			}
+		} else if strings.Index(str,"You have been banned for 1 minute (Wrong username and/or password.)") > -1{
+			fmt.Println("[main]You have been banned for 1 minute (Wrong username and/or password.)")
+			return
 		} else {
 			fmt.Println(str)
 		}
-		fmt.Println(str)
-		if strings.Index(str,"[main]You are connecting via") < 0 {
+		if strings.Index(str,"You are connecting via") < 0 {
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("[main]Error Getting Server Data:", err)
+				fmt.Println("[main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
-			fmt.Println(str)
+			fmt.Println("[main]"+str)
 		}
-		var checkIP int = 0
-		if strings.Index(str,"IPv4") > -1 {
-			checkIP = 6
-		} else if strings.Index(str,"IPv6") > -1 {
-			checkIP = 4
-		} else  {
-			fmt.Println(str)
-		}
-		fmt.Println(checkIP)
+		//var checkIP int = 0
+		//if strings.Index(str,"IPv4") > -1 {
+		//	checkIP = 6
+		//} else if strings.Index(str,"IPv6") > -1 {
+		//	checkIP = 4
+		//} else  {
+		//	fmt.Println(str)
+		//}
+		//fmt.Println(checkIP)
 		for {
 			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
 			clientInfo.MemoryUsed = ram.Info().Usage / 1024 // 需要转单位
@@ -443,13 +458,13 @@ func main() {
 			data, err := jsoniter.MarshalToString(&clientInfo)
 			//fmt.Println(data)
 			if err != nil {
-				fmt.Println("[main]Transformation Error: ", err)
+				fmt.Println("[main]Error transforming client info: ", err)
 				break
 			}
 			info := "update " + data + "\n"
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
-				fmt.Println("[main]Error Sending Data Info:", err)
+				fmt.Println("[main]Error sending client info:", err)
 				break
 			}
 		}
