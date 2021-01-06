@@ -33,7 +33,7 @@ func NewNetSpeed() *NetSpeed{
 
 func (netSpeed *NetSpeed) Run()  {
 	go func() {
-		t1 :=  time.Duration(INTERVAL) * time.Second
+		t1 :=  time.Duration(1) * time.Second
 		t := time.NewTicker(t1)
 		for {
 			select {

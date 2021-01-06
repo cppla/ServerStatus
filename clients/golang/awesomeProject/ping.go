@@ -9,6 +9,7 @@ import (
 
 type PingValue struct {
 	ping uint64
+	status uint
 	lostRate float64
 	stop chan struct{}
 	mtx sync.Mutex
@@ -16,6 +17,7 @@ type PingValue struct {
 
 func NewPingValue() *PingValue {
 	return &PingValue{
+		status: 0,
 		ping: 0.0,
 		lostRate: 0.0,
 		stop: make (chan struct{}),
@@ -63,8 +65,10 @@ func (pingValue *PingValue) RunCU() {
 				//fmt.Printf("%10d  %10d %10f\n",allPacket,lostPacket,pingValue.lostRate)
 				if lostConnect {
 					pingValue.ping = 0
+					pingValue.status = 1
 				} else {
 					pingValue.ping = uint64(diffTime/time.Millisecond)
+					pingValue.status = 0
 				}
 				lostConnect = false
 				resetTime := uint64(time.Since(startTime) / time.Second)
@@ -116,8 +120,10 @@ func (pingValue *PingValue) RunCT() {
 				}
 				if lostConnect {
 					pingValue.ping = 0
+					pingValue.status = 1
 				} else {
 					pingValue.ping = uint64(diffTime/time.Millisecond)
+					pingValue.status = 0
 				}
 				lostConnect = false
 				resetTime := uint64(time.Since(startTime) / time.Second)
@@ -169,8 +175,10 @@ func (pingValue *PingValue) RunCM() {
 				}
 				if lostConnect {
 					pingValue.ping = 0
+					pingValue.status = 1
 				} else {
 					pingValue.ping = uint64(diffTime/time.Millisecond)
+					pingValue.status = 0
 				}
 				lostConnect = false
 				resetTime := uint64(time.Since(startTime) / time.Second)
@@ -189,8 +197,10 @@ func (pingValue *PingValue) Stop() {
 	close(pingValue.stop)
 }
 
-func (pingValue *PingValue) Get() (float64,uint64) {
+func (pingValue *PingValue) Get() (float64,uint64,uint) {
 	pingValue.mtx.Lock()
 	defer pingValue.mtx.Unlock()
-	return pingValue.lostRate,pingValue.ping
+	status := pingValue.status
+	pingValue.status = 0
+	return pingValue.lostRate,pingValue.ping,status
 }

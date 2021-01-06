@@ -10,25 +10,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-
-	//下面这是已经封装好的轮子
-	"github.com/bitcav/nitr-core/cpu"
-	"github.com/bitcav/nitr-core/host"
-	"github.com/bitcav/nitr-core/ram"
 	"github.com/json-iterator/go"
-	//没轮子的自己封装
-	"github.com/shirou/gopsutil/disk"
-	"github.com/shirou/gopsutil/load"
-	"github.com/shirou/gopsutil/mem"
-	nnet "github.com/shirou/gopsutil/net"
+	"io/ioutil"
 	"net"
 	"os"
+	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unsafe"
 )
@@ -40,6 +30,7 @@ var (
 	PASSWORD string = "123456"
 	INTERVAL int = 1
 	PORBEPORT int = 80
+	NETWORKCHECK bool = true
 	CU string = "cu.tz.cloudcpp.com" //120.52.99.224 河北联通
 	CT string = "ct.tz.cloudcpp.com" //183.78.182.66 北京电信
 	CM string = "cm.tz.cloudcpp.com" //211.139.145.129 广州移动
@@ -55,6 +46,7 @@ type Config struct {
 	Cu string `json:"cu"`
 	Ct string `json:"cu"`
 	Cm string `json:"cm"`
+	NetworkCheck bool `json:"networkCheck"`
 }
 
 func NewConfig() Config {
@@ -68,6 +60,7 @@ func NewConfig() Config {
 		Cu:        CU,
 		Ct:        CT,
 		Cm:        CM,
+		NetworkCheck: NETWORKCHECK,
 	}
 }
 
@@ -132,134 +125,58 @@ func NewDefaultClientInfo() ClientInfo {
 	}
 }
 
-func trafficCount()  {
-	netInfo, err := nnet.IOCounters(true)
-	if err != nil {
-		fmt.Println("[trafficCount]Getting traffic count error:",err)
-	}
-	var bytesSent uint64 = 0
-	var bytesRecv uint64 = 0
-	for _, v := range netInfo {
-		if strings.Index(v.Name,"lo") > -1 ||
-			strings.Index(v.Name,"tun") > -1 ||
-			strings.Index(v.Name,"docker") > -1 ||
-			strings.Index(v.Name,"veth") > -1 ||
-			strings.Index(v.Name,"br-") > -1 ||
-			strings.Index(v.Name,"vmbr") > -1 ||
-			strings.Index(v.Name,"vnet") > -1 ||
-			strings.Index(v.Name,"kube") > -1 {
-			continue
-		}
-		bytesSent += v.BytesSent
-		bytesRecv += v.BytesRecv
-	}
-	clientInfo.NetworkIn = bytesRecv
-	clientInfo.NetworkOut = bytesSent
-}
 
-func spaceCount() {
-	// golang 没有类似于在 python 的 dict 或 tuple 的 in 查找关键字，自己写多重判断实现
-	diskList, _ := disk.Partitions(false)
-	var total uint64 = 0
-	var used uint64 = 0
-	for _,d := range diskList {
-		fsType := strings.ToLower(d.Fstype)
-		//fmt.Println(d.Fstype)
-		if strings.Index(fsType, "ext4") < 0 &&
-			strings.Index(fsType, "ext3") < 0  &&
-			strings.Index(fsType, "ext2") < 0  &&
-			strings.Index(fsType, "reiserfs") < 0  &&
-			strings.Index(fsType, "jfs") < 0  &&
-			strings.Index(fsType, "btrfs") < 0  &&
-			strings.Index(fsType, "fuseblk") < 0  &&
-			strings.Index(fsType, "zfs") < 0  &&
-			strings.Index(fsType, "simfs") < 0  &&
-			strings.Index(fsType, "ntfs")< 0 &&
-			strings.Index(fsType, "fat32") < 0  &&
-			strings.Index(fsType, "exfat") < 0  &&
-			strings.Index(fsType, "xfs") < 0 {
-		}  else  {
-			if strings.Index(d.Device, "Z:") > -1 { //特殊盘符自己写处理
-				continue
-			} else {
-				diskUsageOf, _ := disk.Usage(d.Mountpoint)
-				used += diskUsageOf.Used
-				total += diskUsageOf.Total
-			}
-		}
-	}
-	clientInfo.HddUsed = used / 1024.0 / 1024.0
-	clientInfo.HddTotal = total / 1024.0 / 1024.0
-}
-
-func getLoad() {
-	// linux or freebsd only
-	if host.Info().OS == "linux" || host.Info().OS == "freebsd" {
-		l, err :=	load.Avg()
-		if err != nil {
-			fmt.Println("[getLoad]Get CPU loads failed:",err)
-		} else  {
-			clientInfo.Load1 = l.Load1
-			clientInfo.Load5 = l.Load5
-			clientInfo.Load15 = l.Load15
-		}
-	} else {
-		clientInfo.Load1 = 0.0
-		clientInfo.Load5 = 0.0
-		clientInfo.Load15 = 0.0
-	}
-}
 
 var CU_ADDR = CU + ":" + strconv.Itoa(PORBEPORT)
 var CT_ADDR = CT + ":" + strconv.Itoa(PORBEPORT)
 var CM_ADDR = CM + ":" + strconv.Itoa(PORBEPORT)
 
-func getNetworkStatus()  {
-	defaulttimeout  :=  1 * time.Second
-	count := 0
-	conn1 , err1 := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
-	if err1 != nil {
-		fmt.Println("[getNetworkStatus]Error try to connect China unicom :", err1)
-		count += 1
-	}
-	tcpconn1, ok := conn1.(*net.TCPConn)
-	if ok {
-		tcpconn1.SetLinger(0)
-	}
-	if conn1 != nil {
-		conn1.Close()
-	}
-	conn2 , err2 :=  net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
-	if err2 != nil {
-		fmt.Println("[getNetworkStatus]Error try to connect China telecom :", err2)
-		count += 1
-	}
-	tcpconn2, ok := conn2.(*net.TCPConn)
-	if ok {
-		tcpconn2.SetLinger(0)
-	}
-	if conn2 != nil {
-		conn2.Close()
-	}
-	conn3 , err3 :=  net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
-	if err3 != nil {
-		fmt.Println("[getNetworkStatus]Error try to connect China mobile :", err3)
-		count += 1
-	}
-	tcpconn3, ok := conn2.(*net.TCPConn)
-	if ok {
-		tcpconn3.SetLinger(0)
-	}
-	if conn3 != nil {
-		conn3.Close()
-	}
-	if count >= 2 {
-		clientInfo.IpStatus = false
-	} else {
-		clientInfo.IpStatus = true
-	}
-	count = 0
-}
+//func getNetworkStatus()  {
+//	defaulttimeout  :=  1 * time.Second
+//	count := 0
+//	conn1 , err1 := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
+//	if err1 != nil {
+//		fmt.Println("[getNetworkStatus]Error try to connect China unicom :", err1)
+//		count += 1
+//	}
+//	tcpconn1, ok := conn1.(*net.TCPConn)
+//	if ok {
+//		tcpconn1.SetLinger(0)
+//	}
+//	if conn1 != nil {
+//		conn1.Close()
+//	}
+//	conn2 , err2 :=  net.DialTimeout("tcp", CT_ADDR,defaulttimeout)
+//	if err2 != nil {
+//		fmt.Println("[getNetworkStatus]Error try to connect China telecom :", err2)
+//		count += 1
+//	}
+//	tcpconn2, ok := conn2.(*net.TCPConn)
+//	if ok {
+//		tcpconn2.SetLinger(0)
+//	}
+//	if conn2 != nil {
+//		conn2.Close()
+//	}
+//	conn3 , err3 :=  net.DialTimeout("tcp", CM_ADDR,defaulttimeout)
+//	if err3 != nil {
+//		fmt.Println("[getNetworkStatus]Error try to connect China mobile :", err3)
+//		count += 1
+//	}
+//	tcpconn3, ok := conn2.(*net.TCPConn)
+//	if ok {
+//		tcpconn3.SetLinger(0)
+//	}
+//	if conn3 != nil {
+//		conn3.Close()
+//	}
+//	if count >= 2 {
+//		clientInfo.IpStatus = false
+//	} else {
+//		clientInfo.IpStatus = true
+//	}
+//	count = 0
+//}
 
 func str2bytes(s string) []byte {
 	x := (*[2]uintptr)(unsafe.Pointer(&s))
@@ -280,10 +197,13 @@ func SetupCloseHandler() {
 		<-c
 		fmt.Println("\r[main] Ctrl+C pressed in Terminal,Stop client program")
 		if mainConnect != nil {
-			pingValueCU.Stop()
-			pingValueCT.Stop()
-			pingValueCM.Stop()
+			if NETWORKCHECK == true {
+				pingValueCU.Stop()
+				pingValueCT.Stop()
+				pingValueCM.Stop()
+			}
 			netSpeed.Stop()
+			run.StopRunInfo()
 			mainConnect.Close()
 		}
 		os.Exit(0)
@@ -292,6 +212,7 @@ func SetupCloseHandler() {
 
 var mainConnect net.Conn
 var netSpeed *NetSpeed
+var run *Run
 var pingValueCU *PingValue
 var pingValueCT *PingValue
 var pingValueCM *PingValue
@@ -314,6 +235,7 @@ func main() {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Printf("[main]Read config file error:%s\n",err)
+		goto Run
 	}
 	err = jsoniter.Unmarshal(data, &config)
 	if err != nil {
@@ -346,6 +268,8 @@ func main() {
 	if config.Server != "" {
 		SERVER = config.Server
 	}
+	NETWORKCHECK = config.NetworkCheck
+	Run:
 	for _,  args := range os.Args {
 		if strings.Index(args,"SERVER") > -1 {
 			strArr :=  strings.Split(args,"SERVER=")
@@ -362,18 +286,28 @@ func main() {
 		} else if strings.Index( args,"INTERVAL")  > -1{
 			strArr :=  strings.Split(args,"INTERVAL=")
 			INTERVAL, _ = strconv.Atoi(strArr[len(strArr)-1])
+		}  else if strings.Index( args,"NETWORKCHECK")  > -1{
+			strArr :=  strings.Split(args,"NETWORKCHECK=")
+			settings := strings.ToUpper(strArr[len(strArr)-1])
+			if strings.Index(settings,"FALSE") > -1 {
+				NETWORKCHECK = false
+			}
 		}
 	}
 	defaulttimeout  :=  30 * time.Second
 	clientInfo = NewDefaultClientInfo()
 	netSpeed = NewNetSpeed()
-	pingValueCU = NewPingValue()
-	pingValueCT = NewPingValue()
-	pingValueCM = NewPingValue()
-	pingValueCU.RunCU()
-	pingValueCT.RunCT()
-	pingValueCM.RunCM()
 	netSpeed.Run()
+	if NETWORKCHECK == true {
+		pingValueCU = NewPingValue()
+		pingValueCT = NewPingValue()
+		pingValueCM = NewPingValue()
+		pingValueCU.RunCU()
+		pingValueCT.RunCT()
+		pingValueCM.RunCM()
+	}
+	run = NewRunInfo()
+	run.StartGetRunInfo()
 	for {
 		var err error
 		mainConnect , err = net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
@@ -436,26 +370,35 @@ func main() {
 		//	fmt.Println(str)
 		//}
 		//fmt.Println(checkIP)
+		var (
+			status10086 uint = 0
+			status189 uint = 0
+			status10010 uint = 0
+		)
 		for {
-			clientInfo.MemoryTotal = ram.Info().Total / 1024 // 需要转单位
-			clientInfo.MemoryUsed = ram.Info().Usage / 1024 // 需要转单位
-			clientInfo.CPU = cpu.Info().Usage
-			clientInfo.Uptime = host.Info().Uptime
-			//swap 没有造好的轮子，自己加的
-			swapMemory, _ := mem.SwapMemory()
-			clientInfo.SwapTotal = swapMemory.Total / 1024 // 需要转单位
-			clientInfo.SwapUsed = swapMemory.Used / 1024 // 需要转单位
-			getLoad()
-			tupd()
-			trafficCount()
-			spaceCount()
-			getNetworkStatus()
+			run.GetRunInfo()
+			//getNetworkStatus()
 			netSpeed.Get()
-			clientInfo.Ping10086, clientInfo.Time10086 = pingValueCM.Get()
-			clientInfo.Ping189, clientInfo.Time189 = pingValueCT.Get()
-			clientInfo.Ping10010, clientInfo.Time10010 = pingValueCU.Get()
+			if NETWORKCHECK {
+				clientInfo.Ping10086, clientInfo.Time10086, status10086 = pingValueCM.Get()
+				clientInfo.Ping189, clientInfo.Time189, status189 = pingValueCT.Get()
+				clientInfo.Ping10010, clientInfo.Time10010,status10010 = pingValueCU.Get()
+				if (status189+status10010+status10086) >= 2 {
+					clientInfo.IpStatus = false
+				} else {
+					clientInfo.IpStatus = true
+				}
+			} else {
+				clientInfo.Ping10086, clientInfo.Time10086 = 0.0,0
+				clientInfo.Ping189, clientInfo.Time189 =  0.0,0
+				clientInfo.Ping10010, clientInfo.Time10010 = 0.0,0
+				clientInfo.IpStatus = false
+			}
+			status10086 = 0
+			status189 = 0
+			status10010  = 0
 			//结构体转json字符串
-			data, err := jsoniter.MarshalToString(&clientInfo)
+			data, err := clientInfo.MarshalToString()
 			//fmt.Println(data)
 			if err != nil {
 				fmt.Println("[main]Error transforming client info: ", err)
@@ -472,4 +415,25 @@ func main() {
 
 }
 
-
+func (info *ClientInfo) MarshalToString() (string, error) {
+	type Alias ClientInfo
+	return jsoniter.MarshalToString(&struct {
+		CPU float64 `json:"cpu"`
+		Ping10010 float64 `json:"ping_10010"`
+		Ping10086 float64 `json:"ping_10086"`
+		Ping189 float64 `json:"ping_189"`
+		Load1 float64 `json:"load_1"`
+		Load5 float64 `json:"load_5"`
+		Load15 float64 `json:"load_15"`
+		*Alias
+	}{
+		CPU: info.CPU,
+		Ping10010: info.Ping10010,
+		Ping10086: info.Ping10086,
+		Ping189: info.Ping189,
+		Load1: info.Load1,
+		Load5: info.Load5,
+		Load15: info.Load15,
+		Alias:    (*Alias)(info),
+	})
+}
