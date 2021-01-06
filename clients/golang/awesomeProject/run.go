@@ -107,9 +107,9 @@ func (run *Run) StartGetRunInfo()  {
 				hInfo, err := host.Info()
 				if err != nil {
 					fmt.Println("[getInfo]get uptime error",err)
-					clientInfo.Uptime = 0
+					run.uptime = 0
 				} else {
-                    clientInfo.Uptime = hInfo.Uptime
+					run.uptime = hInfo.Uptime
 				}
 				//swap 没有造好的轮子，自己加的
 				swapMemory, err := mem.SwapMemory()
