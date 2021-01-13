@@ -13,13 +13,12 @@ go build .
 ```
 
 ### TODO
-- 日志记录功能
 - 外网连接状态
 - 其他算法优化
 
 ### 鸣谢
 
  - https://github.com/cppla/ServerStatus
- - https://github.com/bitcav/nitr-core
+ - https://github.com/phachon/go-logger
  - https://github.com/shirou/gopsutil
  - https://github.com/json-iterator/go

@@ -11,6 +11,7 @@ package main
 import (
 	"fmt"
 	"github.com/json-iterator/go"
+	"github.com/phachon/go-logger"
 	"io/ioutil"
 	"net"
 	"os"
@@ -195,7 +196,8 @@ func SetupCloseHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main] Ctrl+C pressed in Terminal,Stop client program")
+		logger.Info("[main] Ctrl+C pressed in Terminal,Stop client program")
+		//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main] Ctrl+C pressed in Terminal,Stop client program")
 		if mainConnect != nil {
 			if NETWORKCHECK == true {
 				pingValueCU.Stop()
@@ -217,6 +219,7 @@ var pingValueCU *PingValue
 var pingValueCT *PingValue
 var pingValueCM *PingValue
 
+
 func getCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -226,20 +229,57 @@ func getCurrentDirectory() string {
 	return dir
 }
 
+var logger *go_logger.Logger
+
 func main() {
+
+	logger = go_logger.NewLogger()
+	logger.Detach("console")
+
+	// 命令行输出配置
+	consoleConfig := &go_logger.ConsoleConfig{
+		Color: true, // 命令行输出字符串是否显示颜色
+		JsonFormat: true, // 命令行输出字符串是否格式化
+		Format: "", // 如果输出的不是 json 字符串，JsonFormat: false, 自定义输出的格式
+	}
+	// 添加 console 为 logger 的一个输出
+	logger.Attach("console", go_logger.LOGGER_LEVEL_DEBUG, consoleConfig)
+
+	// 文件输出配置
+	fileConfig := &go_logger.FileConfig {
+		Filename : "./test.log", // 日志输出文件名，不自动存在
+		// 如果要将单独的日志分离为文件，请配置LealFrimeNem参数。
+		LevelFileName : map[int]string {
+			logger.LoggerLevel("error"): "./error.log",    // Error 级别日志被写入 error .log 文件
+			logger.LoggerLevel("info"): "./info.log",      // Info 级别日志被写入到 info.log 文件中
+			logger.LoggerLevel("debug"): "./debug.log",    // Debug 级别日志被写入到 debug.log 文件中
+		},
+		MaxSize : 1024 * 1024,  // 文件最大值（KB），默认值0不限
+		MaxLine : 100000, // 文件最大行数，默认 0 不限制
+		DateSlice : "d",  // 文件根据日期切分， 支持 "Y" (年), "m" (月), "d" (日), "H" (时), 默认 "no"， 不切分
+		JsonFormat: true, // 写入文件的数据是否 json 格式化
+		Format: "", // 如果写入文件的数据不 json 格式化，自定义日志格式
+	}
+	// 添加 file 为 logger 的一个输出
+	logger.Attach("file", go_logger.LOGGER_LEVEL_DEBUG, fileConfig)
+	logger.Info(" [main]Logger init complete")
+
 	// Setup our Ctrl+C handler
 	SetupCloseHandler()
 	config := NewConfig()
 	path :=  getCurrentDirectory() + "\\config.json"
-	fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Try to load config file from %s\n",path)
+	logger.Infof(" [main]Try to load config file from %s\n",path)
+	//fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Try to load config file from %s\n",path)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Read config file error:%s\n",err)
+		logger.Alertf(" [main]Read config file error:%s\n",err)
+		//fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Read config file error:%s\n",err)
 		goto Run
 	}
 	err = jsoniter.Unmarshal(data, &config)
 	if err != nil {
-		fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Parse config file error:%s\n",err)
+		logger.Errorf(" [main]Parse config file error:%s\n",err)
+		//fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Parse config file error:%s\n",err)
 	}
 	if config.User != "" {
 		USER = config.User
@@ -308,58 +348,71 @@ func main() {
 	}
 	run = NewRunInfo()
 	run.StartGetRunInfo()
+	logger.Info("[main] Try to connect server")
 	for {
 		var err error
 		mainConnect , err = net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
 		if err != nil {
-			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error listening:", err)
+			logger.Errorf("[main]Error listening:%s\n", err)
+			//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error listening:", err)
 		}
 		defer mainConnect.Close()
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Listening done,get server info now")
+		logger.Info("[main]Listening done,get server info now")
+		//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Listening done,get server info now")
 		buff := make([]byte, 1024)
 		mainConnect.Read(buff)
 		str := bytes2str(buff)
 		if strings.Index(str,"Authentication required") > -1 {
-			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication required,send it to server")
+			logger.Info("[main]Authentication required,send it to server")
+			//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication required,send it to server")
 			auth := str2bytes(USER + ":" + PASSWORD + "\n")
 			_ , err = mainConnect.Write(auth)
 			if err != nil {
-				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error sending auth info:", err)
+				logger.Errorf("[main]Error sending auth info:", err)
+				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error sending auth info:", err)
 				return
 			}
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
+				logger.Errorf("[main]Error getting server data:", err)
+				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
 			if strings.Index(str,"Authentication required") < 0 {
 				if strings.Index(str,"Wrong username and/or password.") > -1 {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Wrong username and/or password.")
+					logger.Errorf(" [main]Wrong username and/or password.")
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Wrong username and/or password.")
 					return
 				}else if strings.Index(str,"Authentication successful. Access granted.") > -1 {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication successful. Access granted.")
+					logger.Info("[main]Authentication successful. Access granted.")
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication successful. Access granted.")
 				} else {
-					fmt.Println(str)
+					logger.Error(str)
+					//fmt.Println(str)
 					return
 				}
 			}
 		} else if strings.Index(str,"You have been banned for 1 minute (Wrong username and/or password.)") > -1{
-			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]You have been banned for 1 minute (Wrong username and/or password.)")
+			logger.Alert("[main]You have been banned for 1 minute (Wrong username and/or password.)")
+			//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]You have been banned for 1 minute (Wrong username and/or password.)")
 			return
 		} else {
+			logger.Error(str)
 			fmt.Println(str)
 		}
 		if strings.Index(str,"You are connecting via") < 0 {
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
+				logger.Errorf("[main]Error getting server data:", err)
+				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
-			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]"+str)
+			//logger.Info("[main] " + str)
+			//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]"+str)
 		}
 		//var checkIP int = 0
 		//if strings.Index(str,"IPv4") > -1 {
@@ -401,12 +454,15 @@ func main() {
 			data, err := clientInfo.MarshalToString()
 			//fmt.Println(data)
 			if err != nil {
-				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error transforming client info: ", err)
+				logger.Errorf("[main]Error transforming client info: ", err)
+				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error transforming client info: ", err)
 				break
 			}
+			logger.Info("\nInfo:\n"+data+"\n")
 			info := "update " + data + "\n"
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
+				logger.Errorf("[main]Error sending client info:", err)
 				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error sending client info:", err)
 				break
 			}

@@ -1,16 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"strings"
-	"sync"
-	"time"
-	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	nnet "github.com/shirou/gopsutil/net"
+	"strings"
+	"sync"
+	"time"
 )
 
 type Run struct {
@@ -85,7 +84,8 @@ func (run *Run) StartGetRunInfo()  {
 				run.mtx.Lock()
 				memInfo, err := mem.VirtualMemory()
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get memory usage error:",err)
+					logger.Errorf("[getInfo]Get memory usage error:",err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get memory usage error:",err)
 					run.memoryTotal = 0
 					run.memoryUsed = 0
 				} else {
@@ -95,18 +95,21 @@ func (run *Run) StartGetRunInfo()  {
 
 				totalPercent, err := cpu.Percent(time.Second, false)
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [GetInfo]Get cpu usage error:",err)
+					logger.Errorf("[getInfo]Get cpu usage error:",err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [GetInfo]Get cpu usage error:",err)
 					run.CPU = 0.0
 				} else {
 					if totalPercent != nil {
 						run.CPU = totalPercent[0]
 					} else {
-						fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get cpu usage error:",err)
+						logger.Errorf("[getInfo]Get cpu usage error:",err)
+						//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get cpu usage error:",err)
 					}
 				}
 				hInfo, err := host.Info()
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]get uptime error",err)
+					logger.Errorf("[getInfo]get uptime error",err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]get uptime error",err)
 					run.uptime = 0
 				} else {
 					run.uptime = hInfo.Uptime
@@ -114,7 +117,8 @@ func (run *Run) StartGetRunInfo()  {
 				//swap 没有造好的轮子，自己加的
 				swapMemory, err := mem.SwapMemory()
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get swap memory error:",err)
+					logger.Errorf("[getInfo]Get swap memory error:",err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getInfo]Get swap memory error:",err)
 					run.swapTotal = 0
 					run.swapUsed = 0
 				} else {
@@ -134,7 +138,8 @@ func (run *Run) StartGetRunInfo()  {
 func trafficCount()  {
 	netInfo, err := nnet.IOCounters(true)
 	if err != nil {
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [trafficCount]Getting traffic count error:",err)
+		logger.Errorf("[trafficCount]Getting traffic count error:",err)
+		//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [trafficCount]Getting traffic count error:",err)
 	}
 	var bytesSent uint64 = 0
 	var bytesRecv uint64 = 0
@@ -195,7 +200,8 @@ func getLoad() {
 	// linux or freebsd only
 	hInfo, err := host.Info()
 	if err != nil {
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getLoad]get load info error",err)
+		logger.Errorf("[getLoad]Get load info error",err)
+		//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getLoad]get load info error",err)
 		run.load1 = 0.0
 		run.load5 = 0.0
 		run.load15 = 0.0
@@ -203,7 +209,8 @@ func getLoad() {
 		if hInfo.OS == "linux" || hInfo.OS == "freebsd" {
 			l, err :=	load.Avg()
 			if err != nil {
-				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getLoad]Get CPU loads failed:",err)
+				logger.Errorf("[getLoad]Get CPU loads failed:",err)
+				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [getLoad]Get CPU loads failed:",err)
 				run.load1 = 0.0
 				run.load5 = 0.0
 				run.load15 = 0.0

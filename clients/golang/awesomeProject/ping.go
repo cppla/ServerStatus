@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -43,7 +42,8 @@ func (pingValue *PingValue) RunCU() {
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CU_ADDR,defaulttimeout)
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China unicom :", err)
+					logger.Alertf("[ping]Error try to connect China Unicom :", err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China unicom :", err)
 					lostConnect = true
 					lostPacket += 1
 				}
@@ -102,7 +102,8 @@ func (pingValue *PingValue) RunCT() {
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CT_ADDR,defaulttimeout)
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China Telecom :", err)
+					logger.Alertf("[ping]Error try to connect China Telecom :", err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China Telecom :", err)
 					lostConnect = true
 					lostPacket += 1
 				}
@@ -157,7 +158,8 @@ func (pingValue *PingValue) RunCM() {
 				t := time.Now()
 				conn , err := net.DialTimeout("tcp",CM_ADDR,defaulttimeout)
 				if err != nil {
-					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China mobile :", err)
+					logger.Alertf("[ping]Error try to connect China Mobile :", err)
+					//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [ping]Error try to connect China mobile :", err)
 					lostConnect = true
 					lostPacket += 1
 				}
