@@ -195,7 +195,7 @@ func SetupCloseHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\r[main] Ctrl+C pressed in Terminal,Stop client program")
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main] Ctrl+C pressed in Terminal,Stop client program")
 		if mainConnect != nil {
 			if NETWORKCHECK == true {
 				pingValueCU.Stop()
@@ -220,7 +220,7 @@ var pingValueCM *PingValue
 func getCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		fmt.Println("[main] Get current directory error")
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main] Get current directory error")
 		os.Exit(-1)
 	}
 	return dir
@@ -231,15 +231,15 @@ func main() {
 	SetupCloseHandler()
 	config := NewConfig()
 	path :=  getCurrentDirectory() + "\\config.json"
-	fmt.Printf("[main]Try to load config file from %s\n",path)
+	fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Try to load config file from %s\n",path)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		fmt.Printf("[main]Read config file error:%s\n",err)
+		fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Read config file error:%s\n",err)
 		goto Run
 	}
 	err = jsoniter.Unmarshal(data, &config)
 	if err != nil {
-		fmt.Printf("[main]Parse config file error:%s\n",err)
+		fmt.Printf(time.Now().Format("2006-01-02 15:04:05")+" [main]Parse config file error:%s\n",err)
 	}
 	if config.User != "" {
 		USER = config.User
@@ -312,41 +312,41 @@ func main() {
 		var err error
 		mainConnect , err = net.DialTimeout("tcp", SERVER + ":" + strconv.Itoa(PORT),defaulttimeout)
 		if err != nil {
-			fmt.Println("[main]Error listening:", err)
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error listening:", err)
 		}
 		defer mainConnect.Close()
-		fmt.Println("[main]Listening done,get server info now")
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Listening done,get server info now")
 		buff := make([]byte, 1024)
 		mainConnect.Read(buff)
 		str := bytes2str(buff)
 		if strings.Index(str,"Authentication required") > -1 {
-			fmt.Println("[main]Authentication required,send it to server")
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication required,send it to server")
 			auth := str2bytes(USER + ":" + PASSWORD + "\n")
 			_ , err = mainConnect.Write(auth)
 			if err != nil {
-				fmt.Println("[main]Error sending auth info:", err)
+				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error sending auth info:", err)
 				return
 			}
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("[main]Error getting server data:", err)
+				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
 			if strings.Index(str,"Authentication required") < 0 {
 				if strings.Index(str,"Wrong username and/or password.") > -1 {
-					fmt.Println("[main]Wrong username and/or password.")
+					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Wrong username and/or password.")
 					return
 				}else if strings.Index(str,"Authentication successful. Access granted.") > -1 {
-					fmt.Println("[main]Authentication successful. Access granted.")
+					fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Authentication successful. Access granted.")
 				} else {
 					fmt.Println(str)
 					return
 				}
 			}
 		} else if strings.Index(str,"You have been banned for 1 minute (Wrong username and/or password.)") > -1{
-			fmt.Println("[main]You have been banned for 1 minute (Wrong username and/or password.)")
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]You have been banned for 1 minute (Wrong username and/or password.)")
 			return
 		} else {
 			fmt.Println(str)
@@ -355,11 +355,11 @@ func main() {
 			buff = make([]byte, 1024)
 			_ , err = mainConnect.Read(buff)
 			if err != nil {
-				fmt.Println("[main]Error getting server data:", err)
+				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error getting server data:", err)
 				return
 			}
 			str = bytes2str(buff)
-			fmt.Println("[main]"+str)
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]"+str)
 		}
 		//var checkIP int = 0
 		//if strings.Index(str,"IPv4") > -1 {
@@ -401,13 +401,13 @@ func main() {
 			data, err := clientInfo.MarshalToString()
 			//fmt.Println(data)
 			if err != nil {
-				fmt.Println("[main]Error transforming client info: ", err)
+				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error transforming client info: ", err)
 				break
 			}
 			info := "update " + data + "\n"
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
-				fmt.Println("[main]Error sending client info:", err)
+				fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error sending client info:", err)
 				break
 			}
 		}

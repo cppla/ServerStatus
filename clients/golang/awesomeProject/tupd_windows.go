@@ -8,13 +8,14 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 func tupd()  {
 	cmd ,err := Command("cmd","/c netstat -an|find \"TCP\" /c")
 	if err != nil {
 		clientInfo.TCP = 0
-		fmt.Println("[tupd]Get TCP count error:",err)
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [tupd]Get TCP count error:",err)
 	} else {
 		byte1, err := cmd.Output()
 		result := bytes2str(byte1)
@@ -22,14 +23,14 @@ func tupd()  {
 		result = strings.Replace(result, "\n", "", -1)
 		intNum, err := strconv.Atoi(result)
 		if err != nil {
-			fmt.Println("[tupd]Get TCP count error:",err)
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [tupd]Get TCP count error:",err)
 		}
 		clientInfo.TCP = uint64(intNum)
 	}
 	cmd2 ,err := Command("cmd", "/c netstat -an|find \"UDP\" /c")
 	if err != nil {
 		clientInfo.UDP = 0
-		fmt.Println("[tupd]Get UDP count error:",err)
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [tupd]Get UDP count error:",err)
 	} else {
 		byte2, err := cmd2.Output()
 		result := bytes2str(byte2)
@@ -37,13 +38,13 @@ func tupd()  {
 		result = strings.Replace(result, "\n", "", -1)
 		intNum, err := strconv.Atoi(result)
 		if err != nil {
-			fmt.Println("[tupd]Get UDP count error:",err)
+			fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [tupd]Get UDP count error:",err)
 		}
 		clientInfo.UDP = uint64(intNum)
 	}
 	pids, err := process.Processes()
 	if err != nil {
-		fmt.Println("[tupd]Get process count error:",err)
+		fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [tupd]Get process count error:",err)
 	} else {
 		clientInfo.Process = uint64(len(pids))
 	}

@@ -46,7 +46,7 @@ func (netSpeed *NetSpeed) Run()  {
 					var bytesRecv uint64 = 0
 					netInfo, err := nnet.IOCounters(true)
 					if err != nil {
-						fmt.Println("Get network speed error:",err)
+						fmt.Println(time.Now().Format("2006-01-02 15:04:05")," Get network speed error:",err)
 					}
 					for _, v := range netInfo {
 						if strings.Index(v.Name,"lo") > -1 ||
