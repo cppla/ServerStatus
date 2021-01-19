@@ -187,8 +187,12 @@ func spaceCount() {
 				continue
 			} else {
 				diskUsageOf, _ := disk.Usage(d.Mountpoint)
-				used += diskUsageOf.Used
-				total += diskUsageOf.Total
+				path := diskUsageOf.Path
+				//不统计K8s的虚拟挂载点，see here：https://github.com/shirou/gopsutil/issues/1007
+				if !strings.Contains(path,"/var/lib/kubelet") {
+					used += diskUsageOf.Used
+					total += diskUsageOf.Total
+				}
 			}
 		}
 	}

@@ -458,7 +458,7 @@ func main() {
 				//fmt.Println(time.Now().Format("2006-01-02 15:04:05")," [main]Error transforming client info: ", err)
 				break
 			}
-			logger.Info("\nInfo:\n"+data+"\n")
+			//logger.Info("\nInfo:\n"+data+"\n")
 			info := "update " + data + "\n"
 			_ , err = mainConnect.Write(str2bytes(info))
 			if err != nil {
