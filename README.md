@@ -20,15 +20,16 @@
 
 【服务端】：
 ```bash
+`x86_64`: docker pull cppla/serverstatus:latest
+`arm64`: docker pull cppla/serverstatus:arm 
+
+
 wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
 docker run -d --restart=always --name=serverstatus -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 cppla/serverstatus:latest
 
 eg:
 docker run -d --restart=always --name=serverstatus -v ~/config.json:/ServerStatus/server/config.json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
-
-
-`x86_64`: docker pull cppla/serverstatus:latest
-`arm64`: docker pull cppla/serverstatus:arm  
+ 
 ```
 
 【客户端】：
