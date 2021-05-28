@@ -14,29 +14,21 @@
 * autodeploy    自动部署.
 * clients       客户端文件
 * server        服务端文件
-* web           网站文件  
-
-# 更新说明：
-
-* 20200629, 优化IPv6,优化前端。注意docker默认是不支持IPv6的, 如使用docker需要手动开启ipv6        
-* 20200407, 网速计算不严谨，fixed    
-* 20190129, 降低CPU占用            
-* 20181221, 增加实时到三网的延迟       
-* 20181126, add tupd(tcp, udp, process ,thread) count for view ddcc attack    
-* 20180829, 网络情况：主机到三网(CU,CT,CM)每小时丢包率的检测
-* 20180726, 一切皆容器额,查看自动部署或autodeploy/readme
-* 20180312, 加入失联(被照顾)检测【正常：MH361, 屏蔽：MH370】，校准虚拟化流量统计异常　　　　　　
-* 20170807, 更新平均1，5，15负载, 增加服务器总流量监控                           
+* web           网站文件                            
 
 # 自动部署：
 
 【服务端】：
 ```bash
 wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
-docker run -d --restart=always --name=serverstatus -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 cppla/serverstatus
+docker run -d --restart=always --name=serverstatus -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 cppla/serverstatus:latest
 
 eg:
-docker run -d --restart=always --name=serverstatus -v ~/config.json:/ServerStatus/server/config.json -p 80:80 -p 35601:35601 cppla/serverstatus
+docker run -d --restart=always --name=serverstatus -v ~/config.json:/ServerStatus/server/config.json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
+
+
+`x86_64`: docker pull cppla/serverstatus:latest
+`arm64`: docker pull cppla/serverstatus:arm  
 ```
 
 【客户端】：
