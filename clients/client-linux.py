@@ -15,6 +15,7 @@ PORT = 35601
 PASSWORD = "USER_DEFAULT_PASSWORD"
 INTERVAL = 1
 PORBEPORT = 80
+PING_PACKET_HISTORY_LEN = 100
 CU = "cu.tz.cloudcpp.com"
 CT = "ct.tz.cloudcpp.com"
 CM = "cm.tz.cloudcpp.com"
@@ -28,6 +29,10 @@ import sys
 import json
 import subprocess
 import threading
+try:
+    from queue import Queue     # python3
+except ImportError:
+    from Queue import Queue     # python2
 
 def get_uptime():
     with open('/proc/uptime', 'r') as f:
@@ -156,27 +161,23 @@ netSpeed = {
 
 def _ping_thread(host, mark, port):
     lostPacket = 0
-    allPacket = 0
-    startTime = time.time()
+    packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
 
     while True:
+        if packet_queue.full():
+            if packet_queue.get() == 0:
+                lostPacket -= 1
         try:
             b = timeit.default_timer()
             socket.create_connection((host, port), timeout=1).close()
             pingTime[mark] = int((timeit.default_timer()-b)*1000)
+            packet_queue.put(1)
         except:
             lostPacket += 1
-        finally:
-            allPacket += 1
+            packet_queue.put(0)
 
-        if allPacket > 100:
-            lostRate[mark] = float(lostPacket) / allPacket
-
-        endTime = time.time()
-        if endTime - startTime > 3600:
-            lostPacket = 0
-            allPacket = 0
-            startTime = endTime
+        if packet_queue.qsize() > 30:
+            lostRate[mark] = float(lostPacket) / packet_queue.qsize()
 
         time.sleep(INTERVAL)
 
