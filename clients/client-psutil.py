@@ -168,9 +168,14 @@ def _ping_thread(host, mark, port):
             socket.create_connection((IP, port), timeout=1).close()
             pingTime[mark] = int((timeit.default_timer() - b) * 1000)
             packet_queue.put(1)
-        except:
-            lostPacket += 1
-            packet_queue.put(0)
+        except socket.error as error:
+            if error.errno == errno.ECONNREFUSED:
+                pingTime[mark] = int((timeit.default_timer() - b) * 1000)
+                packet_queue.put(1)
+            #elif error.errno == errno.ETIMEDOUT:
+            else:
+                lostPacket += 1
+                packet_queue.put(0)
 
         if packet_queue.qsize() > 30:
             lostRate[mark] = float(lostPacket) / packet_queue.qsize()
