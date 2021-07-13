@@ -26,10 +26,10 @@ import socket
 import time
 import timeit
 import os
-import json
-import psutil
 import sys
-import threading
+import json
+import errno
+import psutil
 import threading
 try:
     from queue import Queue     # python3
