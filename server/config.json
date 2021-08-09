@@ -5,7 +5,7 @@
 			"name": "node1",
 			"type": "xen",
 			"host": "host1",
-			"location": "cn",
+			"location": "🇨🇳",
 			"password": "USER_DEFAULT_PASSWORD"
 		},
 		{
@@ -13,7 +13,7 @@
 			"name": "node2",
 			"type": "vmware",
 			"host": "host2",
-			"location": "jp",
+			"location": "🇯🇵",
 			"password": "USER_DEFAULT_PASSWORD"
 		},
 		{
@@ -22,7 +22,7 @@
 			"name": "node3",
 			"type": "Nothing",
 			"host": "host3",
-			"location": "fr",
+			"location": "🇫🇷",
 			"password": "USER_DEFAULT_PASSWORD"
 		},
 		{
@@ -30,7 +30,7 @@
 			"name": "node4",
 			"type": "kvm",
 			"host": "host4",
-			"location": "kr",
+			"location": "🇰🇷",
 			"password": "USER_DEFAULT_PASSWORD"
 		}
 	]
