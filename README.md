@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
 [![Version](https://img.shields.io/badge/Version-Beta%201.0.2-red)](https://github.com/cppla/ServerStatus)
 
-![Latest Version](http://dl.cpp.la/Archive/serverstatus.png)
+![Latest Version](http://dl.cpp.la/Archive/serverstatus-1.0.2.png)
 
 # 目录介绍：
 
