@@ -46,13 +46,7 @@ function bytesToSize(bytes, precision, si)
 		var terabyte = gigabyte * 1024;
 	}
 
-	if ((bytes >= 0) && (bytes < kilobyte)) {
-		return bytes + ' B';
-
-	} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
-		ret = (bytes / kilobyte).toFixed(precision) + ' K';
-
-	} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+	if ((bytes >= megabyte) && (bytes < gigabyte)) {
 		ret = (bytes / megabyte).toFixed(precision) + ' M';
 
 	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
@@ -133,16 +127,6 @@ function uptime() {
 				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>关闭</small>";
 			}
 
-			// Ipstatus
-			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
-			// if (result.servers[i].ip_status) {
-			// 	TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-			// 	TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
-			// } else {
-			// 	TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-			// 	TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH370</small>";
-			// }
-
 			// Name
 			TableRow.children["name"].innerHTML = result.servers[i].name;
 
@@ -185,17 +169,13 @@ function uptime() {
 
 				// month traffic
 				var monthtraffic = "";
-				if(result.servers[i].last_network_in < 1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_in/1024/1024).toFixed(1) + "M";
-				else if(result.servers[i].last_network_in < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(2) + "G";
+				if(result.servers[i].last_network_in < 1024*1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(3) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				monthtraffic += " | "
-				if(result.servers[i].last_network_out < 1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_out/1024/1024).toFixed(1) + "M";
-				else if(result.servers[i].last_network_out < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(2) + "G";
+				if(result.servers[i].last_network_out < 1024*1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(3) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
@@ -230,17 +210,13 @@ function uptime() {
 
 				//Traffic
 				var trafficstr = "";
-				if(result.servers[i].network_in < 1024*1024*1024)
-					trafficstr += (result.servers[i].network_in/1024/1024).toFixed(1) + "M";
-				else if(result.servers[i].network_in < 1024*1024*1024*1024)
-					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
+				if(result.servers[i].network_in < 1024*1024*1024*1024)
+					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(3) + "G";
                 else
                     trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				trafficstr += " | "
-				if(result.servers[i].network_out < 1024*1024*1024)
-					trafficstr += (result.servers[i].network_out/1024/1024).toFixed(1) + "M";
-				else if(result.servers[i].network_out < 1024*1024*1024*1024)
-				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
+				if(result.servers[i].network_out < 1024*1024*1024*1024)
+				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(3) + "G";
 				else
 					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["traffic"].innerHTML = trafficstr;
@@ -292,7 +268,7 @@ function uptime() {
                 var PING_189 = result.servers[i].ping_189.toFixed(0);
                 var PING_10086 = result.servers[i].ping_10086.toFixed(0);
                 if (PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20)
-                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
+                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-warning";
                 else
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-success";
 	            TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%💻" + PING_189 + "%💻" + PING_10086 + "%";
