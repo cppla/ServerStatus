@@ -199,7 +199,7 @@ function uptime() {
 				else
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>monthtraffic</small>";
+				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>>";
 
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
