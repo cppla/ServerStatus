@@ -119,16 +119,9 @@ sudo pip3 install psutil
 
 打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python3 client-linux.py &  
 
-# 为什么会有ServerStatus中文版：
+# 相关开源项目： 
 
-* 有些功能确实没用
-* 原版本部署，英文说明复杂
-* 不符合中文版的习惯
-* 没有一次又一次的轮子，哪来如此优秀的云探针
-
-# 相关开源项目，感谢： 
-
-* ServerStatus：https://github.com/BotoX/ServerStatus
+* BotoX：https://github.com/BotoX/ServerStatus
 * mojeda: https://github.com/mojeda 
 * mojeda's ServerStatus: https://github.com/mojeda/ServerStatus
 * BlueVM's project: http://www.lowendtalk.com/discussion/comment/169690#Comment_169690
