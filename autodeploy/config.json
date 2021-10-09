@@ -6,7 +6,8 @@
 			"type": "xen",
 			"host": "host1",
 			"location": "🇨🇳",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"monthstart": 1
 		},
 		{
 			"username": "s02",
@@ -14,7 +15,8 @@
 			"type": "vmware",
 			"host": "host2",
 			"location": "🇯🇵",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"monthstart": 1
 		},
 		{
 			"disabled": true,
@@ -23,15 +25,17 @@
 			"type": "Nothing",
 			"host": "host3",
 			"location": "🇫🇷",
-			"password": "USER_DEFAULT_PASSWORD"
+			"password": "USER_DEFAULT_PASSWORD",
+			"monthstart": 1
 		},
 		{
 			"username": "s04",
-			"name": "ssss",
-			"type": "ssss",
-			"host": "ssss",
-			"location": "🇺🇸",
-			"password": "USER_DEFAULT_PASSWORD"
+			"name": "node4",
+			"type": "kvm",
+			"host": "host4",
+			"location": "🇰🇷",
+			"password": "USER_DEFAULT_PASSWORD",
+			"monthstart": 5
 		}
 	]
 }

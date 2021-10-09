@@ -1,4 +1,5 @@
-FROM debian:latest as builder
+# the Dockerfile is for build git repo
+FROM debian:buster as builder
 
 MAINTAINER cppla https://cpp.la
 

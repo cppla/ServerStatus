@@ -75,7 +75,7 @@ function uptime() {
 	$.getJSON("json/stats.json", function(result) {
 		$("#loading-notice").remove();
 		if(result.reload)
-			setTimeout(function() { location.reload(true) }, 1000);
+			setTimeout(function() { location.reload() }, 1000);
 
 		for (var i = 0, rlen=result.servers.length; i < rlen; i++) {
 			var TableRow = $("#servers tr#r" + i);
@@ -145,10 +145,10 @@ function uptime() {
 			// Ipstatus
 			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
 			if (result.servers[i].ip_status) {
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
 				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
 			} else {
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-danger";
+				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
 				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH370</small>";
 			}
 

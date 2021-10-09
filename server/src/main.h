@@ -36,6 +36,10 @@ class CMain
 		char m_aHost[128];
 		char m_aLocation[128];
 		char m_aPassword[128];
+        int m_aMonthStart;          //track month network traffic. by: https://cpp.la
+
+        int64_t m_LastNetworkIN;    //last network traffic in record.
+        int64_t m_LastNetworkOUT;   //last network traffic out record.
 
 		int64 m_TimeConnected;
 		int64 m_LastUpdate;
