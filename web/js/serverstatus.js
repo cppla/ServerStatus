@@ -144,13 +144,13 @@ function uptime() {
 
 			// Ipstatus
 			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
-			if (result.servers[i].ip_status) {
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
-			} else {
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH370</small>";
-			}
+			// if (result.servers[i].ip_status) {
+			// 	TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
+			// 	TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH361</small>";
+			// } else {
+			// 	TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
+			// 	TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>MH370</small>";
+			// }
 
 			// Name
 			TableRow.children["name"].innerHTML = result.servers[i].name;
@@ -189,6 +189,31 @@ function uptime() {
 					TableRow.setAttribute("data-target", "#rt" + i);
 					server_status[i] = true;
 				}
+
+				// month traffic
+				var monthtraffic = "";
+				if(result.servers[i].last_network_in < 1024)
+					monthtraffic += result.servers[i].last_network_in.toFixed(0) + "B";
+				else if(result.servers[i].last_network_in < 1024*1024)
+					monthtraffic += (result.servers[i].last_network_in/1024).toFixed(0) + "K";
+				else if(result.servers[i].last_network_in < 1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_in/1024/1024).toFixed(1) + "M";
+				else if(result.servers[i].last_network_in < 1024*1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(2) + "G";
+				else
+					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024/1024).toFixed(2) + "T";
+				monthtraffic += " | "
+				if(result.servers[i].last_network_out < 1024)
+					monthtraffic += result.servers[i].last_network_out.toFixed(0) + "B";
+				else if(result.servers[i].last_network_out < 1024*1024)
+					monthtraffic += (result.servers[i].last_network_out/1024).toFixed(0) + "K";
+				else if(result.servers[i].last_network_out < 1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_out/1024/1024).toFixed(1) + "M";
+				else if(result.servers[i].last_network_out < 1024*1024*1024*1024)
+					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(2) + "G";
+				else
+					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
+				TableRow.children["ip_status"].innerHTML = monthtraffic;
 
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
