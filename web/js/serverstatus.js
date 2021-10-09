@@ -8,10 +8,7 @@ function timeSince(date) {
 		return "从未.";
 
 	var seconds = Math.floor((new Date() - date) / 1000);
-	var interval = Math.floor(seconds / 3600);
-	if (interval > 1)
-		return interval + " 小时前.";
-	interval = Math.floor(seconds / 60);
+	var interval = Math.floor(seconds / 60);
 	if (interval > 1)
 		return interval + " 分钟前.";
 	else
@@ -156,12 +153,12 @@ function uptime() {
 				// month traffic
 				var monthtraffic = "";
 				if(result.servers[i].last_network_in < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(3) + "G";
+					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(2) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				monthtraffic += " | "
 				if(result.servers[i].last_network_out < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(3) + "G";
+					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(2) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar";
@@ -193,12 +190,12 @@ function uptime() {
 				//Traffic
 				var trafficstr = "";
 				if(result.servers[i].network_in < 1024*1024*1024*1024)
-					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(3) + "G";
+					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
                 else
                     trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				trafficstr += " | "
 				if(result.servers[i].network_out < 1024*1024*1024*1024)
-				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(3) + "G";
+				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
 				else
 					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["traffic"].innerHTML = trafficstr;
