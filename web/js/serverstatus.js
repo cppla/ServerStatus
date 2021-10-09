@@ -133,15 +133,6 @@ function uptime() {
 				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>关闭</small>";
 			}
 
-			// Online6
-			//if (result.servers[i].online6) {
-			//	TableRow.children["online6"].children[0].children[0].className = "progress-bar progress-bar-success";
-			//	TableRow.children["online6"].children[0].children[0].innerHTML = "<small>开启</small>";
-			//} else {
-			//	TableRow.children["online6"].children[0].children[0].className = "progress-bar progress-bar-danger";
-			//	TableRow.children["online6"].children[0].children[0].innerHTML = "<small>关闭</small>";
-			//}
-
 			// Ipstatus
 			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world.
 			// if (result.servers[i].ip_status) {
@@ -166,6 +157,8 @@ function uptime() {
 					TableRow.children["load"].innerHTML = "–";
 					TableRow.children["network"].innerHTML = "–";
 					TableRow.children["traffic"].innerHTML = "–";
+					TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-warning";
+					TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>关闭</small>";
 					TableRow.children["cpu"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["cpu"].children[0].children[0].style.width = "100%";
 					TableRow.children["cpu"].children[0].children[0].innerHTML = "<small>关闭</small>";
@@ -192,28 +185,21 @@ function uptime() {
 
 				// month traffic
 				var monthtraffic = "";
-				if(result.servers[i].last_network_in < 1024)
-					monthtraffic += result.servers[i].last_network_in.toFixed(0) + "B";
-				else if(result.servers[i].last_network_in < 1024*1024)
-					monthtraffic += (result.servers[i].last_network_in/1024).toFixed(0) + "K";
-				else if(result.servers[i].last_network_in < 1024*1024*1024)
+				if(result.servers[i].last_network_in < 1024*1024*1024)
 					monthtraffic += (result.servers[i].last_network_in/1024/1024).toFixed(1) + "M";
 				else if(result.servers[i].last_network_in < 1024*1024*1024*1024)
 					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(2) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				monthtraffic += " | "
-				if(result.servers[i].last_network_out < 1024)
-					monthtraffic += result.servers[i].last_network_out.toFixed(0) + "B";
-				else if(result.servers[i].last_network_out < 1024*1024)
-					monthtraffic += (result.servers[i].last_network_out/1024).toFixed(0) + "K";
-				else if(result.servers[i].last_network_out < 1024*1024*1024)
+				if(result.servers[i].last_network_out < 1024*1024*1024)
 					monthtraffic += (result.servers[i].last_network_out/1024/1024).toFixed(1) + "M";
 				else if(result.servers[i].last_network_out < 1024*1024*1024*1024)
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(2) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
-				TableRow.children["ip_status"].innerHTML = monthtraffic;
+				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
+				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>monthtraffic</small>";
 
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
@@ -244,22 +230,14 @@ function uptime() {
 
 				//Traffic
 				var trafficstr = "";
-				if(result.servers[i].network_in < 1024)
-					trafficstr += result.servers[i].network_in.toFixed(0) + "B";
-				else if(result.servers[i].network_in < 1024*1024)
-					trafficstr += (result.servers[i].network_in/1024).toFixed(0) + "K";
-				else if(result.servers[i].network_in < 1024*1024*1024)
+				if(result.servers[i].network_in < 1024*1024*1024)
 					trafficstr += (result.servers[i].network_in/1024/1024).toFixed(1) + "M";
 				else if(result.servers[i].network_in < 1024*1024*1024*1024)
 					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
                 else
                     trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
 				trafficstr += " | "
-				if(result.servers[i].network_out < 1024)
-					trafficstr += result.servers[i].network_out.toFixed(0) + "B";
-				else if(result.servers[i].network_out < 1024*1024)
-					trafficstr += (result.servers[i].network_out/1024).toFixed(0) + "K";
-				else if(result.servers[i].network_out < 1024*1024*1024)
+				if(result.servers[i].network_out < 1024*1024*1024)
 					trafficstr += (result.servers[i].network_out/1024/1024).toFixed(1) + "M";
 				else if(result.servers[i].network_out < 1024*1024*1024*1024)
 				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
@@ -337,8 +315,6 @@ function uptime() {
 				var ExpandRow = $("#servers #rt" + i);
 				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>错误</small>";
-				//TableRow.children["online6"].children[0].children[0].className = "progress-bar progress-bar-error";
-				//TableRow.children["online6"].children[0].children[0].innerHTML = "<small>错误</small>";
 				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>错误</small>";
 				TableRow.children["uptime"].children[0].children[0].className = "progress-bar progress-bar-error";
