@@ -1,4 +1,4 @@
-// serverstatus.js
+// serverstatus.js. big data boom today.
 var error = 0;
 var d = 0;
 var server_status = new Array();
@@ -8,24 +8,12 @@ function timeSince(date) {
 		return "从未.";
 
 	var seconds = Math.floor((new Date() - date) / 1000);
-	var interval = Math.floor(seconds / 31536000);
-
-	if (interval > 1)
-		return interval + " 年前.";
-	interval = Math.floor(seconds / 2592000);
-	if (interval > 1)
-		return interval + " 月前.";
-	interval = Math.floor(seconds / 86400);
-	if (interval > 1)
-		return interval + " 日前.";
-	interval = Math.floor(seconds / 3600);
+	var interval = Math.floor(seconds / 3600);
 	if (interval > 1)
 		return interval + " 小时前.";
 	interval = Math.floor(seconds / 60);
 	if (interval > 1)
 		return interval + " 分钟前.";
-	/*if(Math.floor(seconds) >= 5)
-		return Math.floor(seconds) + " seconds";*/
 	else
 		return "几秒前.";
 }
@@ -35,13 +23,11 @@ function bytesToSize(bytes, precision, si)
 	var ret;
 	si = typeof si !== 'undefined' ? si : 0;
 	if(si != 0) {
-		var kilobyte = 1000;
-		var megabyte = kilobyte * 1000;
+		var megabyte = 1000 * 1000;
 		var gigabyte = megabyte * 1000;
 		var terabyte = gigabyte * 1000;
 	} else {
-		var kilobyte = 1024;
-		var megabyte = kilobyte * 1024;
+		var megabyte = 1024 * 1024;
 		var gigabyte = megabyte * 1024;
 		var terabyte = gigabyte * 1024;
 	}
@@ -79,8 +65,8 @@ function uptime() {
 			if (!TableRow.length) {
 				$("#servers").append(
 					"<tr id=\"r" + i + "\" data-toggle=\"collapse\" data-target=\"#rt" + i + "\" class=\"accordion-toggle " + hack + "\">" +
-						"<td id=\"online4\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
-						"<td id=\"ip_status\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
+						"<td id=\"online_status\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
+						"<td id=\"month_traffic\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"name\">加载中</td>" +
 						"<td id=\"type\">加载中</td>" +
 						"<td id=\"location\">加载中</td>" +
@@ -112,19 +98,19 @@ function uptime() {
 				server_status[i] = true;
 			}
 
-			// Online4
+			// online_status
 			if (result.servers[i].online4 && !result.servers[i].online6) {
-				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>IPv4</small>";
+				TableRow.children["online_status"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["online_status"].children[0].children[0].innerHTML = "<small>IPv4</small>";
 			} else if (result.servers[i].online4 && result.servers[i].online6) {
-				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>双栈</small>";
+				TableRow.children["online_status"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["online_status"].children[0].children[0].innerHTML = "<small>双栈</small>";
 			} else if (!result.servers[i].online4 && result.servers[i].online6) {
-			    TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>IPv6</small>";
+			    TableRow.children["online_status"].children[0].children[0].className = "progress-bar progress-bar-success";
+				TableRow.children["online_status"].children[0].children[0].innerHTML = "<small>IPv6</small>";
 			} else {
-				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-danger";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>关闭</small>";
+				TableRow.children["online_status"].children[0].children[0].className = "progress-bar progress-bar-danger";
+				TableRow.children["online_status"].children[0].children[0].innerHTML = "<small>关闭</small>";
 			}
 
 			// Name
@@ -141,8 +127,8 @@ function uptime() {
 					TableRow.children["load"].innerHTML = "–";
 					TableRow.children["network"].innerHTML = "–";
 					TableRow.children["traffic"].innerHTML = "–";
-					TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-warning";
-					TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>关闭</small>";
+					TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-warning";
+					TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>关闭</small>";
 					TableRow.children["cpu"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["cpu"].children[0].children[0].style.width = "100%";
 					TableRow.children["cpu"].children[0].children[0].innerHTML = "<small>关闭</small>";
@@ -178,8 +164,8 @@ function uptime() {
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(3) + "G";
 				else
 					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>>";
+				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar";
+				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>";
 
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
@@ -193,17 +179,13 @@ function uptime() {
 
 				// Network
 				var netstr = "";
-				if(result.servers[i].network_rx < 1024)
-					netstr += result.servers[i].network_rx.toFixed(0) + "B";
-				else if(result.servers[i].network_rx < 1024*1024)
-					netstr += (result.servers[i].network_rx/1024).toFixed(0) + "K";
+				if(result.servers[i].network_rx < 1024*1024)
+					netstr += (result.servers[i].network_rx/1024).toFixed(2) + "K";
 				else
 					netstr += (result.servers[i].network_rx/1024/1024).toFixed(1) + "M";
 				netstr += " | "
-				if(result.servers[i].network_tx < 1024)
-					netstr += result.servers[i].network_tx.toFixed(0) + "B";
-				else if(result.servers[i].network_tx < 1024*1024)
-					netstr += (result.servers[i].network_tx/1024).toFixed(0) + "K";
+				if(result.servers[i].network_tx < 1024*1024)
+					netstr += (result.servers[i].network_tx/1024).toFixed(2) + "K";
 				else
 					netstr += (result.servers[i].network_tx/1024/1024).toFixed(1) + "M";
 				TableRow.children["network"].innerHTML = netstr;
@@ -289,10 +271,10 @@ function uptime() {
 			$("#servers > tr.accordion-toggle").each(function(i) {
 				var TableRow = $("#servers tr#r" + i)[0];
 				var ExpandRow = $("#servers #rt" + i);
-				TableRow.children["online4"].children[0].children[0].className = "progress-bar progress-bar-error";
-				TableRow.children["online4"].children[0].children[0].innerHTML = "<small>错误</small>";
-				TableRow.children["ip_status"].children[0].children[0].className = "progress-bar progress-bar-error";
-				TableRow.children["ip_status"].children[0].children[0].innerHTML = "<small>错误</small>";
+				TableRow.children["online_status"].children[0].children[0].className = "progress-bar progress-bar-error";
+				TableRow.children["online_status"].children[0].children[0].innerHTML = "<small>错误</small>";
+				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-error";
+				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>错误</small>";
 				TableRow.children["uptime"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["uptime"].children[0].children[0].innerHTML = "<small>错误</small>";
 				TableRow.children["load"].children[0].children[0].className = "progress-bar progress-bar-error";
