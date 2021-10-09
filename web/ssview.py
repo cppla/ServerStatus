@@ -1,25 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
-# Update by : https://github.com/cppla/ServerStatus
-# 支持Python版本：2.7 to 3.8; requirements.txt: requests, PrettyTable
-# 时间: 20210714， 主要是为了受到CC attack时候方便查看机器状态 && 程序在非gui环境下目前有闪屏的bug
-
-"""
-ServerStatus in console or shell, demo:
-+--------+----------+--------+----------+------+-------------+-----------------+--------+------+------+
-| Flight |  节点名  |  位置  | 在线时间 | 负载 |     网络    |       流量      | 处理器 | 内存 | 硬盘 |
-+--------+----------+--------+----------+------+-------------+-----------------+--------+------+------+
-| MH361  |  微软云  |  香港  |  50 天   | 0.11 | 0.00M|0.00M | 195.93G|173.64G |   0%   | 28%  | 29%  |
-| MH361  |  腾讯云  |  香港  |  50 天   | 0.38 | 0.00M|0.00M |  51.89G|58.95G  |   2%   | 18%  | 34%  |
-| MH361  |  微软云  | 新加坡 |  14 天   | 0.13 | 0.00M|0.00M |  17.28G|10.24G  |   1%   | 20%  |  5%  |
-| MH361  | 甲骨文1  |  春川  |  61 天   | 0.0  | 0.00M|0.00M |   8.90G|10.20G  |   0%   | 25%  |  5%  |
-| MH361  | 甲骨文2  |  春川  |  61 天   | 0.0  | 0.00M|0.00M |  11.82G|13.71G  |   0%   | 16%  |  5%  |
-| MH370  | 甲骨文3  |  春川  |    -     |  -   |      -      |        -        |   -    |  -   |  -   |
-| MH361  | cdn-aws1 |  edge  |   2 天   | 0.0  | 0.00M|0.00M |   5.33G|5.83G   |   0%   | 24%  | 10%  |
-| MH361  | cdn-aws2 |  edge  |   1 天   | 0.03 | 0.01M|0.01M |   9.47G|4.97G   |   0%   | 17%  | 18%  |
-| MH361  | cdn-aws3 |  edge  |   2 天   | 0.0  | 0.00M|0.00M |   3.73G|2.27G   |   0%   | 21%  |  8%  |
-+--------+----------+--------+----------+------+-------------+-----------------+--------+------+------+
-"""
+# Update by : https://github.com/cppla/ServerStatus, Update date: 20211009
+# 支持Python版本：2.7 to 3.9; requirements.txt: requests, PrettyTable
+# 主要是为了受到CC attack时候方便查看机器状态
 
 import os
 import sys
@@ -43,14 +26,13 @@ def sscmd(address):
 
         ss = PrettyTable(
             [
-                "Flight",
+                "月流量 ↓|↑",
                 "节点名",
-                # "虚拟化",
                 "位置",
                 "在线时间",
                 "负载",
-                "网络",
-                "流量",
+                "网络 ↓|↑",
+                "总流量 ↓|↑",
                 "处理器",
                 "内存",
                 "硬盘"
@@ -60,9 +42,8 @@ def sscmd(address):
             if i["online4"] is False and i["online6"] is False:
                 ss.add_row(
                     [
-                        'MH370',
+                        '0.00G',
                         "%s" % i["name"],
-                        # "%s" % i["type"],
                         "%s" % i["location"],
                         '-',
                         '-',
@@ -76,7 +57,7 @@ def sscmd(address):
             else:
                 ss.add_row(
                     [
-                        "%s" % 'MH361' if i["ip_status"] is True else 'MH370',
+                        "%.2fG|%.2fG" % (float(i["last_network_in"]) / 1024 / 1024 / 1024, float(i["last_network_out"]) / 1024 / 1024 / 1024),
                         "%s" % i["name"],
                         # "%s" % i["type"],
                         "%s" % i["location"],

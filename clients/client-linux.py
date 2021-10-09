@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Update by : https://github.com/cppla/ServerStatus
-# 支持Python版本：2.7 to 3.9
+# Update by : https://github.com/cppla/ServerStatus, Update date: 20211009
+# 版本：1.0.2, 支持Python版本：2.7 to 3.9
 # 支持操作系统： Linux, OSX, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# 时间: 20211009
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
 SERVER = "127.0.0.1"
