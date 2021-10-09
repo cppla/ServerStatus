@@ -38,9 +38,8 @@ class CMain
 		char m_aPassword[128];
         int m_aMonthStart;          //track month network traffic. by: https://cpp.la
 
-        int64_t m_LastNetworkIN;    //last network traffic in record.
-        int64_t m_LastNetworkOUT;   //last network traffic out record.
-
+        int64_t m_LastNetworkIN;
+        int64_t m_LastNetworkOUT;
 		int64 m_TimeConnected;
 		int64 m_LastUpdate;
 
@@ -48,7 +47,8 @@ class CMain
 		{
 			bool m_Online4;
 			bool m_Online6;
-			bool m_IpStatus;    //mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world. by:cpp.la
+			// bool m_IpStatus， delete ip_status check, Duplicate packet loss rate detection
+			// mh361 or mh370, mourn mh370, 2014-03-08 01:20　lost from all over the world. by:https://cpp.la
 			int64_t m_Uptime;
 			double m_Load_1;
 			double m_Load_5;
