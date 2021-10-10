@@ -177,12 +177,12 @@ function uptime() {
 				// Network
 				var netstr = "";
 				if(result.servers[i].network_rx < 1024*1024)
-					netstr += (result.servers[i].network_rx/1024).toFixed(2) + "K";
+					netstr += (result.servers[i].network_rx/1024).toFixed(1) + "K";
 				else
 					netstr += (result.servers[i].network_rx/1024/1024).toFixed(1) + "M";
 				netstr += " | "
 				if(result.servers[i].network_tx < 1024*1024)
-					netstr += (result.servers[i].network_tx/1024).toFixed(2) + "K";
+					netstr += (result.servers[i].network_tx/1024).toFixed(1) + "K";
 				else
 					netstr += (result.servers[i].network_tx/1024/1024).toFixed(1) + "M";
 				TableRow.children["network"].innerHTML = netstr;
