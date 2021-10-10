@@ -11,7 +11,6 @@
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-1.0.2.png)
 
 `更新说明：月流量沿用vnstat方式， 初始月份流量只能从安装算起，次月准确。  vnstat更是直接写了SQLite数据库😅！ 探针，物如其名，轻才重要！`    
-`todo：目前重启会导致月流量统计清零，下次更新存json解决`
 
 # 目录介绍：
 
