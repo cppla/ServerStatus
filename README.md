@@ -121,6 +121,10 @@ sudo pip3 install psutil
 
 打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python3 client-linux.py &  
 
+`extra scene (run web/ssview.py)`
+![Shell View](http://dl.cpp.la/Archive/serverstatus-shell.png)
+
+
 # 相关开源项目： 
 
 * BotoX：https://github.com/BotoX/ServerStatus
