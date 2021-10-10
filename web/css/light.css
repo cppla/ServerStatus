@@ -14,8 +14,9 @@ body { background: #ebebeb url('../img/light.png'); }
 tr.even.expandRow > :hover { background: #F9F9F9 !important; }
 tr.odd.expandRow > :hover { background: #FFF !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
+#month_traffic { min-width: 90px; }
+#network { min-width: 50px; max-width: 55px; }
 #cpu, #ram, #hdd, #network { min-width: 55px; max-width: 100px; }
-#ping { min-width: 55px; max-width: 130px; }
 
 @media only screen and (max-width: 992px) {
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
@@ -35,7 +36,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
-	#network, tr td:nth-child(8)		{ display:none; visibility:hidden; }
+	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
 	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 450px) {
@@ -45,7 +46,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
-	#network, tr td:nth-child(8)		{ display:none; visibility:hidden; }
+	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
 	#cpu, #ram, #hdd { min-width: 25px; max-width: 50px; }
 	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
 }
