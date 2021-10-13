@@ -285,8 +285,10 @@ void CMain::JSONUpdateThread(void *pUser)
 			}
 			else
 			{
-				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false },\n",
-					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation);
+			    // sava network traffic record to json when close client
+			    // last_network_in == last network in record, last_network_out == last network out record
+				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 " },\n",
+					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation, pClients[i].m_LastNetworkIN, pClients[i].m_LastNetworkOUT);
 				pBuf += strlen(pBuf);
 			}
 		}
@@ -396,6 +398,42 @@ int CMain::ReadConfig()
 			ID++;
 		}
 	}
+
+	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
+    IOHANDLE nFile = io_open(m_Config.m_aJSONFile, IOFLAG_READ);
+    if(nFile)
+    {
+        int nFileSize = (int)io_length(nFile);
+        char *pNFileData = (char *)mem_alloc(nFileSize + 1, 1);
+
+        io_read(nFile, pNFileData, nFileSize);
+        pNFileData[nFileSize] = 0;
+        io_close(nFile);
+
+        json_settings nJsonSettings;
+        mem_zero(&nJsonSettings, sizeof(nJsonSettings));
+        json_value *pNJsonData = json_parse_ex(&nJsonSettings, pNFileData, strlen(pNFileData), aError);
+        if(pNJsonData)
+        {
+            const json_value &rStart = (*pNJsonData)["servers"];
+            if(rStart.type == json_array)
+            {
+                int ID = 0;
+                for(unsigned i = 0; i < rStart.u.array.length; i++)
+                {
+                    if(ID < 0 || ID >= NET_MAX_CLIENTS)
+                        continue;
+
+                    Client(ID)->m_LastNetworkIN = rStart[i]["last_network_in"].u.integer;
+                    Client(ID)->m_LastNetworkOUT = rStart[i]["last_network_out"].u.integer;
+
+                    ID++;
+                }
+            }
+            json_value_free(pNJsonData);
+        }
+        mem_free(pNFileData);
+    }
 
 	// clean up
 	json_value_free(pJsonData);
