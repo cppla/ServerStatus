@@ -280,7 +280,9 @@ void CMain::JSONUpdateThread(void *pUser)
 					pClients[i].m_Stats.m_time_10010, pClients[i].m_Stats.m_time_189, pClients[i].m_Stats.m_time_10086,pClients[i].m_Stats.m_tcpCount,pClients[i].m_Stats.m_udpCount,pClients[i].m_Stats.m_processCount,pClients[i].m_Stats.m_threadCount,
 					pClients[i].m_Stats.m_NetworkRx, pClients[i].m_Stats.m_NetworkTx, pClients[i].m_Stats.m_NetworkIN, pClients[i].m_Stats.m_NetworkOUT, (int)pClients[i].m_Stats.m_CPU, pClients[i].m_Stats.m_MemTotal, pClients[i].m_Stats.m_MemUsed,
 					pClients[i].m_Stats.m_SwapTotal, pClients[i].m_Stats.m_SwapUsed, pClients[i].m_Stats.m_HDDTotal, pClients[i].m_Stats.m_HDDUsed,
-					pClients[i].m_Stats.m_NetworkIN - pClients[i].m_LastNetworkIN, pClients[i].m_Stats.m_NetworkOUT - pClients[i].m_LastNetworkOUT, pClients[i].m_Stats.m_aCustom);
+					pClients[i].m_Stats.m_NetworkIN == 0 ? pClients[i].m_LastNetworkIN : pClients[i].m_Stats.m_NetworkIN - pClients[i].m_LastNetworkIN,
+					pClients[i].m_Stats.m_NetworkOUT == 0 ? pClients[i].m_LastNetworkOUT : pClients[i].m_Stats.m_NetworkOUT - pClients[i].m_LastNetworkOUT,
+					pClients[i].m_Stats.m_aCustom);
 				pBuf += strlen(pBuf);
 			}
 			else
@@ -400,7 +402,7 @@ int CMain::ReadConfig()
 	}
 
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
-	// support by: https://cpp.la, todo: restart multiple times, inaccurate
+	// support by: https://cpp.la
     IOHANDLE nFile = io_open(m_Config.m_aJSONFile, IOFLAG_READ);
     if(nFile)
     {
