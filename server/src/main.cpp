@@ -400,6 +400,7 @@ int CMain::ReadConfig()
 	}
 
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
+	// support by: https://cpp.la, todo: restart multiple times, inaccurate
     IOHANDLE nFile = io_open(m_Config.m_aJSONFile, IOFLAG_READ);
     if(nFile)
     {
