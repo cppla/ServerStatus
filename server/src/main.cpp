@@ -265,6 +265,7 @@ void CMain::JSONUpdateThread(void *pUser)
 					str_format(aUptime, sizeof(aUptime), "%02d:%02d:%02d", (int)(pClients[i].m_Stats.m_Uptime/60.0/60.0), (int)((pClients[i].m_Stats.m_Uptime/60)%60), (int)((pClients[i].m_Stats.m_Uptime)%60));
 
 				// track month network traffic, diff: 2021-10-01 00:10
+				// if ServerStatus is active then last_network_in/out is month traffic diff, else last_network_in/out is last record flag.
                 time_t currentStamp = (long long)time(/*ago*/0);
                 if(0 == pClients[i].m_LastNetworkIN || (localtime(&currentStamp)->tm_mday == pClients[i].m_aMonthStart && localtime(&currentStamp)->tm_hour == 0 && localtime(&currentStamp)->tm_min < 10))
                 {
