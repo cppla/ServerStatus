@@ -17,9 +17,9 @@ body { background: #222 url('../img/dark.png'); color: #fff; }
 tr.even.expandRow > :hover { background: #2F2F2F !important; }
 tr.odd.expandRow > :hover { background: #000 !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
-#month_traffic { min-width: 90px; }
-#network { min-width: 50px; max-width: 55px; }
-#cpu, #ram, #hdd, #network { min-width: 55px; max-width: 100px; }
+#month_traffic { min-width: 85px; }
+#network { min-width: 80px; }
+#cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
 
 @media only screen and (max-width: 992px) {
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
