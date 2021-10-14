@@ -152,15 +152,17 @@ function uptime() {
 
 				// month traffic
 				var monthtraffic = "";
-				if(result.servers[i].last_network_in < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024).toFixed(2) + "G";
+				var trafficdiff_in = result.servers[i].network_in - result.servers[i].last_network_in;
+				var trafficdiff_out = result.servers[i].network_out - result.servers[i].last_network_out;
+				if(trafficdiff_in < 1024*1024*1024*1024)
+					monthtraffic += (trafficdiff_in/1024/1024/1024).toFixed(2) + "G";
 				else
-					monthtraffic += (result.servers[i].last_network_in/1024/1024/1024/1024).toFixed(2) + "T";
+					monthtraffic += (trafficdiff_in/1024/1024/1024/1024).toFixed(2) + "T";
 				monthtraffic += " | "
-				if(result.servers[i].last_network_out < 1024*1024*1024*1024)
-					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024).toFixed(2) + "G";
+				if(trafficdiff_out < 1024*1024*1024*1024)
+					monthtraffic += (trafficdiff_out/1024/1024/1024).toFixed(2) + "G";
 				else
-					monthtraffic += (result.servers[i].last_network_out/1024/1024/1024/1024).toFixed(2) + "T";
+					monthtraffic += (trafficdiff_out/1024/1024/1024/1024).toFixed(2) + "T";
 				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar";
 				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>";
 
