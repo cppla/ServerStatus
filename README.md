@@ -6,7 +6,7 @@
 [![Python Support](https://img.shields.io/badge/python-2.7%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Beta%201.0.3-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Beta%201.0.4-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-1.0.2.png)
 
