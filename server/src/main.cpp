@@ -318,7 +318,9 @@ void CMain::JSONUpdateThread(void *pUser)
 		fs_rename(aJSONFileTmp, pConfig->m_aJSONFile);
 		thread_sleep(1000);
 	}
-	fs_remove(pConfig->m_aJSONFile);
+	// support by: https://cpp.la. don't remove month traffic record
+	// it will cause quiescence
+	//fs_remove(pConfig->m_aJSONFile);
 }
 
 int CMain::ReadConfig()
