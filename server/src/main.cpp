@@ -318,9 +318,11 @@ void CMain::JSONUpdateThread(void *pUser)
 		fs_rename(aJSONFileTmp, pConfig->m_aJSONFile);
 		thread_sleep(1000);
 	}
-	// support by: https://cpp.la. don't remove month traffic record
-	// it will cause quiescence
-	//fs_remove(pConfig->m_aJSONFile);
+	// support by: https://cpp.la. don't remove month traffic record, storage as "stats.json~", remark: 2021-10-18
+	// fs_remove(pConfig->m_aJSONFile);
+    char aJSONFileTmp[1024];
+    str_format(aJSONFileTmp, sizeof(aJSONFileTmp), "%s~", pConfig->m_aJSONFile);
+    fs_rename(pConfig->m_aJSONFile, aJSONFileTmp);
 }
 
 int CMain::ReadConfig()
@@ -407,6 +409,12 @@ int CMain::ReadConfig()
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
 	// support by: https://cpp.la
     IOHANDLE nFile = io_open(m_Config.m_aJSONFile, IOFLAG_READ);
+	if(!nFile)
+    {
+	    char aJSONFileTmp[1024];
+        str_format(aJSONFileTmp, sizeof(aJSONFileTmp), "%s~", m_Config.m_aJSONFile);
+        nFile = io_open(aJSONFileTmp, IOFLAG_READ);
+    }
     if(nFile)
     {
         int nFileSize = (int)io_length(nFile);
