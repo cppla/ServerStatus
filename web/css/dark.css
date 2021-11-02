@@ -17,9 +17,10 @@ body { background: #222 url('../img/dark.png'); color: #fff; }
 tr.even.expandRow > :hover { background: #2F2F2F !important; }
 tr.odd.expandRow > :hover { background: #000 !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
-#month_traffic { min-width: 85px; }
-#network { min-width: 80px; }
+#month_traffic { min-width: 85px; max-width: 95px;}
+#network { min-width: 85px; }
 #cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
+#ping { max-width: 85px; }
 
 @media only screen and (max-width: 992px) {
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
