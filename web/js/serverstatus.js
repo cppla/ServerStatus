@@ -163,7 +163,7 @@ function uptime() {
 					monthtraffic += (trafficdiff_out/1024/1024/1024).toFixed(2) + "G";
 				else
 					monthtraffic += (trafficdiff_out/1024/1024/1024/1024).toFixed(2) + "T";
-				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar";
+				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-info";
 				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>";
 
 				// Uptime
