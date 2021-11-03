@@ -14,9 +14,10 @@ body { background: #ebebeb url('../img/light.png'); }
 tr.even.expandRow > :hover { background: #F9F9F9 !important; }
 tr.odd.expandRow > :hover { background: #FFF !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
-#month_traffic { min-width: 85px; }
-#network { min-width: 80px; }
-#cpu, #ram, #hdd, #network { min-width: 45px; max-width: 90px; }
+#month_traffic { min-width: 85px; max-width: 95px;}
+#network { min-width: 85px; }
+#cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
+#ping { max-width: 85px; }
 
 @media only screen and (max-width: 992px) {
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
@@ -32,6 +33,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 @media only screen and (max-width: 620px) {
 	body								{ font-size: 10px; }
 	.content 							{ padding: 0; }
+	#month_traffic, tr td:nth-child(2)	{ display:none; visibility:hidden; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
@@ -41,6 +43,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 @media only screen and (max-width: 533px) {
 	body								{ font-size: 10px; }
 	.content 							{ padding: 0; }
+	#month_traffic, tr td:nth-child(2)	{ display:none; visibility:hidden; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
@@ -50,11 +53,12 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 @media only screen and (max-width: 450px) {
 	body								{ font-size: 10px; }
 	.content 							{ padding: 0; }
+	#month_traffic, tr td:nth-child(2)	{ display:none; visibility:hidden; }
 	#name, tr td:nth-child(3)			{ min-width: 55px; max-width: 85px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
-	#cpu, #ram, #hdd { min-width: 25px; max-width: 50px; }
+	#cpu, #ram, #hdd 					{ min-width: 25px; max-width: 50px; }
 	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
 }
