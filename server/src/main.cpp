@@ -267,7 +267,7 @@ void CMain::JSONUpdateThread(void *pUser)
 				// track month network traffic, diff: 2021-10-01 00:05, 5minutes
 				// last_network_in/out is last record flag.
                 time_t currentStamp = (long long)time(/*ago*/0);
-                if(0 == pClients[i].m_LastNetworkIN || pClients[i].m_LastNetworkIN > pClients[i].m_Stats.m_NetworkIN || (localtime(&currentStamp)->tm_mday == pClients[i].m_aMonthStart && localtime(&currentStamp)->tm_hour == 0 && localtime(&currentStamp)->tm_min < 5))
+                if(0 == pClients[i].m_LastNetworkIN || (0 != pClients[i].m_Stats.m_NetworkIN && pClients[i].m_LastNetworkIN > pClients[i].m_Stats.m_NetworkIN) || (localtime(&currentStamp)->tm_mday == pClients[i].m_aMonthStart && localtime(&currentStamp)->tm_hour == 0 && localtime(&currentStamp)->tm_min < 5))
                 {
                     pClients[i].m_LastNetworkIN = pClients[i].m_Stats.m_NetworkIN;
                     pClients[i].m_LastNetworkOUT = pClients[i].m_Stats.m_NetworkOUT;
