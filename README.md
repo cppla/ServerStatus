@@ -6,7 +6,7 @@
 [![Python Support](https://img.shields.io/badge/python-2.7%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Beta%201.0.5-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Beta%201.0.6-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-1.0.2.png)
 
@@ -26,13 +26,9 @@
 `x86_64`: docker pull cppla/serverstatus:latest
 `arm64`: docker pull cppla/serverstatus:arm 
 
+mkdir /serverstatus && cd /serverstatus && wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
+docker run -d --restart=always --name=serverstatus -v /serverstatus/config.json:/ServerStatus/server/config.json -v /serverstatus/json:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
 
-wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
-docker run -d --restart=always --name=serverstatus -v {$path}/config.json:/ServerStatus/server/config.json -p {$port}:80 -p {$port}:35601 cppla/serverstatus:latest
-
-eg:
-docker run -d --restart=always --name=serverstatus -v ~/config.json:/ServerStatus/server/config.json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
- 
 ```
 
 【客户端】：
