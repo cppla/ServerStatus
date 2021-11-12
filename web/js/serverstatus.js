@@ -252,7 +252,7 @@ function uptime() {
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-warning";
                 else
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-success";
-	            TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%💻" + PING_189 + "%💻" + PING_10086 + "%";
+	            TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%🌍" + PING_189 + "%🌍" + PING_10086 + "%";
 
 				// Custom
 				if (result.servers[i].custom) {
