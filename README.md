@@ -27,6 +27,7 @@
 `arm64`: docker pull cppla/serverstatus:arm 
 
 mkdir /serverstatus && cd /serverstatus && wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
+
 docker run -d --restart=always --name=serverstatus -v /serverstatus/config.json:/ServerStatus/server/config.json -v /serverstatus/json:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
 
 ```
