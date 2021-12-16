@@ -1,0 +1,22 @@
+version: "3"
+services:
+  serverstatus:
+    image: cppla/serverstatus:latest
+    container_name: serverstatus
+    restart: unless-stopped
+    networks:
+      serverstatus-network:
+        ipv4_address: 172.23.0.2
+    volumes:
+      - ./server/config.json:/ServerStatus/server/config.json 
+      - ./web/json:/usr/share/nginx/html/json
+    ports:
+      - 35601:35601
+      - 8080:80
+
+networks:
+  serverstatus-network:
+    name: serverstatus-network
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24
