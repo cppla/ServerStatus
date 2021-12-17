@@ -14,21 +14,23 @@
 
 # 目录介绍：
 
-* autodeploy    自动部署.
-* clients       客户端文件
-* server        服务端文件
-* web           网站文件                            
+* clients       	客户端文件
+* server       	 	服务端文件  
+* web           	网站文件
+
+* server/config.json	探针配置文件                                
+* web/json      	探针月流量        
 
 # 自动部署：
 
 【服务端】：
 ```bash
-`x86_64`: docker pull cppla/serverstatus:latest
-`arm64`: docker pull cppla/serverstatus:arm 
 
-mkdir /serverstatus && cd /serverstatus && wget https://raw.githubusercontent.com/cppla/ServerStatus/master/autodeploy/config.json
+`onetouch`: wget --no-check-certificate -qO https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json && mkdir json && docker run -d --restart=always --name=serverstatus -v config.json:/ServerStatus/server/config.json -v json:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest     
 
-docker run -d --restart=always --name=serverstatus -v /serverstatus/config.json:/ServerStatus/server/config.json -v /serverstatus/json:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest
+`ServerStatus`: docker-compose up -d    
+
+`ServerStatus with tgbot`: docker-compose -f docker-compose-telegram.yml up -d   
 
 ```
 
