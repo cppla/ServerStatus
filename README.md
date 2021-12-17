@@ -10,7 +10,7 @@
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-1.0.2.png)
 
-`更新说明：初始月份流量只能从安装算起，次月准确。  vnstat更是直接写了SQLite😅！ 然而探针，物如其名，轻才重要！`    
+`curl -sSL https://get.docker.com/ | sh && apt -y install docker-compose`    
 
 # 目录介绍：
 
