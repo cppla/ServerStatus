@@ -318,14 +318,17 @@ setInterval(updateTime, 2000);
 
 
 // styleswitcher.js
-function setActiveStyleSheet(title) {
-	var i, a, main;
-	for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
-		if(a.getAttribute("rel").indexOf("style") != -1 && a.getAttribute("title")) {
-			a.disabled = true;
-			if(a.getAttribute("title") == title) a.disabled = false;
-		}
-	}
+function setActiveStyleSheet(title, cookie=false) {
+        var i, a, main;
+        for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
+                if(a.getAttribute("rel").indexOf("style") != -1 && a.getAttribute("title")) {
+                        a.disabled = true;
+                        if(a.getAttribute("title") == title) a.disabled = false;
+                }
+        }
+        if (true==cookie) {
+                createCookie("style", title, 365);
+        }
 }
 
 function getActiveStyleSheet() {
@@ -335,15 +338,6 @@ function getActiveStyleSheet() {
 			return a.getAttribute("title");
 	}
 	return null;
-}
-
-function getPreferredStyleSheet() {
-	var i, a;
-	for(i=0; (a = document.getElementsByTagName("link")[i]); i++) {
-		if(a.getAttribute("rel").indexOf("style") != -1	&& a.getAttribute("rel").indexOf("alt") == -1 && a.getAttribute("title"))
-			return a.getAttribute("title");
-	}
-return null;
 }
 
 function createCookie(name,value,days) {
@@ -370,16 +364,19 @@ function readCookie(name) {
 }
 
 window.onload = function(e) {
-	var cookie = readCookie("style");
-	var title = cookie ? cookie : getPreferredStyleSheet();
-	setActiveStyleSheet(title);
+        var cookie = readCookie("style");
+        if (cookie && cookie != 'null' ) {
+                setActiveStyleSheet(cookie);
+        } else {
+                function handleChange (mediaQueryListEvent) {
+                        if (mediaQueryListEvent.matches) {
+                                setActiveStyleSheet('dark');
+                        } else {
+                                setActiveStyleSheet('light');
+                        }
+                }
+                const mediaQueryListDark = window.matchMedia('(prefers-color-scheme: dark)');
+                setActiveStyleSheet(mediaQueryListDark.matches ? 'dark' : 'light');
+                mediaQueryListDark.addEventListener("change",handleChange);
+        }
 }
-
-window.onunload = function(e) {
-	var title = getActiveStyleSheet();
-	createCookie("style", title, 365);
-}
-
-var cookie = readCookie("style");
-var title = cookie ? cookie : getPreferredStyleSheet();
-setActiveStyleSheet(title);
