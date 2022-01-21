@@ -438,8 +438,12 @@ int CMain::ReadConfig()
                     if(ID < 0 || ID >= NET_MAX_CLIENTS)
                         continue;
 
-                    Client(ID)->m_LastNetworkIN = rStart[i]["last_network_in"].u.integer;
-                    Client(ID)->m_LastNetworkOUT = rStart[i]["last_network_out"].u.integer;
+                    // check name and host for match , when ServerStatus reload month traffic.
+                    if(strcmp(Client(ID)->m_aName, rStart[i]["name"].u.string.ptr)==0 && strcmp(Client(ID)->m_aHost, rStart[i]["host"].u.string.ptr)==0)
+                    {
+                        Client(ID)->m_LastNetworkIN = rStart[i]["last_network_in"].u.integer;
+                        Client(ID)->m_LastNetworkOUT = rStart[i]["last_network_out"].u.integer;
+                    }
 
                     ID++;
                 }
