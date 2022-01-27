@@ -1,6 +1,9 @@
 version: "3"
 services:
   serverstatus:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: cppla/serverstatus:latest
     container_name: serverstatus
     restart: unless-stopped
