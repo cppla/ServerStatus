@@ -33,7 +33,7 @@ docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json
 
 `ServerStatus`: docker-compose up -d    
 
-`ServerStatus with tgbot`: docker-compose -f docker-compose-telegram.yml up -d   
+`ServerStatus with tgbot`: TG_CHAT_ID=你的电报ID TG_BOT_TOKEN=你的电报密钥 docker-compose -f docker-compose-telegram.yml up -d   
 
 ```
 

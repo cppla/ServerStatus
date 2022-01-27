@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: cppla/serverstatus:latest
+    image: serverstatus_server
     container_name: serverstatus
     restart: unless-stopped
     networks:
@@ -20,14 +20,15 @@ services:
     build:
       context: ./plugin
       dockerfile: Dockerfile-telegram
+    image: serverstatus_bot
     container_name: bot4sss
     restart: unless-stopped
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.3
     environment:
-      - TG_CHAT_ID=tg_chat_id
-      - TG_BOT_TOKEN=tg_bot_token
+      - TG_CHAT_ID=${TG_CHAT_ID}
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN}
 
 networks:
   serverstatus-network:

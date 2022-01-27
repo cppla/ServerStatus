@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: serverstatus_server
     container_name: serverstatus
     restart: unless-stopped
     networks:
