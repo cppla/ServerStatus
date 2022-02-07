@@ -4,48 +4,58 @@ var d = 0;
 var server_status = new Array();
 
 function timeSince(date) {
-	if(date == 0)
-		return "从未.";
+    if (date == 0) return "从未";
 
-	var seconds = Math.floor((new Date() - date) / 1000);
-	var interval = Math.floor(seconds / 60);
-	if (interval > 1)
-		return interval + " 分钟前.";
-	else
-		return "几秒前.";
+    var seconds = Math.floor((new Date() - date) / 1000);
+    var interval = Math.floor(seconds / 31536000);
+
+    if (interval > 1) return interval + " 年前";
+    interval = Math.floor(seconds / 2592000);
+    if (interval > 1) return interval + " 月前";
+    interval = Math.floor(seconds / 86400);
+    if (interval > 1) return interval + " 日前";
+    interval = Math.floor(seconds / 3600);
+    if (interval > 1) return interval + " 小时前";
+    interval = Math.floor(seconds / 60);
+    if (interval > 1) return interval + " 分钟前";
+    /*if(Math.floor(seconds) >= 5)
+                return Math.floor(seconds) + " seconds";*/
+    else return "刚刚";
 }
 
-function bytesToSize(bytes, precision, si)
-{
-	var ret;
-	si = typeof si !== 'undefined' ? si : 0;
-	if(si != 0) {
-		var megabyte = 1000 * 1000;
-		var gigabyte = megabyte * 1000;
-		var terabyte = gigabyte * 1000;
-	} else {
-		var megabyte = 1024 * 1024;
-		var gigabyte = megabyte * 1024;
-		var terabyte = gigabyte * 1024;
-	}
+function bytesToSize(bytes, precision, si) {
+    var ret;
+    si = typeof si !== "undefined" ? si : 0;
+    if (si != 0) {
+        var kilobyte = 1000;
+        var megabyte = kilobyte * 1000;
+        var gigabyte = megabyte * 1000;
+        var terabyte = gigabyte * 1000;
+    } else {
+        var kilobyte = 1024;
+        var megabyte = kilobyte * 1024;
+        var gigabyte = megabyte * 1024;
+        var terabyte = gigabyte * 1024;
+    }
 
-	if ((bytes >= megabyte) && (bytes < gigabyte)) {
-		ret = (bytes / megabyte).toFixed(precision) + ' M';
-
-	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
-		ret = (bytes / gigabyte).toFixed(precision) + ' G';
-
-	} else if (bytes >= terabyte) {
-		ret = (bytes / terabyte).toFixed(precision) + ' T';
-
-	} else {
-		return bytes + ' B';
-	}
-	if(si != 0) {
-		return ret + 'B';
-	} else {
-		return ret + 'iB';
-	}
+    if (bytes >= 0 && bytes < kilobyte) {
+        return bytes + " B";
+    } else if (bytes >= kilobyte && bytes < megabyte) {
+        ret = (bytes / kilobyte).toFixed(precision) + " K";
+    } else if (bytes >= megabyte && bytes < gigabyte) {
+        ret = (bytes / megabyte).toFixed(precision) + " M";
+    } else if (bytes >= gigabyte && bytes < terabyte) {
+        ret = (bytes / gigabyte).toFixed(precision) + " G";
+    } else if (bytes >= terabyte) {
+        ret = (bytes / terabyte).toFixed(precision) + " T";
+    } else {
+        return bytes + " B";
+    }
+    if (si != 0) {
+        return ret + "B";
+    } else {
+        return ret + "iB";
+    }
 }
 
 function uptime() {
@@ -176,31 +186,61 @@ function uptime() {
 				    TableRow.children["load"].innerHTML = result.servers[i].load_1.toFixed(2);
 				}
 
-				// Network
-				var netstr = "";
-				if(result.servers[i].network_rx < 1024*1024)
-					netstr += (result.servers[i].network_rx/1024).toFixed(1) + "K";
-				else
-					netstr += (result.servers[i].network_rx/1024/1024).toFixed(1) + "M";
-				netstr += " | "
-				if(result.servers[i].network_tx < 1024*1024)
-					netstr += (result.servers[i].network_tx/1024).toFixed(1) + "K";
-				else
-					netstr += (result.servers[i].network_tx/1024/1024).toFixed(1) + "M";
-				TableRow.children["network"].innerHTML = netstr;
+		                // Network
+		                var netstr = "";
+		                if (result.servers[i].network_rx < 1024)
+		                    netstr += result.servers[i].network_rx.toFixed(0) + "B";
+		                else if (result.servers[i].network_rx < 1024 * 1024)
+		                    netstr += (result.servers[i].network_rx / 1024).toFixed(1) + "K";
+		                else
+		                    netstr +=
+		                    (result.servers[i].network_rx / 1024 / 1024).toFixed(1) + "M";
+		                netstr += " | ";
+		                if (result.servers[i].network_tx < 1024)
+		                    netstr += result.servers[i].network_tx.toFixed(0) + "B";
+		                else if (result.servers[i].network_tx < 1024 * 1024)
+		                    netstr += (result.servers[i].network_tx / 1024).toFixed(1) + "K";
+		                else
+		                    netstr +=
+		                    (result.servers[i].network_tx / 1024 / 1024).toFixed(1) + "M";
+		                TableRow.children["network"].innerHTML = netstr;
 
-				//Traffic
-				var trafficstr = "";
-				if(result.servers[i].network_in < 1024*1024*1024*1024)
-					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
-                else
-                    trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
-				trafficstr += " | "
-				if(result.servers[i].network_out < 1024*1024*1024*1024)
-				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
-				else
-					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(2) + "T";
-				TableRow.children["traffic"].innerHTML = trafficstr;
+		                //Traffic
+		                var trafficstr = "";
+		                if (result.servers[i].network_in < 1024)
+		                    trafficstr += result.servers[i].network_in.toFixed(0) + "B";
+		                else if (result.servers[i].network_in < 1024 * 1024)
+		                    trafficstr += (result.servers[i].network_in / 1024).toFixed(1) + "K";
+		                else if (result.servers[i].network_in < 1024 * 1024 * 1024)
+		                    trafficstr +=
+		                    (result.servers[i].network_in / 1024 / 1024).toFixed(1) + "M";
+		                else if (result.servers[i].network_in < 1024 * 1024 * 1024 * 1024)
+		                    trafficstr +=
+		                    (result.servers[i].network_in / 1024 / 1024 / 1024).toFixed(2) +
+		                    "G";
+		                else
+		                    trafficstr +=
+		                    (result.servers[i].network_in / 1024 / 1024 / 1024 / 1024).toFixed(
+		                        2
+		                    ) + "T";
+		                trafficstr += " | ";
+		                if (result.servers[i].network_out < 1024)
+		                    trafficstr += result.servers[i].network_out.toFixed(0) + "B";
+		                else if (result.servers[i].network_out < 1024 * 1024)
+		                    trafficstr += (result.servers[i].network_out / 1024).toFixed(1) + "K";
+		                else if (result.servers[i].network_out < 1024 * 1024 * 1024)
+		                    trafficstr +=
+		                    (result.servers[i].network_out / 1024 / 1024).toFixed(1) + "M";
+		                else if (result.servers[i].network_out < 1024 * 1024 * 1024 * 1024)
+		                    trafficstr +=
+		                    (result.servers[i].network_out / 1024 / 1024 / 1024).toFixed(2) +
+		                    "G";
+		                else
+		                    trafficstr +=
+		                    (result.servers[i].network_out / 1024 / 1024 / 1024 / 1024).toFixed(
+		                        2
+		                    ) + "T";
+		                TableRow.children["traffic"].innerHTML = trafficstr;
 
 				// CPU
 				if (result.servers[i].cpu >= 90)
