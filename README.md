@@ -1,4 +1,23 @@
-# ServerStatus中文版：   
+参考 [https://github.com/P3TERX/ServerStatus-V](https://github.com/P3TERX/ServerStatus-V) 中 vnstat 统计流量的实现方式，在 [https://github.com/cppla/ServerStatus](https://github.com/cppla/ServerStatus) 的基础上，优化和更新此功能。
+
+使用此版本时注意，需手动安装 vnstat ，如未安装则流量数据不会显示。具体教程请参考：[vnStat 安装教程](https://p3terx.com/archives/statistics-vps-traffic-using-vnstat-under-linux.html)
+
+vnstat 默认以 比特单位  显示， 通过运行以下命令修改/etc/vnstat.conf中的 UnitMode， RateUnit 配置项，以实现 字节单位 显示：
+
+```bash
+# how units are prefixed when traffic is shown
+# 0 = IEC standard prefixes (KiB/MiB/GiB...)
+# 1 = old style binary prefixes (KB/MB/GB...)
+# 2 = SI decimal prefixes (kB/MB/GB...)
+sed -i "s/UnitMode.*/UnitMode 1/g" /etc/vnstat.conf
+
+# used rate unit (0 = bytes, 1 = bits)
+sed -i "s/RateUnit.*/RateUnit 0/g" /etc/vnstat.conf
+```
+
+------
+
+# ServerStatus中文版：
 
 * ServerStatus中文版是一个酷炫高逼格的云探针、云监控、服务器云监控、多服务器探针~。
 * 在线演示：https://tz.cloudcpp.com    
@@ -46,7 +65,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 ```
 
 # 手动安装教程：     
-   
+
 【克隆代码】:
 ```
 git clone https://github.com/cppla/ServerStatus.git
