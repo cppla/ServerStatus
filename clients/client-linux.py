@@ -85,22 +85,50 @@ def get_cpu():
     result = 100-(t[len(t)-1]*100.00/st)
     return round(result, 1)
 
+# 原版本 https://github.com/cppla/ServerStatus 的流量统计
+# def liuliang():
+#     NET_IN = 0
+#     NET_OUT = 0
+#     with open('/proc/net/dev') as f:
+#         for line in f.readlines():
+#             netinfo = re.findall('([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
+#             if netinfo:
+#                 if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
+#                         or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \
+#                         or 'br-' in netinfo[0][0] or 'vmbr' in netinfo[0][0] \
+#                         or 'vnet' in netinfo[0][0] or 'kube' in netinfo[0][0] \
+#                         or netinfo[0][1]=='0' or netinfo[0][9]=='0':
+#                     continue
+#                 else:
+#                     NET_IN += int(netinfo[0][1])
+#                     NET_OUT += int(netinfo[0][9])
+#     return NET_IN, NET_OUT
+
+# 修改版 https://github.com/P3TERX/ServerStatus-V 的流量统计
+# def liuliang():
+#     NET_IN = 0
+#     NET_OUT = 0
+#     vnstat=os.popen('vnstat --dumpdb').readlines()
+#     for line in vnstat:
+#         if line[0:4] == "m;0;":
+#             mdata=line.split(";")
+#             NET_IN=int(mdata[3])*1024*1024
+#             NET_OUT=int(mdata[4])*1024*1024
+#             break
+#     return NET_IN, NET_OUT
+
+# 改用vnstat作为汇总流量统计工具，vnstat默认显示是比特单位 ， 可以通过修改/etc/vnstat.conf中的 UnitMode 1 ， RateUnit 0 可以改为字节单位
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
-    with open('/proc/net/dev') as f:
-        for line in f.readlines():
-            netinfo = re.findall('([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
-            if netinfo:
-                if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
-                        or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \
-                        or 'br-' in netinfo[0][0] or 'vmbr' in netinfo[0][0] \
-                        or 'vnet' in netinfo[0][0] or 'kube' in netinfo[0][0] \
-                        or netinfo[0][1]=='0' or netinfo[0][9]=='0':
-                    continue
-                else:
-                    NET_IN += int(netinfo[0][1])
-                    NET_OUT += int(netinfo[0][9])
+    with os.popen('vnstat --oneline b') as p:
+        vnstat = p.readlines()
+    vData = vnstat[0].split(";")
+    if len(vData) != 15:
+        # Not enough data available yet.
+        return NET_IN, NET_OUT
+    NET_IN = int(vData[8])
+    NET_OUT = int(vData[9])
     return NET_IN, NET_OUT
 
 def tupd():
