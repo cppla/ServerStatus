@@ -160,21 +160,33 @@ function uptime() {
 					server_status[i] = true;
 				}
 
-				// month traffic
-				var monthtraffic = "";
-				var trafficdiff_in = result.servers[i].network_in - result.servers[i].last_network_in;
-				var trafficdiff_out = result.servers[i].network_out - result.servers[i].last_network_out;
-				if(trafficdiff_in < 1024*1024*1024*1024)
-					monthtraffic += (trafficdiff_in/1024/1024/1024).toFixed(2) + "G";
-				else
-					monthtraffic += (trafficdiff_in/1024/1024/1024/1024).toFixed(2) + "T";
-				monthtraffic += " | "
-				if(trafficdiff_out < 1024*1024*1024*1024)
-					monthtraffic += (trafficdiff_out/1024/1024/1024).toFixed(2) + "G";
-				else
-					monthtraffic += (trafficdiff_out/1024/1024/1024/1024).toFixed(2) + "T";
-				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-success";
-				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>";
+                // month traffic
+                var monthtraffic = "";
+                var trafficdiff_in = result.servers[i].network_in - result.servers[i].last_network_in;
+                var trafficdiff_out = result.servers[i].network_out - result.servers[i].last_network_out;
+                if (trafficdiff_in < 1024)
+                    monthtraffic += trafficdiff_in.toFixed(0) + "B";
+                else if (trafficdiff_in < 1024 * 1024)
+                    monthtraffic += (trafficdiff_in / 1024).toFixed(1) + "K";
+                else if (trafficdiff_in < 1024 * 1024 * 1024)
+                    monthtraffic += (trafficdiff_in / 1024 / 1024).toFixed(1) + "M";
+                else if (trafficdiff_in < 1024 * 1024 * 1024 * 1024)
+                    monthtraffic += (trafficdiff_in / 1024 / 1024 / 1024).toFixed(2) + "G";
+                else
+                    monthtraffic += (trafficdiff_in / 1024 / 1024 / 1024 / 1024).toFixed(2) + "T";
+                monthtraffic += " | ";
+                if (trafficdiff_out < 1024)
+                    monthtraffic += trafficdiff_out.toFixed(0) + "B";
+                else if (trafficdiff_out < 1024 * 1024)
+                    monthtraffic += (trafficdiff_out / 1024).toFixed(1) + "K";
+                else if (trafficdiff_out < 1024 * 1024 * 1024)
+                    monthtraffic += (trafficdiff_out / 1024 / 1024).toFixed(1) + "M";
+                else if (trafficdiff_out < 1024 * 1024 * 1024 * 1024)
+                    monthtraffic += (trafficdiff_out / 1024 / 1024 / 1024).toFixed(2) + "G";
+                else
+                    monthtraffic += (trafficdiff_out / 1024 / 1024 / 1024 / 1024).toFixed(2) + "T";
+                TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-success";
+                TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>" + monthtraffic + "</small>";
 
 				// Uptime
 				TableRow.children["uptime"].innerHTML = result.servers[i].uptime;
