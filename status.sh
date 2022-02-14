@@ -20,7 +20,7 @@ web_file="/usr/local/ServerStatus/web"
 server_file="/usr/local/ServerStatus/server"
 server_conf="/usr/local/ServerStatus/server/config.json"
 server_conf_1="/usr/local/ServerStatus/server/config.conf"
-client_file="/usr/local/ServerStatus/client"
+client_file="/usr/local/ServerStatus/clients"
 
 client_log_file="/tmp/serverstatus_client.log"
 server_log_file="/tmp/serverstatus_server.log"
@@ -52,38 +52,21 @@ check_pid_client() {
 }
 
 Download_Server_Status_server() {
-git clone https://github.com/cppla/ServerStatus.git
+git clone https://github.com/cppla/ServerStatus.git "${file}"
 }
 Download_Server_Status_client() {
-git clone https://github.com/cppla/ServerStatus.git
+git clone https://github.com/cppla/ServerStatus.git "${file}"
 }
 Download_Server_Status_Service() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
   local service_note="服务端"
   [[ ${mode} == "client" ]] && service_note="客户端"
-  if [[ ${release} == "archlinux" ]]; then
     wget --no-check-certificate "${link_prefix}/service/status-${mode}.service" -O "/usr/lib/systemd/system/status-${mode}.service" ||
       {
         echo -e "${Error} ServerStatus ${service_note}服务管理脚本下载失败 !"
         exit 1
       }
-    systemctl enable "status-${mode}.service"
-  else
-    wget --no-check-certificate "${link_prefix}/service/server_status_${mode}_${release}" -O "/etc/init.d/status-${mode}" ||
-      {
-        echo -e "${Error} ServerStatus ${service_note}服务管理脚本下载失败 !"
-        exit 1
-      }
-    chmod +x "/etc/init.d/status-${mode}"
-    [[ ${release} == "centos" ]] &&
-      {
-        chkconfig --add "status-${mode}"
-        chkconfig "status-${mode}" on
-      }
-
-    [[ ${release} == "debian" ]] && update-rc.d -f "status-${mode}" defaults
-  fi
   echo -e "${Info} ServerStatus ${service_note}服务管理脚本下载完成 !"
 }
 Service_Server_Status_server() {
@@ -117,11 +100,10 @@ EOF
 }
 Read_config_client() {
   client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py") "
-  client_server="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2}')"
-  client_port="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2}')"
-  client_user="$(echo -e "${client_text}" | grep "USER=" | awk -F "=" '{print $2}')"
-  client_password="$(echo -e "${client_text}" | grep "PASSWORD=" | awk -F "=" '{print $2}')"
-  grep -q "NET_IN, NET_OUT = get_traffic_vnstat()" "${client_file}/client-linux.py" && client_vnstat="true" || client_vnstat="false"
+  client_server="$(echo -e "${client_text}" | grep "SERVER =" | awk -F "=" '{print $2}')"
+  client_port="$(echo -e "${client_text}" | grep "PORT =" | awk -F "=" '{print $2}')"
+  client_user="$(echo -e "${client_text}" | grep "USER =" | awk -F "=" '{print $2}')"
+  client_password="$(echo -e "${client_text}" | grep "PASSWORD =" | awk -F "=" '{print $2}')"
 }
 Read_config_server() {
   if [[ ! -e "${server_conf_1}" ]]; then
@@ -216,11 +198,6 @@ Set_password() {
   echo -e "	密码[password]: ${Red_background_prefix} ${password_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
-Set_vnstat() {
-  echo -e "对于流量计算是否使用Vnstat每月自动清零？ [y/N]"
-  read -erp "(默认: N):" isVnstat
-  [[ -z "$isVnstat" ]] && isVnstat="n"
-}
 Set_name() {
   echo -e "请输入 ServerStatus 服务端要设置的节点名称[name]（支持中文，前提是你的系统和SSH工具支持中文输入，仅仅是个名字）"
   read -erp "(默认: Server 01):" name_s
@@ -269,7 +246,6 @@ Set_config_client() {
   Set_server_port
   Set_username "client"
   Set_password "client"
-  Set_vnstat
 }
 Set_ServerStatus_server() {
   check_installed_server_status
@@ -283,12 +259,11 @@ Set_ServerStatus_server() {
  ${Green_font_prefix} 5.${Font_color_suffix} 修改 节点配置 - 节点名称
  ${Green_font_prefix} 6.${Font_color_suffix} 修改 节点配置 - 节点虚拟化
  ${Green_font_prefix} 7.${Font_color_suffix} 修改 节点配置 - 节点位置
- ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 节点区域
- ${Green_font_prefix} 9.${Font_color_suffix} 修改 节点配置 - 全部参数
+ ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 全部参数
 ————————
- ${Green_font_prefix} 10.${Font_color_suffix} 启用/禁用 节点配置
+ ${Green_font_prefix} 9.${Font_color_suffix} 启用/禁用 节点配置
 ————————
- ${Green_font_prefix}11.${Font_color_suffix} 修改 服务端监听端口" && echo
+ ${Green_font_prefix}10.${Font_color_suffix} 修改 服务端监听端口" && echo
   read -erp "(默认: 取消):" server_num
   [[ -z "${server_num}" ]] && echo "已取消..." && exit 1
   if [[ ${server_num} == "1" ]]; then
@@ -306,20 +281,19 @@ Set_ServerStatus_server() {
   elif [[ ${server_num} == "7" ]]; then
     Modify_ServerStatus_server_location
   elif [[ ${server_num} == "8" ]]; then
-    Modify_ServerStatus_server_region
-  elif [[ ${server_num} == "9" ]]; then
     Modify_ServerStatus_server_all
-  elif [[ ${server_num} == "10" ]]; then
+  elif [[ ${server_num} == "9" ]]; then
     Modify_ServerStatus_server_disabled
-  elif [[ ${server_num} == "11" ]]; then
+  elif [[ ${server_num} == "10" ]]; then
     Read_config_server
     Set_server_port
     Write_server_config_conf
   else
-    echo -e "${Error} 请输入正确的数字[1-11]" && exit 1
+    echo -e "${Error} 请输入正确的数字[1-10]" && exit 1
   fi
   Restart_ServerStatus_server
 }
+
 List_ServerStatus_server() {
   conf_text=$(${jq_file} '.servers' ${server_conf} | ${jq_file} ".[]|.username" | sed 's/\"//g')
   conf_text_total=$(echo -e "${conf_text}" | wc -l)
@@ -345,6 +319,7 @@ List_ServerStatus_server() {
   echo && echo -e "节点总数 ${Green_font_prefix}${conf_text_total}${Font_color_suffix}"
   echo -e "${conf_list_all}"
 }
+
 Add_ServerStatus_server() {
   Set_config_server
   Set_username_ch=$(grep '"username": "'"${username_s}"'"' ${server_conf})
@@ -383,6 +358,7 @@ Del_ServerStatus_server() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_username() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -399,6 +375,7 @@ Modify_ServerStatus_server_username() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_password() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -415,6 +392,7 @@ Modify_ServerStatus_server_password() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_name() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -431,6 +409,7 @@ Modify_ServerStatus_server_name() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_type() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -463,22 +442,7 @@ Modify_ServerStatus_server_location() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
-Modify_ServerStatus_server_region() {
-  List_ServerStatus_server
-  echo -e "请输入要修改的节点用户名"
-  read -erp "(默认: 取消):" manually_username
-  [[ -z "${manually_username}" ]] && echo -e "已取消..." && exit 1
-  Set_username_num=$(cat -n ${server_conf} | grep '"username": "'"${manually_username}"'"' | awk '{print $1}')
-  if [[ -n ${Set_username_num} ]]; then
-    Set_region
-    Set_region_num_a=$((Set_username_num + 7))
-    Set_region_num_a_text=$(sed -n "${Set_region_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_region_num_a}"'s/"region": "'"${Set_region_num_a_text}"'"/"region": "'"${region_s}"'"/g' ${server_conf}
-    echo -e "${Info} 修改成功 [ 原节点地区: ${Set_region_num_a_text}, 新节点地区: ${region_s} ]"
-  else
-    echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
-  fi
-}
+
 Modify_ServerStatus_server_all() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -513,6 +477,7 @@ Modify_ServerStatus_server_all() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_disabled() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -533,6 +498,7 @@ Modify_ServerStatus_server_disabled() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Set_ServerStatus_client() {
   check_installed_client_status
   Set_config_client
@@ -540,121 +506,14 @@ Set_ServerStatus_client() {
   Modify_config_client
   Restart_ServerStatus_client
 }
-Install_vnStat() {
-  if [[ ${release} == "archlinux" ]]; then
-    pacman -Sy vnstat --noconfirm
-    systemctl enable vnstat
-    systemctl start vnstat
-    return 0
-  elif [[ ${release} == "centos" ]]; then
-    yum -y update
-    yum -y install sqlite sqlite-devel
-    yum -y groupinstall "Development Tools"
-  elif [[ ${release} == "debian" ]]; then
-    apt -y update
-    apt -y install sqlite3 libsqlite3-dev build-essential
-  fi
-  cd "/tmp" || return 1
-  wget --no-check-certificate https://humdi.net/vnstat/vnstat-latest.tar.gz
-  tar zxvf vnstat-latest.tar.gz
-  cd vnstat-*/ || return 1
-  ./configure --prefix=/usr --sysconfdir=/etc && make && make install
-  if ! vnstat -v >/dev/null 2>&1; then
-    echo "编译安装vnStat失败，请手动安装vnStat"
-    exit 1
-  fi
-  vnstatd -d
-  if [[ ${release} == "centos" ]]; then
-    if grep "6\..*" /etc/redhat-release | grep -i "centos" | grep -v "{^6}\.6" >/dev/null; then
-      [[ ! -e /etc/init.d/vnstat ]] && cp examples/init.d/redhat/vnstat /etc/init.d/
-      chkconfig vnstat on
-      service vnstat restart
-    fi
-  else
-    if grep -i "debian" /etc/issue | grep -q "7" || grep -i "ubuntu" /etc/issue | grep -q "14"; then
-      [[ ! -e /etc/init.d/vnstat ]] && cp examples/init.d/debian/vnstat /etc/init.d/
-      update-rc.d vnstat defaults
-      service vnstat restart
-    fi
-  fi
-  if [[ ! -e /etc/init.d/vnstat ]]; then
-    cp -v examples/systemd/simple/vnstat.service /etc/systemd/system/
-    systemctl enable vnstat
-    systemctl start vnstat
-  fi
-  rm -rf vnstat*
-  cd ~ || exit
-}
-Modify_config_client_traffic() {
-  [ -z ${isVnstat} ] && [[ ${client_vnstat_s} == "false" ]] && return
-  if [[ ${isVnstat="y"} == [Yy] ]]; then
-    vnstat -v >/dev/null 2>&1 || Install_vnStat
-    netName=$(awk '{i++; if( i>2 && ($2 != 0 && $10 != 0) ){print $1}}' /proc/net/dev | sed 's/^lo:$//g' | sed 's/^tun:$//g' | sed '/^$/d' | sed 's/^[\t]*//g' | sed 's/[:]*$//g')
-    if [ -z "$netName" ]; then
-      echo -e "获取网卡名称失败，请在Github反馈"
-      exit 1
-    fi
-    if [[ $netName =~ [[:space:]] ]]; then
-      read -erp "检测到多个网卡: ${netName}，请手动输入网卡名称" netName
-    fi
-    read -erp "请输入每月流量归零的日期(1~28)，默认为1(即每月1日): " time_N
-    [[ -z "$time_N" ]] && time_N="1"
-    while ! [[ $time_N =~ ^[0-9]*$ ]] || ((time_N < 1 || time_N > 28)); do
-      read -erp "你输入的日期不合法，请重新输入: " time_N
-    done
-    sed -i "s/$(grep -w "MonthRotate" /etc/vnstat.conf)/MonthRotate $time_N/" /etc/vnstat.conf
-    sed -i "s/$(grep -w "Interface" /etc/vnstat.conf)/Interface \"$netName\"/" /etc/vnstat.conf
-    chmod -R 777 /var/lib/vnstat/
-    systemctl restart vnstat
-    if ! grep -q "NET_IN, NET_OUT = get_traffic_vnstat()" ${client_file}/client-linux.py; then
-      sed -i 's/\t/    /g' ${client_file}/client-linux.py
-      sed -i 's/NET_IN, NET_OUT = traffic.get_traffic()/NET_IN, NET_OUT = get_traffic_vnstat()/' ${client_file}/client-linux.py
-    fi
-  elif grep -q "NET_IN, NET_OUT = get_traffic_vnstat()" ${client_file}/client-linux.py; then
-    sed -i 's/\t/    /g' ${client_file}/client-linux.py
-    sed -i 's/NET_IN, NET_OUT = get_traffic_vnstat()/NET_IN, NET_OUT = traffic.get_traffic()/' ${client_file}/client-linux.py
-  fi
-}
+
 Modify_config_client() {
   sed -i 's/SERVER = "'"${client_server}"'"/SERVER = "'"${server_s}"'"/g' "${client_file}/client-linux.py"
   sed -i "s/PORT = ${client_port}/PORT = ${server_port_s}/g" "${client_file}/client-linux.py"
   sed -i 's/USER = "'"${client_user}"'"/USER = "'"${username_s}"'"/g' "${client_file}/client-linux.py"
   sed -i 's/PASSWORD = "'"${client_password}"'"/PASSWORD = "'"${password_s}"'"/g' "${client_file}/client-linux.py"
-  Modify_config_client_traffic
 }
-Install_jq() {
-  [[ ${mirror_num} == 2 ]] && {
-    github_link="https://hub.fastgit.org"
-    raw_link="https://raw.fastgit.org"
-  } || {
-    github_link="https://github.com"
-    raw_link="https://raw.githubusercontent.com"
-  }
-  if [[ ! -e ${jq_file} ]]; then
-    if [[ ${bit} == "x86_64" ]]; then
-      jq_file="${file}/jq"
-      wget --no-check-certificate "${github_link}/stedolan/jq/releases/download/jq-1.5/jq-linux64" -O ${jq_file}
-    elif [[ ${bit} == "i386" ]]; then
-      jq_file="${file}/jq"
-      wget --no-check-certificate "${github_link}/stedolan/jq/releases/download/jq-1.5/jq-linux32" -O ${jq_file}
-    else
-      # ARM fallback to package manager
-      [[ ${release} == "archlinux" ]] && pacman -Sy jq --noconfirm
-      [[ ${release} == "centos" ]] && yum -y install jq
-      [[ ${release} == "debian" ]] && apt -y install jq
-      jq_file="/usr/bin/jq"
-    fi
-    [[ ! -e ${jq_file} ]] && echo -e "${Error} JQ解析器 下载失败，请检查 !" && exit 1
-    chmod +x ${jq_file}
-    echo -e "${Info} JQ解析器 安装完成，继续..."
-  else
-    echo -e "${Info} JQ解析器 已安装，继续..."
-  fi
-  if [[ ! -e ${region_json} ]]; then
-    wget --no-check-certificate "${raw_link}/michaelwittig/node-i18n-iso-countries/master/langs/zh.json" -O ${region_json}
-    [[ ! -e ${region_json} ]] && echo -e "${Error} ISO 3166-1 json文件下载失败，请检查！" && exit 1
-  fi
-}
+
 Install_caddy() {
   echo
   echo -e "${Info} 是否由脚本自动配置HTTP服务(服务端的在线监控网站)，如果选择 N，则请在其他HTTP服务中配置网站根目录为：${Green_font_prefix}${web_file}${Font_color_suffix} [Y/n]"
@@ -693,6 +552,7 @@ EOF
     echo -e "${Info} 跳过 HTTP服务部署，请手动部署，Web网页文件位置：${web_file} ，如果位置改变，请注意修改服务脚本文件 /etc/init.d/status-server 中的 WEB_BIN 变量 !"
   fi
 }
+
 Install_ServerStatus_server() {
   Set_Mirror
   [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 ServerStatus 服务端已安装 !" && exit 1
@@ -711,14 +571,12 @@ Install_ServerStatus_server() {
   echo -e "${Info} 所有步骤 安装完毕，开始启动..."
   Start_ServerStatus_server
 }
+
 Install_ServerStatus_client() {
   Set_Mirror
   [[ -e "${client_file}/client-linux.py" ]] && echo -e "${Error} 检测到 ServerStatus 客户端已安装 !" && exit 1
-  check_sys
   echo -e "${Info} 开始设置 用户配置..."
   Set_config_client
-  echo -e "${Info} 开始安装/配置 依赖..."
-  Installation_dependency "client"
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_client
   echo -e "${Info} 开始下载/安装 服务脚本(init)..."
@@ -729,6 +587,7 @@ Install_ServerStatus_client() {
   echo -e "${Info} 所有步骤 安装完毕，开始启动..."
   Start_ServerStatus_client
 }
+
 Update_ServerStatus_server() {
   Set_Mirror
   check_installed_server_status
@@ -745,6 +604,7 @@ Update_ServerStatus_server() {
   Service_Server_Status_server
   Start_ServerStatus_server
 }
+
 Update_ServerStatus_client() {
   Set_Mirror
   check_installed_client_status
@@ -778,6 +638,7 @@ Update_ServerStatus_client() {
   Service_Server_Status_client
   Start_ServerStatus_client
 }
+
 Start_ServerStatus_server() {
   check_installed_server_status
   check_pid_server
@@ -788,6 +649,7 @@ Start_ServerStatus_server() {
     /etc/init.d/status-server start
   fi
 }
+
 Stop_ServerStatus_server() {
   check_installed_server_status
   check_pid_server
@@ -798,6 +660,7 @@ Stop_ServerStatus_server() {
     /etc/init.d/status-server stop
   fi
 }
+
 Restart_ServerStatus_server() {
   check_installed_server_status
   check_pid_server
@@ -814,6 +677,7 @@ Restart_ServerStatus_server() {
     /etc/init.d/status-server start
   fi
 }
+
 Uninstall_ServerStatus_server() {
   check_installed_server_status
   echo "确定要卸载 ServerStatus 服务端(如果同时安装了客户端，则只会删除服务端) ? [y/N]"
@@ -852,37 +716,31 @@ Uninstall_ServerStatus_server() {
     echo && echo "卸载已取消..." && echo
   fi
 }
+
 Start_ServerStatus_client() {
   check_installed_client_status
   check_pid_client
   [[ -n ${PID} ]] && echo -e "${Error} ServerStatus 正在运行，请检查 !" && exit 1
-  if [[ ${release} == "archlinux" ]]; then
-    systemctl start status-client.service
-  else
-    /etc/init.d/status-client start
-  fi
+    systemctl enable status-client
+    service status-client start
+
 }
+
 Stop_ServerStatus_client() {
   check_installed_client_status
   check_pid_client
   [[ -z ${PID} ]] && echo -e "${Error} ServerStatus 没有运行，请检查 !" && exit 1
-  if [[ ${release} == "archlinux" ]]; then
-    systemctl stop status-client.service
-  else
-    /etc/init.d/status-client stop
-  fi
+    service status-client stop
 }
+
 Restart_ServerStatus_client() {
   check_installed_client_status
   check_pid_client
   if [[ -n ${PID} ]]; then
-    if [[ ${release} == "archlinux" ]]; then
-      systemctl restart status-client.service
-    else
-      /etc/init.d/status-client restart
-    fi
+    service status-client restart
   fi
 }
+
 Uninstall_ServerStatus_client() {
   check_installed_client_status
   echo "确定要卸载 ServerStatus 客户端(如果同时安装了服务端，则只会删除客户端) ? [y/N]"
@@ -913,6 +771,7 @@ Uninstall_ServerStatus_client() {
     echo && echo "卸载已取消..." && echo
   fi
 }
+
 View_ServerStatus_client() {
   check_installed_client_status
   Read_config_client
@@ -923,7 +782,6 @@ View_ServerStatus_client() {
   端口 \t: ${Green_font_prefix}${client_port}${Font_color_suffix}
   账号 \t: ${Green_font_prefix}${client_user}${Font_color_suffix}
   密码 \t: ${Green_font_prefix}${client_password}${Font_color_suffix}
-  vnStat : ${Green_font_prefix}${client_vnstat}${Font_color_suffix}
 
 ————————————————————"
 }
@@ -1103,6 +961,7 @@ menu_server() {
     ;;
   esac
 }
+
 Set_Mirror() {
   echo -e "${Info} 请输入要选择的下载源，默认使用GitHub，中国大陆建议选择Coding.net，但是不建议将服务端部署在中国大陆主机上
   ${Green_font_prefix} 1.${Font_color_suffix} GitHub
@@ -1111,7 +970,6 @@ Set_Mirror() {
   [[ -z "${mirror_num}" ]] && mirror_num=1
   [[ ${mirror_num} == 2 ]] && link_prefix=${coding_prefix} || link_prefix=${github_prefix}
 }
-check_sys
 action=$1
 if [[ -n $action ]]; then
   if [[ $action == "s" ]]; then
