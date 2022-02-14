@@ -98,6 +98,7 @@ Write_server_config_conf() {
 PORT = ${server_port_s}
 EOF
 }
+
 Read_config_client() {
   client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py") "
   client_server="$(echo -e "${client_text}" | grep "SERVER =" | awk -F "=" '{print $2}')"
@@ -105,6 +106,7 @@ Read_config_client() {
   client_user="$(echo -e "${client_text}" | grep "USER =" | awk -F "=" '{print $2}')"
   client_password="$(echo -e "${client_text}" | grep "PASSWORD =" | awk -F "=" '{print $2}')"
 }
+
 Read_config_server() {
   if [[ ! -e "${server_conf_1}" ]]; then
     server_port_s="35601"
@@ -114,6 +116,7 @@ Read_config_server() {
     server_port="$(grep "PORT = " ${server_conf_1} | awk '{print $3}')"
   fi
 }
+
 Set_server() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
@@ -132,6 +135,7 @@ Set_server() {
   echo -e "	IP/域名[server]: ${Red_background_prefix} ${server_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_server_http_port() {
   while true; do
     echo -e "请输入 ServerStatus 服务端中网站要设置的 域名/IP的端口[1-65535]（如果是域名的话，一般用 80 端口）"
@@ -151,6 +155,7 @@ Set_server_http_port() {
     fi
   done
 }
+
 Set_server_port() {
   while true; do
     echo -e "请输入 ServerStatus 服务端监听的端口[1-65535]（用于服务端接收客户端消息的端口，客户端要填写这个端口）"
@@ -170,6 +175,7 @@ Set_server_port() {
     fi
   done
 }
+
 Set_username() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
@@ -184,6 +190,7 @@ Set_username() {
   echo -e "	账号[username]: ${Red_background_prefix} ${username_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_password() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
@@ -198,6 +205,7 @@ Set_password() {
   echo -e "	密码[password]: ${Red_background_prefix} ${password_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_name() {
   echo -e "请输入 ServerStatus 服务端要设置的节点名称[name]（支持中文，前提是你的系统和SSH工具支持中文输入，仅仅是个名字）"
   read -erp "(默认: Server 01):" name_s
@@ -206,6 +214,7 @@ Set_name() {
   echo -e "	节点名称[name]: ${Red_background_prefix} ${name_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_type() {
   echo -e "请输入 ServerStatus 服务端要设置的节点虚拟化类型[type]（例如 OpenVZ / KVM）"
   read -erp "(默认: KVM):" type_s
@@ -214,6 +223,7 @@ Set_type() {
   echo -e "	虚拟化类型[type]: ${Red_background_prefix} ${type_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_location() {
   echo -e "请输入 ServerStatus 服务端要设置的节点位置[location]（支持中文，前提是你的系统和SSH工具支持中文输入）"
   read -erp "(默认: Hong Kong):" location_s
@@ -222,6 +232,7 @@ Set_location() {
   echo -e "	节点位置[location]: ${Red_background_prefix} ${location_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_region() {
   echo -e "请输入 ServerStatus 服务端要设置的节点地区[region]（用于国家/地区的旗帜图标显示）"
   read -erp "(默认: HK):" region_s
@@ -233,6 +244,7 @@ Set_region() {
   echo -e "	节点地区[region]: ${Red_background_prefix} ${region_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
+
 Set_config_server() {
   Set_username "server"
   Set_password "server"
@@ -241,12 +253,14 @@ Set_config_server() {
   Set_location
   Set_region
 }
+
 Set_config_client() {
   Set_server "client"
   Set_server_port
   Set_username "client"
   Set_password "client"
 }
+
 Set_ServerStatus_server() {
   check_installed_server_status
   echo && echo -e " 你要做什么？
@@ -336,6 +350,7 @@ Add_ServerStatus_server() {
   sed -i '3i\  {' ${server_conf}
   echo -e "${Info} 添加节点成功 ${Green_font_prefix}[ 节点名称: ${name_s}, 节点用户名: ${username_s}, 节点密码: ${password_s} ]${Font_color_suffix} !"
 }
+
 Del_ServerStatus_server() {
   List_ServerStatus_server
   [[ "${conf_text_total}" == "1" ]] && echo -e "${Error} 节点配置仅剩 1个，不能删除 !" && exit 1
@@ -426,6 +441,7 @@ Modify_ServerStatus_server_type() {
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
   fi
 }
+
 Modify_ServerStatus_server_location() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
