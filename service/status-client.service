@@ -2,7 +2,7 @@
 Description=ServerStatus-Client
 After=network.target
 [Service]
-ExecStart=/usr/bin/python3 /root/ServerStatus/clients/client-linux.py
+ExecStart=/usr/bin/python3 /usr/local/ServerStatus/client/status-client.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 [Install]
