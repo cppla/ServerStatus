@@ -524,10 +524,10 @@ Set_ServerStatus_client() {
 }
 
 Modify_config_client() {
-  sed -i 's/SERVER = "'"${client_server}"'"/SERVER = "'"${server_s}"'"/g' "${client_file}/client-linux.py"
-  sed -i "s/PORT = ${client_port}/PORT = ${server_port_s}/g" "${client_file}/client-linux.py"
-  sed -i 's/USER = "'"${client_user}"'"/USER = "'"${username_s}"'"/g' "${client_file}/client-linux.py"
-  sed -i 's/PASSWORD = "'"${client_password}"'"/PASSWORD = "'"${password_s}"'"/g' "${client_file}/client-linux.py"
+  sed -i 's/SERVER = "'"${client_server}"'"/SERVER = "'"${server_s}"'"/' "${client_file}/client-linux.py"
+  sed -i "s/PORT = ${client_port}/PORT = ${server_port_s}/" "${client_file}/client-linux.py"
+  sed -i 's/USER = "'"${client_user}"'"/USER = "'"${username_s}"'"/' "${client_file}/client-linux.py"
+  sed -i 's/PASSWORD = "'"${client_password}"'"/PASSWORD = "'"${password_s}"'"/' "${client_file}/client-linux.py"
 }
 
 Install_caddy() {
