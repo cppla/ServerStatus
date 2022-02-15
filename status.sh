@@ -4,7 +4,7 @@ export PATH
 
 #=================================================
 #  System Required: CentOS/Debian/Ubuntu/ArchLinux
-#  Description: ServerStatus client + server
+#  Description: $NAME client + server
 #  Version: Test v0.4.1
 #  Author: Toyo, Modified by APTX
 #=================================================
@@ -19,114 +19,97 @@ file="/usr/local/ServerStatus"
 web_file="/usr/local/ServerStatus/web"
 server_file="/usr/local/ServerStatus/server"
 server_conf="/usr/local/ServerStatus/server/config.json"
-server_conf_1="/usr/local/ServerStatus/server/config.conf"
 client_file="/usr/local/ServerStatus/clients"
 
 client_log_file="/tmp/serverstatus_client.log"
 server_log_file="/tmp/serverstatus_server.log"
-jq_file="${file}/jq"
-[[ ! -e ${jq_file} ]] && jq_file="/usr/bin/jq"
 
 github_prefix="https://raw.githubusercontent.com/jwstaceyOvO/ServerStatus/master"
-coding_prefix="https://cokemine.coding.net/p/hotarunet/d/ServerStatus-Hotaru/git/raw/master"
-link_prefix=${github_prefix}
 
+NAME="ServerStatus"
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
 Info="${Green_font_prefix}[信息]${Font_color_suffix}"
 Error="${Red_font_prefix}[错误]${Font_color_suffix}"
 Tip="${Green_font_prefix}[注意]${Font_color_suffix}"
 
 check_installed_server_status() {
-  [[ ! -e "${server_file}/sergate" ]] && echo -e "${Error} ServerStatus 服务端没有安装，请检查 !" && exit 1
+  [[ ! -e "${server_file}/sergate" ]] && echo -e "${Error} $NAME 服务端没有安装，请检查 !" && exit 1
 }
+
 check_installed_client_status() {
-  [[ ! -e "${client_file}/client-linux.py" ]] && echo -e "${Error} ServerStatus 客户端没有安装，请检查 !" && exit 1
-}
-check_pid_server() {
-  #PID=$(ps -ef | grep "sergate" | grep -v grep | grep -v ".sh" | grep -v "init.d" | grep -v "service" | awk '{print $2}')
-  PID=$(pgrep -f "sergate")
-}
-check_pid_client() {
-  #PID=$(ps -ef | grep "client-linux.py" | grep -v grep | grep -v ".sh" | grep -v "init.d" | grep -v "service" | awk '{print $2}')
-  PID=$(pgrep -f "client-linux.py")
+  [[ ! -e "${client_file}/client-linux.py" ]] && echo -e "${Error} $NAME 客户端没有安装，请检查 !" && exit 1
 }
 
 Download_Server_Status_server() {
-git clone https://github.com/cppla/ServerStatus.git "${file}"
+git clone https://github.com/cppla/ServerStatus.git "${file}" && make
 }
+
 Download_Server_Status_client() {
-git clone https://github.com/cppla/ServerStatus.git "${file}"
+mkdir -p "${client_file}"
+wget -N --no-check-certificate "${github_prefix}/clients/client-linux.py"  -P "${client_file}"
 }
+
 Download_Server_Status_Service() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
   local service_note="服务端"
   [[ ${mode} == "client" ]] && service_note="客户端"
-    wget --no-check-certificate "${link_prefix}/service/status-${mode}.service" -O "/usr/lib/systemd/system/status-${mode}.service" ||
+    wget --no-check-certificate "${github_prefix}/service/status-${mode}.service" -O "/usr/lib/systemd/system/status-${mode}.service" ||
       {
-        echo -e "${Error} ServerStatus ${service_note}服务管理脚本下载失败 !"
+        echo -e "${Error} $NAME ${service_note}服务管理脚本下载失败 !"
         exit 1
       }
-  echo -e "${Info} ServerStatus ${service_note}服务管理脚本下载完成 !"
+  echo -e "${Info} $NAME ${service_note}服务管理脚本下载完成 !"
 }
+
 Service_Server_Status_server() {
   Download_Server_Status_Service "server"
 }
+
 Service_Server_Status_client() {
   Download_Server_Status_Service "client"
 }
+
 Write_server_config() {
   cat >${server_conf} <<-EOF
 {"servers":
- [
-  {
-   "username": "username01",
-   "password": "password",
-   "name": "Server 01",
-   "type": "KVM",
-   "host": "",
-   "location": "Hong Kong",
-   "disabled": false,
-   "region": "HK"
-  }
- ]
-}
-EOF
-}
-Write_server_config_conf() {
-  cat >${server_conf_1} <<-EOF
-PORT = ${server_port_s}
+	[
+		{
+			"username": "s01",
+			"name": "vps-1",
+			"type": "kvm",
+			"host": "chengdu",
+			"location": "🇨🇳",
+			"password": "USER_DEFAULT_PASSWORD",
+			"monthstart": 1
+		},
+	]
+}       
 EOF
 }
 
 Read_config_client() {
   client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py") "
-  client_server="$(echo -e "${client_text}" | grep "SERVER =" | awk -F "=" '{print $2}')"
-  client_port="$(echo -e "${client_text}" | grep "PORT =" | awk -F "=" '{print $2}')"
-  client_user="$(echo -e "${client_text}" | grep "USER =" | awk -F "=" '{print $2}')"
-  client_password="$(echo -e "${client_text}" | grep "PASSWORD =" | awk -F "=" '{print $2}')"
+  client_server="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2;exit}')"
+  client_port="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2;exit}')"
+  client_user="$(echo -e "${client_text}" | grep "USER=" | awk -F "=" '{print $2;exit}')"
+  client_password="$(echo -e "${client_text}" | grep "PASSWORD=" | awk -F "=" '{print $2;exit}')"
 }
 
 Read_config_server() {
-  if [[ ! -e "${server_conf_1}" ]]; then
-    server_port_s="35601"
-    Write_server_config_conf
     server_port="35601"
-  else
-    server_port="$(grep "PORT = " ${server_conf_1} | awk '{print $3}')"
-  fi
 }
 
 Set_server() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
   if [[ ${mode} == "server" ]]; then
-    echo -e "请输入 ServerStatus 服务端中网站要设置的 域名[server]
+    echo -e "请输入 $NAME 服务端中网站要设置的 域名[server]
 默认为本机IP为域名，例如输入: toyoo.pw ，如果要使用本机IP，请留空直接回车"
     read -erp "(默认: 本机IP):" server_s
     [[ -z "$server_s" ]] && server_s=""
   else
-    echo -e "请输入 ServerStatus 服务端的 IP/域名[server]，请注意，如果你的域名使用了CDN，请直接填写IP"
+    echo -e "请输入 $NAME 服务端的 IP/域名[server]，请注意，如果你的域名使用了CDN，请直接填写IP"
     read -erp "(默认: 127.0.0.1):" server_s
     [[ -z "$server_s" ]] && server_s="127.0.0.1"
   fi
@@ -138,7 +121,7 @@ Set_server() {
 
 Set_server_http_port() {
   while true; do
-    echo -e "请输入 ServerStatus 服务端中网站要设置的 域名/IP的端口[1-65535]（如果是域名的话，一般用 80 端口）"
+    echo -e "请输入 $NAME 服务端中网站要设置的 域名/IP的端口[1-65535]（如果是域名的话，一般用 80 端口）"
     read -erp "(默认: 8888):" server_http_port_s
     [[ -z "$server_http_port_s" ]] && server_http_port_s="8888"
     if [[ "$server_http_port_s" =~ ^[0-9]*$ ]]; then
@@ -158,7 +141,7 @@ Set_server_http_port() {
 
 Set_server_port() {
   while true; do
-    echo -e "请输入 ServerStatus 服务端监听的端口[1-65535]（用于服务端接收客户端消息的端口，客户端要填写这个端口）"
+    echo -e "请输入 $NAME 服务端监听的端口[1-65535]（用于服务端接收客户端消息的端口，客户端要填写这个端口）"
     read -erp "(默认: 35601):" server_port_s
     [[ -z "$server_port_s" ]] && server_port_s="35601"
     if [[ "$server_port_s" =~ ^[0-9]*$ ]]; then
@@ -180,9 +163,9 @@ Set_username() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
   if [[ ${mode} == "server" ]]; then
-    echo -e "请输入 ServerStatus 服务端要设置的用户名[username]（字母/数字，不可与其他账号重复）"
+    echo -e "请输入 $NAME 服务端要设置的用户名[username]（字母/数字，不可与其他账号重复）"
   else
-    echo -e "请输入 ServerStatus 服务端中对应配置的用户名[username]（字母/数字，不可与其他账号重复）"
+    echo -e "请输入 $NAME 服务端中对应配置的用户名[username]（字母/数字，不可与其他账号重复）"
   fi
   read -erp "(默认: 取消):" username_s
   [[ -z "$username_s" ]] && echo "已取消..." && exit 0
@@ -195,9 +178,9 @@ Set_password() {
   mode=$1
   [[ -z ${mode} ]] && mode="server"
   if [[ ${mode} == "server" ]]; then
-    echo -e "请输入 ServerStatus 服务端要设置的密码[password]（字母/数字，可重复）"
+    echo -e "请输入 $NAME 服务端要设置的密码[password]（字母/数字，可重复）"
   else
-    echo -e "请输入 ServerStatus 服务端中对应配置的密码[password]（字母/数字）"
+    echo -e "请输入 $NAME 服务端中对应配置的密码[password]（字母/数字）"
   fi
   read -erp "(默认: doub.io):" password_s
   [[ -z "$password_s" ]] && password_s="doub.io"
@@ -207,7 +190,7 @@ Set_password() {
 }
 
 Set_name() {
-  echo -e "请输入 ServerStatus 服务端要设置的节点名称[name]（支持中文，前提是你的系统和SSH工具支持中文输入，仅仅是个名字）"
+  echo -e "请输入 $NAME 服务端要设置的节点名称[name]（支持中文，前提是你的系统和SSH工具支持中文输入，仅仅是个名字）"
   read -erp "(默认: Server 01):" name_s
   [[ -z "$name_s" ]] && name_s="Server 01"
   echo && echo "	================================================"
@@ -216,7 +199,7 @@ Set_name() {
 }
 
 Set_type() {
-  echo -e "请输入 ServerStatus 服务端要设置的节点虚拟化类型[type]（例如 OpenVZ / KVM）"
+  echo -e "请输入 $NAME 服务端要设置的节点虚拟化类型[type]（例如 OpenVZ / KVM）"
   read -erp "(默认: KVM):" type_s
   [[ -z "$type_s" ]] && type_s="KVM"
   echo && echo "	================================================"
@@ -225,23 +208,11 @@ Set_type() {
 }
 
 Set_location() {
-  echo -e "请输入 ServerStatus 服务端要设置的节点位置[location]（支持中文，前提是你的系统和SSH工具支持中文输入）"
+  echo -e "请输入 $NAME 服务端要设置的节点位置[location]（支持中文，前提是你的系统和SSH工具支持中文输入）"
   read -erp "(默认: Hong Kong):" location_s
   [[ -z "$location_s" ]] && location_s="Hong Kong"
   echo && echo "	================================================"
   echo -e "	节点位置[location]: ${Red_background_prefix} ${location_s} ${Font_color_suffix}"
-  echo "	================================================" && echo
-}
-
-Set_region() {
-  echo -e "请输入 ServerStatus 服务端要设置的节点地区[region]（用于国家/地区的旗帜图标显示）"
-  read -erp "(默认: HK):" region_s
-  [[ -z "$region_s" ]] && region_s="HK"
-  while ! check_region; do
-    read -erp "你输入的节点地区不合法，请重新输入：" region_s
-  done
-  echo && echo "	================================================"
-  echo -e "	节点地区[region]: ${Red_background_prefix} ${region_s} ${Font_color_suffix}"
   echo "	================================================" && echo
 }
 
@@ -301,7 +272,6 @@ Set_ServerStatus_server() {
   elif [[ ${server_num} == "10" ]]; then
     Read_config_server
     Set_server_port
-    Write_server_config_conf
   else
     echo -e "${Error} 请输入正确的数字[1-10]" && exit 1
   fi
@@ -321,7 +291,6 @@ List_ServerStatus_server() {
     now_text_name=$(echo -e "${now_text}" | grep "name" | grep -v "username" | awk -F ": " '{print $2}')
     now_text_type=$(echo -e "${now_text}" | grep "type" | awk -F ": " '{print $2}')
     now_text_location=$(echo -e "${now_text}" | grep "location" | awk -F ": " '{print $2}')
-    now_text_region=$(echo -e "${now_text}" | grep "region" | awk -F ": " '{print $2}')
     now_text_disabled=$(echo -e "${now_text}" | grep "disabled" | awk -F ": " '{print $2}')
     if [[ ${now_text_disabled} == "false" ]]; then
       now_text_disabled_status="${Green_font_prefix}启用${Font_color_suffix}"
@@ -524,10 +493,10 @@ Set_ServerStatus_client() {
 }
 
 Modify_config_client() {
-  sed -i 's/SERVER = "'"${client_server}"'"/SERVER = "'"${server_s}"'"/' "${client_file}/client-linux.py"
-  sed -i "s/PORT = ${client_port}/PORT = ${server_port_s}/" "${client_file}/client-linux.py"
-  sed -i 's/USER = "'"${client_user}"'"/USER = "'"${username_s}"'"/' "${client_file}/client-linux.py"
-  sed -i 's/PASSWORD = "'"${client_password}"'"/PASSWORD = "'"${password_s}"'"/' "${client_file}/client-linux.py"
+  sed -i '0,/SERVER = "'"${client_server}"'"/s//SERVER = "'"${server_s}"'"/' "${client_file}/client-linux.py"
+  sed -i '0,/PORT = ${client_port}/s//PORT = ${server_port_s}/' "${client_file}/client-linux.py"
+  sed -i '0,/USER = "'"${client_user}"'"/s//USER = "'"${username_s}"'"/' "${client_file}/client-linux.py"
+  sed -i '0,/PASSWORD = "'"${client_password}"'"/s//PASSWORD = "'"${password_s}"'"/' "${client_file}/client-linux.py"
 }
 
 Install_caddy() {
@@ -570,11 +539,9 @@ EOF
 }
 
 Install_ServerStatus_server() {
-  Set_Mirror
-  [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 ServerStatus 服务端已安装 !" && exit 1
+  [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 $NAME 服务端已安装 !" && exit 1
   Set_server_port
   echo -e "${Info} 开始安装/配置 依赖..."
-  Installation_dependency "server"
   Install_caddy
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_server
@@ -583,14 +550,12 @@ Install_ServerStatus_server() {
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
   Write_server_config
-  Write_server_config_conf
   echo -e "${Info} 所有步骤 安装完毕，开始启动..."
   Start_ServerStatus_server
 }
 
 Install_ServerStatus_client() {
-  Set_Mirror
-  [[ -e "${client_file}/client-linux.py" ]] && echo -e "${Error} 检测到 ServerStatus 客户端已安装 !" && exit 1
+  [[ -e "${client_file}/client-linux.py" ]] && echo -e "${Error} 检测到 $NAME 客户端已安装 !" && exit 1
   echo -e "${Info} 开始设置 用户配置..."
   Set_config_client
   echo -e "${Info} 开始下载/安装..."
@@ -605,16 +570,7 @@ Install_ServerStatus_client() {
 }
 
 Update_ServerStatus_server() {
-  Set_Mirror
   check_installed_server_status
-  check_pid_server
-  if [[ -n ${PID} ]]; then
-    if [[ ${release} == "archlinux" ]]; then
-      systemctl stop status-server
-    else
-      /etc/init.d/status-server stop
-    fi
-  fi
   Download_Server_Status_server
   rm -rf /etc/init.d/status-server
   Service_Server_Status_server
@@ -622,87 +578,50 @@ Update_ServerStatus_server() {
 }
 
 Update_ServerStatus_client() {
-  Set_Mirror
   check_installed_client_status
-  check_pid_client
-  if [[ -n ${PID} ]]; then
-    if [[ ${release} == "archlinux" ]]; then
-      systemctl stop status-client
-    else
-      /etc/init.d/status-client stop
-    fi
-  fi
-  if [[ ! -e "${client_file}/client-linux.py" ]]; then
-    if [[ ! -e "${file}/client-linux.py" ]]; then
-      echo -e "${Error} ServerStatus 客户端文件不存在 !" && exit 1
-    else
-      client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${file}/client-linux.py")"
-      rm -rf "${file}/client-linux.py"
-    fi
-  else
-    client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py")"
-  fi
-  server_s="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2}')"
-  server_port_s="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2}')"
-  username_s="$(echo -e "${client_text}" | grep "USER=" | awk -F "=" '{print $2}')"
-  password_s="$(echo -e "${client_text}" | grep "PASSWORD=" | awk -F "=" '{print $2}')"
-  grep -q "NET_IN, NET_OUT = get_traffic_vnstat()" "${client_file}/client-linux.py" && client_vnstat_s="true" || client_vnstat_s="false"
+  service status-client stop
+  client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py") "
+  server_s="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2;exit}')"
+  server_port_s="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2;exit}')"
+  username_s="$(echo -e "${client_text}" | grep "USER=" | awk -F "=" '{print $2;exit}')"
+  password_s="$(echo -e "${client_text}" | grep "PASSWORD=" | awk -F "=" '{print $2;exit}')"
   Download_Server_Status_client
   Read_config_client
   Modify_config_client
-  rm -rf /etc/init.d/status-client
+  rm -rf  /usr/lib/systemd/system/status-client.service
   Service_Server_Status_client
   Start_ServerStatus_client
 }
 
 Start_ServerStatus_server() {
   check_installed_server_status
-  check_pid_server
-  [[ -n ${PID} ]] && echo -e "${Error} ServerStatus 正在运行，请检查 !" && exit 1
-  if [[ ${release} == "archlinux" ]]; then
-    systemctl start status-server.service
-  else
-    /etc/init.d/status-server start
-  fi
+  systemctl -q is-active status-server && echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
+  service status-server start
 }
 
 Stop_ServerStatus_server() {
   check_installed_server_status
-  check_pid_server
-  [[ -z ${PID} ]] && echo -e "${Error} ServerStatus 没有运行，请检查 !" && exit 1
-  if [[ ${release} == "archlinux" ]]; then
-    systemctl stop status-server.service
-  else
-    /etc/init.d/status-server stop
-  fi
+if (systemctl -q is-active status-server)
+  then
+     service status-server stop 
+ else  
+ echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
+fi
 }
 
 Restart_ServerStatus_server() {
   check_installed_server_status
-  check_pid_server
-  if [[ -n ${PID} ]]; then
-    if [[ ${release} == "archlinux" ]]; then
-      systemctl stop status-server.service
-    else
-      /etc/init.d/status-server stop
-    fi
-  fi
-  if [[ ${release} == "archlinux" ]]; then
-    systemctl start status-server.service
-  else
-    /etc/init.d/status-server start
-  fi
+  systemctl -q is-active status-client && service status-server stop
 }
 
 Uninstall_ServerStatus_server() {
   check_installed_server_status
-  echo "确定要卸载 ServerStatus 服务端(如果同时安装了客户端，则只会删除服务端) ? [y/N]"
+  echo "确定要卸载 $NAME 服务端(如果同时安装了客户端，则只会删除服务端) ? [y/N]"
   echo
   read -erp "(默认: n):" unyn
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
-    check_pid_server
-    [[ -n $PID ]] && kill -9 "${PID}"
+  service status-server stop
     Read_config_server
     if [[ -e "${client_file}/client-linux.py" ]]; then
       rm -rf "${server_file}"
@@ -710,7 +629,6 @@ Uninstall_ServerStatus_server() {
     else
       rm -rf "${file}"
     fi
-    rm -rf "/etc/init.d/status-server"
     if [[ -e "/usr/bin/caddy" ]]; then
       systemctl stop caddy
       systemctl disable caddy
@@ -718,15 +636,8 @@ Uninstall_ServerStatus_server() {
       [[ ${release} == "centos" ]] && yum -y remove caddy
       [[ ${release} == "archlinux" ]] && pacman -R caddy --noconfirm
     fi
-    if [[ ${release} == "centos" ]]; then
-      chkconfig --del status-server
-    elif [[ ${release} == "debian" ]]; then
-      update-rc.d -f status-server remove
-    elif [[ ${release} == "archlinux" ]]; then
-      systemctl stop status-server
-      systemctl disable status-server
       rm /usr/lib/systemd/system/status-server.service
-    fi
+      systemctl daemon-reload
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
     echo && echo "卸载已取消..." && echo
@@ -734,54 +645,66 @@ Uninstall_ServerStatus_server() {
 }
 
 Start_ServerStatus_client() {
+NAME="ServerStatus Client"
   check_installed_client_status
-  check_pid_client
-  [[ -n ${PID} ]] && echo -e "${Error} ServerStatus 正在运行，请检查 !" && exit 1
-    systemctl enable status-client
-    service status-client start
-
+if (systemctl -q is-active status-client)
+ then
+    echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
+fi
+   systemctl daemon-reload
+   systemctl enable status-client
+   service status-client start
+   if (systemctl -q is-active status-client)
+     then
+       echo -e "${Info} $NAME 启动成功 !"
+   else
+       echo -e "${Error} $NAME 启动失败 !"
+   fi
 }
 
 Stop_ServerStatus_client() {
   check_installed_client_status
-  check_pid_client
-  [[ -z ${PID} ]] && echo -e "${Error} ServerStatus 没有运行，请检查 !" && exit 1
-    service status-client stop
+if (systemctl -q is-active status-client)
+   then  service status-client stop
+    if (systemctl -q is-active status-client)
+      then
+       echo -e "${Error}} $NAME 停止失败 !"
+  else
+       echo -e "${Info} $NAME 停止成功 !"
+    fi
+ else
+    echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
+ fi
 }
 
 Restart_ServerStatus_client() {
   check_installed_client_status
-  check_pid_client
-  if [[ -n ${PID} ]]; then
-    service status-client restart
-  fi
+      service status-client restart
+if (systemctl -q is-active status-client)
+     then
+     echo -e "${Info} $NAME 重启成功 !"
+  else
+     echo -e "${Error} $NAME 重启失败 !" && exit 1
+fi
 }
 
 Uninstall_ServerStatus_client() {
   check_installed_client_status
-  echo "确定要卸载 ServerStatus 客户端(如果同时安装了服务端，则只会删除客户端) ? [y/N]"
+  echo "确定要卸载 $NAME 客户端(如果同时安装了服务端，则只会删除客户端) ? [y/N]"
   echo
   read -erp "(默认: n):" unyn
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
-    check_pid_client
-    [[ -n $PID ]] && kill -9 "${PID}"
+    service status-client stop
     Read_config_client
     if [[ -e "${server_file}/sergate" ]]; then
       rm -rf "${client_file}"
-    else
-      rm -rf "${file}"
     fi
-    rm -rf /etc/init.d/status-client
-    if [[ ${release} == "centos" ]]; then
-      chkconfig --del status-client
-    elif [[ ${release} == "debian" ]]; then
-      update-rc.d -f status-client remove
-    elif [[ ${release} == "archlinux" ]]; then
       systemctl stop status-client
       systemctl disable status-client
+      rm -rf "${client_file}"
       rm /usr/lib/systemd/system/status-client.service
-    fi
+      systemctl daemon-reload
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
     echo && echo "卸载已取消..." && echo
@@ -792,7 +715,7 @@ View_ServerStatus_client() {
   check_installed_client_status
   Read_config_client
   clear && echo "————————————————————" && echo
-  echo -e "  ServerStatus 客户端配置信息：
+  echo -e "  $NAME 客户端配置信息：
 
   IP \t: ${Green_font_prefix}${client_server}${Font_color_suffix}
   端口 \t: ${Green_font_prefix}${client_port}${Font_color_suffix}
@@ -812,26 +735,22 @@ View_server_Log() {
   tail -f ${server_log_file}
 }
 Update_Shell() {
-  Set_Mirror
-  sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "${link_prefix}/status.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
+  sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "${github_prefix}/status.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
   [[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法链接到 Github !" && exit 0
-  if [[ -e "/etc/init.d/status-client" ]] || [[ -e "/usr/lib/systemd/system/status-client.service" ]]; then
-    rm -rf /etc/init.d/status-client
+  if  [[ -e "/usr/lib/systemd/system/status-client.service" ]]; then
     rm -rf /usr/lib/systemd/system/status-client.service
     Service_Server_Status_client
   fi
-  if [[ -e "/etc/init.d/status-server" ]] || [[ -e "/usr/lib/systemd/system/status-server.service" ]]; then
-    rm -rf /etc/init.d/status-server
+  if  [[ -e "/usr/lib/systemd/system/status-server.service" ]]; then
     rm -rf /usr/lib/systemd/system/status-server.service
     Service_Server_Status_server
   fi
-  wget -N --no-check-certificate "${link_prefix}/status.sh" && chmod +x status.sh
+  wget -N --no-check-certificate "${github_prefix}/status.sh"
   echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !(注意：因为更新方式为直接覆盖当前运行的脚本，所以可能下面会提示一些报错，无视即可)" && exit 0
 }
 menu_client() {
-  echo && echo -e "  ServerStatus 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-  -- Toyo | doub.io/shell-jc3 --
-  --    Modified by APTX    --
+  echo && echo -e "  $NAME 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
+
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
  ————————————
  ${Green_font_prefix} 1.${Font_color_suffix} 安装 客户端
@@ -848,23 +767,13 @@ menu_client() {
 ————————————
  ${Green_font_prefix}10.${Font_color_suffix} 切换为 服务端菜单" && echo
   if [[ -e "${client_file}/client-linux.py" ]]; then
-    check_pid_client
-    if [[ -n "${PID}" ]]; then
+    if (systemctl -q is-active status-client); then
       echo -e " 当前状态: 客户端 ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
     else
       echo -e " 当前状态: 客户端 ${Green_font_prefix}已安装${Font_color_suffix} 但 ${Red_font_prefix}未启动${Font_color_suffix}"
     fi
-  else
-    if [[ -e "${file}/client-linux.py" ]]; then
-      check_pid_client
-      if [[ -n "${PID}" ]]; then
-        echo -e " 当前状态: 客户端 ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
-      else
-        echo -e " 当前状态: 客户端 ${Green_font_prefix}已安装${Font_color_suffix} 但 ${Red_font_prefix}未启动${Font_color_suffix}"
-      fi
     else
       echo -e " 当前状态: 客户端 ${Red_font_prefix}未安装${Font_color_suffix}"
-    fi
   fi
   echo
   read -erp " 请输入数字 [0-10]:" num
@@ -908,7 +817,7 @@ menu_client() {
   esac
 }
 menu_server() {
-  echo && echo -e "  ServerStatus 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
+  echo && echo -e "  $NAME 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
   -- Toyo | doub.io/shell-jc3 --
   --    Modified by APTX    --
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
@@ -927,8 +836,7 @@ menu_server() {
 ————————————
  ${Green_font_prefix}10.${Font_color_suffix} 切换为 客户端菜单" && echo
   if [[ -e "${server_file}/sergate" ]]; then
-    check_pid_server
-    if [[ -n "${PID}" ]]; then
+    if (systemctl -q is-active status-server) then
       echo -e " 当前状态: 服务端 ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
     else
       echo -e " 当前状态: 服务端 ${Green_font_prefix}已安装${Font_color_suffix} 但 ${Red_font_prefix}未启动${Font_color_suffix}"
@@ -978,14 +886,6 @@ menu_server() {
   esac
 }
 
-Set_Mirror() {
-  echo -e "${Info} 请输入要选择的下载源，默认使用GitHub，中国大陆建议选择Coding.net，但是不建议将服务端部署在中国大陆主机上
-  ${Green_font_prefix} 1.${Font_color_suffix} GitHub
-  ${Green_font_prefix} 2.${Font_color_suffix} Coding.net (部分资源通过 FastGit 提供服务下载, Thanks to FastGit.org for the service)"
-  read -erp "请输入数字 [1-2], 默认为 1:" mirror_num
-  [[ -z "${mirror_num}" ]] && mirror_num=1
-  [[ ${mirror_num} == 2 ]] && link_prefix=${coding_prefix} || link_prefix=${github_prefix}
-}
 action=$1
 if [[ -n $action ]]; then
   if [[ $action == "s" ]]; then
