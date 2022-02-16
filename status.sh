@@ -17,6 +17,7 @@ plugin_file="/usr/local/ServerStatus/plugin"
 client_file="/usr/local/ServerStatus/clients"
 client_log_file="/tmp/serverstatus_client.log"
 server_log_file="/tmp/serverstatus_server.log"
+service="/usr/lib/systemd/system"
 
 github_prefix="https://raw.githubusercontent.com/jwstaceyOvO/ServerStatus/master"
 
@@ -46,14 +47,9 @@ Download_Server_Status_server() {
   [[ ! -e "sergate" ]] && echo -e "${Error} ServerStatus 服务端编译失败 !" && cd "${file_1}" && rm -rf "/tmp//ServerStatus-master" && exit 1
   cd "${file_1}" || exit 1
   mkdir -p "${server_file}"
-  if [[ -e "${server_file}/sergate" ]]; then
-    mv "${server_file}/sergate" "${server_file}/sergate1"
-    mv "/tmp/ServerStatus-master/server/sergate" "${server_file}/sergate"
-  else
-    mv "/tmp/ServerStatus-master/server/sergate" "${server_file}/sergate"
-    mv "/tmp/ServerStatus-master/web" "${web_file}"
-    mv "/tmp/ServerStatus-master/plugin" "${plugin_file}"
-  fi
+  mv "/tmp/ServerStatus-master/server" "${file}"
+  mv "/tmp/ServerStatus-master/web" "${file}"
+  mv "/tmp/ServerStatus-master/plugin" "${file}"
   rm -rf "/tmp/ServerStatus-master"
   if [[ ! -e "${server_file}/sergate" ]]; then
     echo -e "${Error} ServerStatus 服务端移动重命名失败 !"
@@ -74,7 +70,7 @@ Download_Server_Status_Service() {
   [[ -z ${mode} ]] && mode="server"
   local service_note="服务端"
   [[ ${mode} == "client" ]] && service_note="客户端"
-    wget --no-check-certificate "${github_prefix}/service/status-${mode}.service" -O "/usr/lib/systemd/system/status-${mode}.service" ||
+    wget --no-check-certificate "${github_prefix}/service/status-${mode}.service" -O "${service}/status-${mode}.service" ||
       {
         echo -e "${Error} $NAME ${service_note}服务管理脚本下载失败 !"
         exit 1
@@ -358,14 +354,15 @@ Add_ServerStatus_server() {
   Set_config_server
   Set_username_ch=$(grep '"username": "'"${username_s}"'"' ${server_conf})
   [[ -n "${Set_username_ch}" ]] && echo -e "${Error} 用户名已被使用 !" && exit 1
-  sed -i '3i\  },' ${server_conf}
-  sed -i '3i\   "username": "'"${username_s}"'",' ${server_conf}
-  sed -i '3i\   "name": "'"${name_s}"'",' ${server_conf}
-  sed -i '3i\   "type": "'"${type_s}"'",' ${server_conf}
-  sed -i '3i\   "location": "'"${location_s}"'",' ${server_conf}
-  sed -i '3i\   "password": "'"${password_s}"'",' ${server_conf}
-  sed -i '3i\   "monthstart": "'"${monthstart_s}"'",' ${server_conf}
-  sed -i '3i\  {' ${server_conf}
+  sed -i '3i\        },' ${server_conf}
+  sed -i '3i\            "monthstart": "'"${monthstart_s}"'",' ${server_conf}
+  sed -i '3i\            "location": "'"${location_s}"'",' ${server_conf}
+  sed -i '3i\            "host": "'"None"'",' ${server_conf}
+  sed -i '3i\            "type": "'"${type_s}"'",' ${server_conf}
+  sed -i '3i\            "name": "'"${name_s}"'",' ${server_conf}
+  sed -i '3i\            "password": "'"${password_s}"'",' ${server_conf}
+  sed -i '3i\            "username": "'"${username_s}"'",' ${server_conf}
+  sed -i '3i\        {' ${server_conf}
   echo -e "${Info} 添加节点成功 ${Green_font_prefix}[ 节点名称: ${name_s}, 节点用户名: ${username_s}, 节点密码: ${password_s} ]${Font_color_suffix} !"
 }
 
@@ -610,7 +607,6 @@ Install_ServerStatus_server() {
   Install_caddy
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_server
-  Install_jq
   echo -e "${Info} 开始下载/安装 服务脚本..."
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
@@ -645,7 +641,7 @@ Update_ServerStatus_server() {
 Update_ServerStatus_client() {
   check_installed_client_status
   service status-client stop
-  client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py") "
+  client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py")"
   server_s="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2;exit}')"
   server_port_s="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2;exit}')"
   username_s="$(echo -e "${client_text}" | grep "USER=" | awk -F "=" '{print $2;exit}')"
@@ -653,15 +649,21 @@ Update_ServerStatus_client() {
   Download_Server_Status_client
   Read_config_client
   Modify_config_client
-  rm -rf  /usr/lib/systemd/system/status-client.service
+  rm -rf  ${service}/status-client.service
   Service_Server_Status_client
   Start_ServerStatus_client
 }
 
 Start_ServerStatus_server() {
+  port="$(grep "m_Port = " ${server_file}/src/main.cpp | awk '{print $3}' | sed '{s/;$//}')"
   check_installed_server_status
   systemctl -q is-active status-server && echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
   service status-server start
+		if (systemctl -q is-active status-server) then
+			echo -e "${Info} $NAME 服务端启动成功[监听端口：${port}] !"
+		else
+			echo -e "${Error} $NAME 服务端启动失败 !"
+		fi
 }
 
 Stop_ServerStatus_server() {
@@ -672,11 +674,22 @@ if (systemctl -q is-active status-server)
  else  
  echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
 fi
+		if (systemctl -q is-active status-server) then
+			echo -e "${Error} $NAME 服务端停止失败 !"
+		else
+			echo -e "${Info} $NAME 服务端停止成功 !"
+		fi
 }
 
 Restart_ServerStatus_server() {
   check_installed_server_status
-  systemctl -q is-active status-client && service status-server stop
+  service status-server restart
+if (systemctl -q is-active status-server)
+     then
+     echo -e "${Info} $NAME 服务端重启成功 !"
+else
+     echo -e "${Error} $NAME 服务端重启失败 !" && exit 1
+fi
 }
 
 Uninstall_ServerStatus_server() {
@@ -701,7 +714,7 @@ Uninstall_ServerStatus_server() {
       [[ ${release} == "centos" ]] && yum -y remove caddy
       [[ ${release} == "archlinux" ]] && pacman -R caddy --noconfirm
     fi
-      rm /usr/lib/systemd/system/status-server.service
+      rm ${service}/status-server.service
       systemctl daemon-reload
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
@@ -710,43 +723,39 @@ Uninstall_ServerStatus_server() {
 }
 
 Start_ServerStatus_client() {
-NAME="ServerStatus Client"
   check_installed_client_status
-if (systemctl -q is-active status-client)
- then
-    echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
+if (systemctl -q is-active status-client) then
+    echo -e "${Error} $NAME 客户端正在运行，请检查 !" && exit 1
 fi
    service status-client start
    if (systemctl -q is-active status-client)
      then
-       echo -e "${Info} $NAME 启动成功 !"
+       echo -e "${Info} $NAME 客户端启动成功 !"
    else
-       echo -e "${Error} $NAME 启动失败 !"
+       echo -e "${Error} $NAME 客户端启动失败 !"
    fi
 }
 
 Stop_ServerStatus_client() {
   check_installed_client_status
-if (systemctl -q is-active status-client)
-   then  service status-client stop
-    if (systemctl -q is-active status-client)
-      then
+if (systemctl -q is-active status-client) then
+  service status-client stop
+    if (systemctl -q is-active status-client) then
        echo -e "${Error}} $NAME 停止失败 !"
-  else
+      else
        echo -e "${Info} $NAME 停止成功 !"
     fi
- else
+else
     echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
- fi
+fi
 }
 
 Restart_ServerStatus_client() {
   check_installed_client_status
       service status-client restart
-if (systemctl -q is-active status-client)
-     then
+if (systemctl -q is-active status-client) then
      echo -e "${Info} $NAME 重启成功 !"
-  else
+else
      echo -e "${Error} $NAME 重启失败 !" && exit 1
 fi
 }
@@ -766,7 +775,7 @@ Uninstall_ServerStatus_client() {
     fi
       systemctl stop status-client
       rm -rf "${client_file}"
-      rm /usr/lib/systemd/system/status-client.service
+      rm ${service}/status-client.service
       systemctl daemon-reload
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
@@ -803,12 +812,12 @@ View_server_Log() {
 Update_Shell() {
   sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "${github_prefix}/status.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
   [[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法链接到 Github !" && exit 0
-  if  [[ -e "/usr/lib/systemd/system/status-client.service" ]]; then
-    rm -rf /usr/lib/systemd/system/status-client.service
+  if  [[ -e "${service}/status-client.service" ]]; then
+    rm -rf ${service}/status-client.service
     Service_Server_Status_client
   fi
-  if  [[ -e "/usr/lib/systemd/system/status-server.service" ]]; then
-    rm -rf /usr/lib/systemd/system/status-server.service
+  if  [[ -e "${service}/status-server.service" ]]; then
+    rm -rf ${service}/status-server.service
     Service_Server_Status_server
   fi
   wget -N --no-check-certificate "${github_prefix}/status.sh"
@@ -885,8 +894,7 @@ menu_client() {
 }
 menu_server() {
   echo && echo -e "  $NAME 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-  -- Toyo | doub.io/shell-jc3 --
-  --    Modified by APTX    --
+
  ${Green_font_prefix} 0.${Font_color_suffix} 升级脚本
  ————————————
  ${Green_font_prefix} 1.${Font_color_suffix} 安装 服务端
