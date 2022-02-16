@@ -2,14 +2,8 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-#=================================================
-#  System Required: CentOS/Debian/Ubuntu/ArchLinux
-#  Description: $NAME client + server
-#  Version: Test v0.4.1
-#  Author: Toyo, Modified by APTX
-#=================================================
+sh_ver="1.0.0"
 
-sh_ver="0.4.1"
 filepath=$(
   cd "$(dirname "$0")" || exit
   pwd
@@ -19,8 +13,8 @@ file="/usr/local/ServerStatus"
 web_file="/usr/local/ServerStatus/web"
 server_file="/usr/local/ServerStatus/server"
 server_conf="/usr/local/ServerStatus/server/config.json"
+plugin_file="/usr/local/ServerStatus/plugin"
 client_file="/usr/local/ServerStatus/clients"
-
 client_log_file="/tmp/serverstatus_client.log"
 server_log_file="/tmp/serverstatus_server.log"
 
@@ -41,7 +35,33 @@ check_installed_client_status() {
 }
 
 Download_Server_Status_server() {
-git clone https://github.com/cppla/ServerStatus.git "${file}" && make
+  cd "/tmp" || exit 1
+  wget -N --no-check-certificate https://github.com/cppla/ServerStatus/archive/refs/heads/master.zip
+    [[ ! -e "master.zip" ]] && echo -e "${Error} ServerStatus 服务端下载失败 !" && exit 1
+  unzip master.zip
+  rm -rf master.zip
+  [[ ! -d "/tmp/ServerStatus-master" ]] && echo -e "${Error} ServerStatus 服务端解压失败 !" && exit 1
+  cd "/tmp/ServerStatus-master/server" || exit 1
+  make
+  [[ ! -e "sergate" ]] && echo -e "${Error} ServerStatus 服务端编译失败 !" && cd "${file_1}" && rm -rf "/tmp//ServerStatus-master" && exit 1
+  cd "${file_1}" || exit 1
+  mkdir -p "${server_file}"
+  if [[ -e "${server_file}/sergate" ]]; then
+    mv "${server_file}/sergate" "${server_file}/sergate1"
+    mv "/tmp/ServerStatus-master/server/sergate" "${server_file}/sergate"
+  else
+    mv "/tmp/ServerStatus-master/server/sergate" "${server_file}/sergate"
+    mv "/tmp/ServerStatus-master/web" "${web_file}"
+    mv "/tmp/ServerStatus-master/plugin" "${plugin_file}"
+  fi
+  rm -rf "/tmp/ServerStatus-master"
+  if [[ ! -e "${server_file}/sergate" ]]; then
+    echo -e "${Error} ServerStatus 服务端移动重命名失败 !"
+    [[ -e "${server_file}/sergate1" ]] && mv "${server_file}/sergate1" "${server_file}/sergate"
+    exit 1
+  else
+    [[ -e "${server_file}/sergate1" ]] && rm -rf "${server_file}/sergate1"
+  fi
 }
 
 Download_Server_Status_client() {
@@ -59,6 +79,7 @@ Download_Server_Status_Service() {
         echo -e "${Error} $NAME ${service_note}服务管理脚本下载失败 !"
         exit 1
       }
+    systemctl enable "status-${mode}.service"
   echo -e "${Info} $NAME ${service_note}服务管理脚本下载完成 !"
 }
 
@@ -70,22 +91,42 @@ Service_Server_Status_client() {
   Download_Server_Status_Service "client"
 }
 
+Installation_dependency() {
+  mode=$1
+  if [[ ${release} == "centos" ]]; then
+    yum makecache
+    yum -y install unzip
+    yum -y install python3 >/dev/null 2>&1 || yum -y install python
+  elif [[ ${release} == "debian" ]]; then
+    apt -y update
+    apt -y install unzip
+    apt -y install python3 >/dev/null 2>&1 || apt -y install python
+  elif [[ ${release} == "archlinux" ]]; then
+    pacman -Sy python python-pip unzip --noconfirm
+  fi
+  [[ ! -e /usr/bin/python ]] && ln -s /usr/bin/python3 /usr/bin/python
+}
+
 Write_server_config() {
   cat >${server_conf} <<-EOF
-{"servers":
-	[
-		{
-			"username": "s01",
-			"name": "vps-1",
-			"type": "kvm",
-			"host": "chengdu",
-			"location": "🇨🇳",
-			"password": "USER_DEFAULT_PASSWORD",
-			"monthstart": 1
-		},
-	]
-}       
+{
+    "servers": [
+        {
+            "username": "s01",
+            "name": "vps-1",
+            "type": "kvm",
+            "host": "chengdu",
+            "location": "🇨🇳",
+            "password": "USER_DEFAULT_PASSWORD",
+            "monthstart": 1
+        }
+    ]
+}     
 EOF
+}
+
+Write_server_config_conf() {
+  sed -i "s/m_Port = ${server_port}/m_Port = ${server_port_s}/g" "${server_file}/src/main.cpp"
 }
 
 Read_config_client() {
@@ -97,7 +138,7 @@ Read_config_client() {
 }
 
 Read_config_server() {
-    server_port="35601"
+    server_port="$(grep "m_Port = " ${server_file}/src/main.cpp | awk '{print $3}' | sed '{s/;$//}')"
 }
 
 Set_server() {
@@ -216,13 +257,22 @@ Set_location() {
   echo "	================================================" && echo
 }
 
+Set_monthstart() {
+  echo -e "请输入 $NAME 服务端要设置的节点月重置流量日[monthstart]（每月流量归零的日期（1~28），默认为1（即每月1日））"
+  read -erp "(默认: 1):" monthstart_s
+  [[ -z "$monthstart_s" ]] && monthstart_s="1"
+  echo && echo "	================================================"
+  echo -e "	月流量重置日[monthstart]: ${Red_background_prefix} ${monthstart_s} ${Font_color_suffix}"
+  echo "	================================================" && echo
+}
+
 Set_config_server() {
   Set_username "server"
   Set_password "server"
   Set_name
   Set_type
   Set_location
-  Set_region
+  Set_monthstart
 }
 
 Set_config_client() {
@@ -272,6 +322,7 @@ Set_ServerStatus_server() {
   elif [[ ${server_num} == "10" ]]; then
     Read_config_server
     Set_server_port
+    Write_server_config_conf
   else
     echo -e "${Error} 请输入正确的数字[1-10]" && exit 1
   fi
@@ -297,7 +348,7 @@ List_ServerStatus_server() {
     else
       now_text_disabled_status="${Red_font_prefix}禁用${Font_color_suffix}"
     fi
-    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 类型: ${Green_font_prefix}${now_text_type}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 区域: ${Green_font_prefix}${now_text_region}${Font_color_suffix} 状态: ${Green_font_prefix}${now_text_disabled_status}${Font_color_suffix}\n"
+    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 类型: ${Green_font_prefix}${now_text_type}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 月流量重置日: ${Green_font_prefix}${now_text_monthstart}${Font_color_suffix} 状态: ${Green_font_prefix}${now_text_disabled_status}${Font_color_suffix}\n"
   done
   echo && echo -e "节点总数 ${Green_font_prefix}${conf_text_total}${Font_color_suffix}"
   echo -e "${conf_list_all}"
@@ -308,14 +359,12 @@ Add_ServerStatus_server() {
   Set_username_ch=$(grep '"username": "'"${username_s}"'"' ${server_conf})
   [[ -n "${Set_username_ch}" ]] && echo -e "${Error} 用户名已被使用 !" && exit 1
   sed -i '3i\  },' ${server_conf}
-  sed -i '3i\   "region": "'"${region_s}"'"' ${server_conf}
-  sed -i '3i\   "disabled": false ,' ${server_conf}
-  sed -i '3i\   "location": "'"${location_s}"'",' ${server_conf}
-  sed -i '3i\   "host": "'"None"'",' ${server_conf}
-  sed -i '3i\   "type": "'"${type_s}"'",' ${server_conf}
-  sed -i '3i\   "name": "'"${name_s}"'",' ${server_conf}
-  sed -i '3i\   "password": "'"${password_s}"'",' ${server_conf}
   sed -i '3i\   "username": "'"${username_s}"'",' ${server_conf}
+  sed -i '3i\   "name": "'"${name_s}"'",' ${server_conf}
+  sed -i '3i\   "type": "'"${type_s}"'",' ${server_conf}
+  sed -i '3i\   "location": "'"${location_s}"'",' ${server_conf}
+  sed -i '3i\   "password": "'"${password_s}"'",' ${server_conf}
+  sed -i '3i\   "monthstart": "'"${monthstart_s}"'",' ${server_conf}
   sed -i '3i\  {' ${server_conf}
   echo -e "${Info} 添加节点成功 ${Green_font_prefix}[ 节点名称: ${name_s}, 节点用户名: ${username_s}, 节点密码: ${password_s} ]${Font_color_suffix} !"
 }
@@ -428,6 +477,23 @@ Modify_ServerStatus_server_location() {
   fi
 }
 
+Modify_ServerStatus_server_monthstart() {
+  List_ServerStatus_server
+  echo -e "请输入要修改的节点用户名"
+  read -erp "(默认: 取消):" manually_username
+  [[ -z "${manually_username}" ]] && echo -e "已取消..." && exit 1
+  Set_username_num=$(cat -n ${server_conf} | grep '"username": "'"${manually_username}"'"' | awk '{print $1}')
+  if [[ -n ${Set_username_num} ]]; then
+    Set_monthstart
+    Set_monthstart_num_a=$((Set_username_num + 1))
+    Set_monthstart_num_text=$(sed -n "${Set_monthstart_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
+    sed -i "${Set_monthstart_num_a}"'s/"monthstart": "'"${Set_monthstart_num_text}"'"/"monthstart": "'"${monthstart_s}"'"/g' ${server_conf}
+    echo -e "${Info} 修改成功 [ 原月流量重置日: ${Set_monthstart_num_text}, 新月流量重置日: ${monthstart_s} ]"
+  else
+    echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
+  fi
+}
+
 Modify_ServerStatus_server_all() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -440,7 +506,7 @@ Modify_ServerStatus_server_all() {
     Set_name
     Set_type
     Set_location
-    Set_region
+    Set_monthstart
     sed -i "${Set_username_num}"'s/"username": "'"${manually_username}"'"/"username": "'"${username_s}"'"/g' ${server_conf}
     Set_password_num_a=$((Set_username_num + 1))
     Set_password_num_text=$(sed -n "${Set_password_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
@@ -454,9 +520,9 @@ Modify_ServerStatus_server_all() {
     Set_location_num_a=$((Set_username_num + 5))
     Set_location_num_a_text=$(sed -n "${Set_location_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
     sed -i "${Set_location_num_a}"'s/"location": "'"${Set_location_num_a_text}"'"/"location": "'"${location_s}"'"/g' ${server_conf}
-    Set_region_num_a=$((Set_username_num + 7))
-    Set_region_num_a_text=$(sed -n "${Set_region_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_region_num_a}"'s/"region": "'"${Set_region_num_a_text}"'"/"region": "'"${region_s}"'"/g' ${server_conf}
+    Set_monthstart_num_a=$((Set_username_num + 7))
+    Set_monthstart_num_a_text=$(sed -n "${Set_monthstart_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
+    sed -i "${Set_monthstart_num_a}"'s/"monthstart": "'"${Set_monthstart_num_a_text}"'"/"monthstart": "'"${monthstart_s}"'"/g' ${server_conf}
     echo -e "${Info} 修改成功。"
   else
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
@@ -541,12 +607,11 @@ EOF
 Install_ServerStatus_server() {
   [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 $NAME 服务端已安装 !" && exit 1
   Set_server_port
-  echo -e "${Info} 开始安装/配置 依赖..."
   Install_caddy
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_server
   Install_jq
-  echo -e "${Info} 开始下载/安装 服务脚本(init)..."
+  echo -e "${Info} 开始下载/安装 服务脚本..."
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
   Write_server_config
@@ -603,7 +668,7 @@ Stop_ServerStatus_server() {
   check_installed_server_status
 if (systemctl -q is-active status-server)
   then
-     service status-server stop 
+  service status-server stop 
  else  
  echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
 fi
@@ -622,7 +687,7 @@ Uninstall_ServerStatus_server() {
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
   service status-server stop
-    Read_config_server
+  systemctl disable status-server
     if [[ -e "${client_file}/client-linux.py" ]]; then
       rm -rf "${server_file}"
       rm -rf "${web_file}"
@@ -651,8 +716,6 @@ if (systemctl -q is-active status-client)
  then
     echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
 fi
-   systemctl daemon-reload
-   systemctl enable status-client
    service status-client start
    if (systemctl -q is-active status-client)
      then
@@ -696,12 +759,12 @@ Uninstall_ServerStatus_client() {
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
     service status-client stop
+    systemctl disable status-client
     Read_config_client
     if [[ -e "${server_file}/sergate" ]]; then
       rm -rf "${client_file}"
     fi
       systemctl stop status-client
-      systemctl disable status-client
       rm -rf "${client_file}"
       rm /usr/lib/systemd/system/status-client.service
       systemctl daemon-reload
@@ -724,16 +787,19 @@ View_ServerStatus_client() {
 
 ————————————————————"
 }
+
 View_client_Log() {
   [[ ! -e ${client_log_file} ]] && echo -e "${Error} 没有找到日志文件 !" && exit 1
   echo && echo -e "${Tip} 按 ${Red_font_prefix}Ctrl+C${Font_color_suffix} 终止查看日志" && echo -e "如果需要查看完整日志内容，请用 ${Red_font_prefix}cat ${client_log_file}${Font_color_suffix} 命令。" && echo
   tail -f ${client_log_file}
 }
+
 View_server_Log() {
   [[ ! -e ${server_log_file} ]] && echo -e "${Error} 没有找到日志文件 !" && exit 1
   echo && echo -e "${Tip} 按 ${Red_font_prefix}Ctrl+C${Font_color_suffix} 终止查看日志" && echo -e "如果需要查看完整日志内容，请用 ${Red_font_prefix}cat ${server_log_file}${Font_color_suffix} 命令。" && echo
   tail -f ${server_log_file}
 }
+
 Update_Shell() {
   sh_new_ver=$(wget --no-check-certificate -qO- -t1 -T3 "${github_prefix}/status.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
   [[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法链接到 Github !" && exit 0
@@ -748,6 +814,7 @@ Update_Shell() {
   wget -N --no-check-certificate "${github_prefix}/status.sh"
   echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !(注意：因为更新方式为直接覆盖当前运行的脚本，所以可能下面会提示一些报错，无视即可)" && exit 0
 }
+
 menu_client() {
   echo && echo -e "  $NAME 一键安装管理脚本 ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
 
