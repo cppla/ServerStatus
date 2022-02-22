@@ -13,6 +13,7 @@ file="/usr/local/ServerStatus"
 web_file="/usr/local/ServerStatus/web"
 server_file="/usr/local/ServerStatus/server"
 server_conf="/usr/local/ServerStatus/server/config.json"
+server_conf_1="/usr/local/ServerStatus/server/config.conf"
 plugin_file="/usr/local/ServerStatus/plugin"
 client_file="/usr/local/ServerStatus/clients"
 service="/usr/lib/systemd/system"
@@ -33,7 +34,7 @@ check_sys() {
     release="centos"
   elif grep -q -E -i "debian|ubuntu" /etc/issue; then
     release="debian"
-  elif grep -q -E -i "centos|red hat|redhat" /etc/issue; then
+  elif grep -q -E -i "centonetstat -tunlps|red hat|redhat" /etc/issue; then
     release="centos"
   elif grep -q -E -i "Arch|Manjaro" /etc/issue; then
     release="archlinux"
@@ -145,7 +146,9 @@ EOF
 }
 
 Write_server_config_conf() {
-  sed -i "s/m_Port = ${server_port}/m_Port = ${server_port_s}/g" "${server_file}/src/main.cpp"
+  cat >${server_conf_1} <<-EOF
+PORT = ${server_port_s}
+EOF
 }
 
 Read_config_client() {
@@ -157,7 +160,13 @@ Read_config_client() {
 }
 
 Read_config_server() {
-    server_port="$(grep "m_Port = " ${server_file}/src/main.cpp | awk '{print $3}' | sed '{s/;$//}')"
+  if [[ ! -e "${server_conf_1}" ]]; then
+    server_port_s="35601"
+    Write_server_config_conf
+    server_port="35601"
+  else
+    server_port="$(grep "PORT = " ${server_conf_1} | awk '{print $3}')"
+  fi
 }
 
 Set_server() {
@@ -666,6 +675,7 @@ Install_jq
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
   Write_server_config
+  Write_server_config_conf
   echo -e "${Info} 所有步骤 安装完毕，开始启动..."
   Start_ServerStatus_server
 }
