@@ -15,9 +15,9 @@ server_file="/usr/local/ServerStatus/server"
 server_conf="/usr/local/ServerStatus/server/config.json"
 plugin_file="/usr/local/ServerStatus/plugin"
 client_file="/usr/local/ServerStatus/clients"
-client_log_file="/tmp/serverstatus_client.log"
-server_log_file="/tmp/serverstatus_server.log"
 service="/usr/lib/systemd/system"
+jq_file="${file}/jq"
+[[ ! -e ${jq_file} ]] && jq_file="/usr/bin/jq"
 
 github_prefix="https://raw.githubusercontent.com/jwstaceyOvO/ServerStatus/master"
 
@@ -26,6 +26,26 @@ Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Red_background_pre
 Info="${Green_font_prefix}[信息]${Font_color_suffix}"
 Error="${Red_font_prefix}[错误]${Font_color_suffix}"
 Tip="${Green_font_prefix}[注意]${Font_color_suffix}"
+
+#检查系统
+check_sys() {
+  if [[ -f /etc/redhat-release ]]; then
+    release="centos"
+  elif grep -q -E -i "debian|ubuntu" /etc/issue; then
+    release="debian"
+  elif grep -q -E -i "centos|red hat|redhat" /etc/issue; then
+    release="centos"
+  elif grep -q -E -i "Arch|Manjaro" /etc/issue; then
+    release="archlinux"
+  elif grep -q -E -i "debian|ubuntu" /proc/version; then
+    release="debian"
+  elif grep -q -E -i "centos|red hat|redhat" /proc/version; then
+    release="centos"
+  else
+    echo -e "ServerStatus 暂不支持该Linux发行版"
+  fi
+  bit=$(uname -m)
+}
 
 check_installed_server_status() {
   [[ ! -e "${server_file}/sergate" ]] && echo -e "${Error} $NAME 服务端没有安装，请检查 !" && exit 1
@@ -93,12 +113,15 @@ Installation_dependency() {
     yum makecache
     yum -y install unzip
     yum -y install python3 >/dev/null 2>&1 || yum -y install python
+    [[ ${mode} == "server" ]] && yum -y groupinstall "Development Tools"
   elif [[ ${release} == "debian" ]]; then
     apt -y update
     apt -y install unzip
     apt -y install python3 >/dev/null 2>&1 || apt -y install python
+    [[ ${mode} == "server" ]] && apt -y install build-essential
   elif [[ ${release} == "archlinux" ]]; then
     pacman -Sy python python-pip unzip --noconfirm
+    [[ ${mode} == "server" ]] && pacman -Sy base-devel --noconfirm
   fi
   [[ ! -e /usr/bin/python ]] && ln -s /usr/bin/python3 /usr/bin/python
 }
@@ -109,11 +132,11 @@ Write_server_config() {
     "servers": [
         {
             "username": "s01",
+            "password": "password",
             "name": "vps-1",
-            "type": "kvm",
-            "host": "chengdu",
-            "location": "🇨🇳",
-            "password": "USER_DEFAULT_PASSWORD",
+            "type": "KVM",
+            "host": "azure",
+            "location": "Hong Kong",
             "monthstart": 1
         }
     ]
@@ -290,9 +313,8 @@ Set_ServerStatus_server() {
  ${Green_font_prefix} 5.${Font_color_suffix} 修改 节点配置 - 节点名称
  ${Green_font_prefix} 6.${Font_color_suffix} 修改 节点配置 - 节点虚拟化
  ${Green_font_prefix} 7.${Font_color_suffix} 修改 节点配置 - 节点位置
- ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 全部参数
-————————
- ${Green_font_prefix} 9.${Font_color_suffix} 启用/禁用 节点配置
+ ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 月流量重置日
+ ${Green_font_prefix} 9.${Font_color_suffix} 修改 节点配置 - 全部参数
 ————————
  ${Green_font_prefix}10.${Font_color_suffix} 修改 服务端监听端口" && echo
   read -erp "(默认: 取消):" server_num
@@ -312,9 +334,9 @@ Set_ServerStatus_server() {
   elif [[ ${server_num} == "7" ]]; then
     Modify_ServerStatus_server_location
   elif [[ ${server_num} == "8" ]]; then
-    Modify_ServerStatus_server_all
+    Modify_ServerStatus_server_monthstart  
   elif [[ ${server_num} == "9" ]]; then
-    Modify_ServerStatus_server_disabled
+    Modify_ServerStatus_server_all
   elif [[ ${server_num} == "10" ]]; then
     Read_config_server
     Set_server_port
@@ -338,13 +360,13 @@ List_ServerStatus_server() {
     now_text_name=$(echo -e "${now_text}" | grep "name" | grep -v "username" | awk -F ": " '{print $2}')
     now_text_type=$(echo -e "${now_text}" | grep "type" | awk -F ": " '{print $2}')
     now_text_location=$(echo -e "${now_text}" | grep "location" | awk -F ": " '{print $2}')
-    now_text_disabled=$(echo -e "${now_text}" | grep "disabled" | awk -F ": " '{print $2}')
+    now_text_monthstart=$(echo -e "${now_text}" | grep "monthstart" | awk -F ": " '{print $2}')
     if [[ ${now_text_disabled} == "false" ]]; then
       now_text_disabled_status="${Green_font_prefix}启用${Font_color_suffix}"
     else
       now_text_disabled_status="${Red_font_prefix}禁用${Font_color_suffix}"
     fi
-    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 类型: ${Green_font_prefix}${now_text_type}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 月流量重置日: ${Green_font_prefix}${now_text_monthstart}${Font_color_suffix} 状态: ${Green_font_prefix}${now_text_disabled_status}${Font_color_suffix}\n"
+    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 虚拟化: ${Green_font_prefix}${now_text_type}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 月流量重置日: ${Green_font_prefix}${now_text_monthstart}${Font_color_suffix}\n"
   done
   echo && echo -e "节点总数 ${Green_font_prefix}${conf_text_total}${Font_color_suffix}"
   echo -e "${conf_list_all}"
@@ -355,7 +377,7 @@ Add_ServerStatus_server() {
   Set_username_ch=$(grep '"username": "'"${username_s}"'"' ${server_conf})
   [[ -n "${Set_username_ch}" ]] && echo -e "${Error} 用户名已被使用 !" && exit 1
   sed -i '3i\        },' ${server_conf}
-  sed -i '3i\            "monthstart": "'"${monthstart_s}"'",' ${server_conf}
+  sed -i '3i\            "monthstart": '"${monthstart_s}"'' ${server_conf}
   sed -i '3i\            "location": "'"${location_s}"'",' ${server_conf}
   sed -i '3i\            "host": "'"None"'",' ${server_conf}
   sed -i '3i\            "type": "'"${type_s}"'",' ${server_conf}
@@ -375,7 +397,7 @@ Del_ServerStatus_server() {
   del_username=$(cat -n ${server_conf} | grep '"username": "'"${del_server_username}"'"' | awk '{print $1}')
   if [[ -n ${del_username} ]]; then
     del_username_min=$((del_username - 1))
-    del_username_max=$((del_username + 8))
+    del_username_max=$((del_username + 7))
     del_username_max_text=$(sed -n "${del_username_max}p" ${server_conf})
     del_username_max_text_last=${del_username_max_text:((${#del_username_max_text} - 1))}
     if [[ ${del_username_max_text_last} != "," ]]; then
@@ -482,9 +504,9 @@ Modify_ServerStatus_server_monthstart() {
   Set_username_num=$(cat -n ${server_conf} | grep '"username": "'"${manually_username}"'"' | awk '{print $1}')
   if [[ -n ${Set_username_num} ]]; then
     Set_monthstart
-    Set_monthstart_num_a=$((Set_username_num + 1))
+    Set_monthstart_num_a=$((Set_username_num + 6))
     Set_monthstart_num_text=$(sed -n "${Set_monthstart_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_monthstart_num_a}"'s/"monthstart": "'"${Set_monthstart_num_text}"'"/"monthstart": "'"${monthstart_s}"'"/g' ${server_conf}
+    sed -i "${Set_monthstart_num_a}"'s/"monthstart": '"${Set_monthstart_num_text}"'/"monthstart": '"${monthstart_s}"'/g' ${server_conf}
     echo -e "${Info} 修改成功 [ 原月流量重置日: ${Set_monthstart_num_text}, 新月流量重置日: ${monthstart_s} ]"
   else
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
@@ -517,9 +539,9 @@ Modify_ServerStatus_server_all() {
     Set_location_num_a=$((Set_username_num + 5))
     Set_location_num_a_text=$(sed -n "${Set_location_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
     sed -i "${Set_location_num_a}"'s/"location": "'"${Set_location_num_a_text}"'"/"location": "'"${location_s}"'"/g' ${server_conf}
-    Set_monthstart_num_a=$((Set_username_num + 7))
+    Set_monthstart_num_a=$((Set_username_num + 6))
     Set_monthstart_num_a_text=$(sed -n "${Set_monthstart_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_monthstart_num_a}"'s/"monthstart": "'"${Set_monthstart_num_a_text}"'"/"monthstart": "'"${monthstart_s}"'"/g' ${server_conf}
+    sed -i "${Set_monthstart_num_a}"'s/"monthstart": '"${Set_monthstart_num_a_text}"'/"monthstart": '"${monthstart_s}"'/g' ${server_conf}
     echo -e "${Info} 修改成功。"
   else
     echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
@@ -560,6 +582,36 @@ Modify_config_client() {
   sed -i '0,/PORT = ${client_port}/s//PORT = ${server_port_s}/' "${client_file}/client-linux.py"
   sed -i '0,/USER = "'"${client_user}"'"/s//USER = "'"${username_s}"'"/' "${client_file}/client-linux.py"
   sed -i '0,/PASSWORD = "'"${client_password}"'"/s//PASSWORD = "'"${password_s}"'"/' "${client_file}/client-linux.py"
+}
+
+Install_jq() {
+  [[ ${mirror_num} == 2 ]] && {
+    github_link="https://hub.fastgit.org"
+    raw_link="https://raw.fastgit.org"
+  } || {
+    github_link="https://github.com"
+    raw_link="https://raw.githubusercontent.com"
+  }
+  if [[ ! -e ${jq_file} ]]; then
+    if [[ ${bit} == "x86_64" ]]; then
+      jq_file="${file}/jq"
+      wget --no-check-certificate "${github_link}/stedolan/jq/releases/download/jq-1.5/jq-linux64" -O ${jq_file}
+    elif [[ ${bit} == "i386" ]]; then
+      jq_file="${file}/jq"
+      wget --no-check-certificate "${github_link}/stedolan/jq/releases/download/jq-1.5/jq-linux32" -O ${jq_file}
+    else
+      # ARM fallback to package manager
+      [[ ${release} == "archlinux" ]] && pacman -Sy jq --noconfirm
+      [[ ${release} == "centos" ]] && yum -y install jq
+      [[ ${release} == "debian" ]] && apt -y install jq
+      jq_file="/usr/bin/jq"
+    fi
+    [[ ! -e ${jq_file} ]] && echo -e "${Error} JQ解析器 下载失败，请检查 !" && exit 1
+    chmod +x ${jq_file}
+    echo -e "${Info} JQ解析器 安装完成，继续..."
+  else
+    echo -e "${Info} JQ解析器 已安装，继续..."
+  fi
 }
 
 Install_caddy() {
@@ -604,9 +656,12 @@ EOF
 Install_ServerStatus_server() {
   [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 $NAME 服务端已安装 !" && exit 1
   Set_server_port
+  echo -e "${Info} 开始安装/配置 依赖..."
+  Installation_dependency "server"
   Install_caddy
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_server
+Install_jq
   echo -e "${Info} 开始下载/安装 服务脚本..."
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
@@ -617,11 +672,14 @@ Install_ServerStatus_server() {
 
 Install_ServerStatus_client() {
   [[ -e "${client_file}/client-linux.py" ]] && echo -e "${Error} 检测到 $NAME 客户端已安装 !" && exit 1
+  check_sys
   echo -e "${Info} 开始设置 用户配置..."
   Set_config_client
+  echo -e "${Info} 开始安装/配置 依赖..."
+  Installation_dependency "client"
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_client
-  echo -e "${Info} 开始下载/安装 服务脚本(init)..."
+  echo -e "${Info} 开始下载/安装 服务脚本..."
   Service_Server_Status_client
   echo -e "${Info} 开始写入 配置..."
   Read_config_client
@@ -640,7 +698,7 @@ Update_ServerStatus_server() {
 
 Update_ServerStatus_client() {
   check_installed_client_status
-  service status-client stop
+  systemctl stop status-client
   client_text="$(sed 's/\"//g;s/,//g;s/ //g' "${client_file}/client-linux.py")"
   server_s="$(echo -e "${client_text}" | grep "SERVER=" | awk -F "=" '{print $2;exit}')"
   server_port_s="$(echo -e "${client_text}" | grep "PORT=" | awk -F "=" '{print $2;exit}')"
@@ -658,7 +716,7 @@ Start_ServerStatus_server() {
   port="$(grep "m_Port = " ${server_file}/src/main.cpp | awk '{print $3}' | sed '{s/;$//}')"
   check_installed_server_status
   systemctl -q is-active status-server && echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
-  service status-server start
+  systemctl start status-server
 		if (systemctl -q is-active status-server) then
 			echo -e "${Info} $NAME 服务端启动成功[监听端口：${port}] !"
 		else
@@ -670,7 +728,7 @@ Stop_ServerStatus_server() {
   check_installed_server_status
 if (systemctl -q is-active status-server)
   then
-  service status-server stop 
+  systemctl stop status-server 
  else  
  echo -e "${Error} $NAME 没有运行，请检查 !" && exit 1
 fi
@@ -683,7 +741,7 @@ fi
 
 Restart_ServerStatus_server() {
   check_installed_server_status
-  service status-server restart
+  systemctl restart status-server
 if (systemctl -q is-active status-server)
      then
      echo -e "${Info} $NAME 服务端重启成功 !"
@@ -699,11 +757,13 @@ Uninstall_ServerStatus_server() {
   read -erp "(默认: n):" unyn
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
-  service status-server stop
-  systemctl disable status-server
+    systemctl stop status-server
+    systemctl disable status-server
+    rm ${service}/status-server.service -f
     if [[ -e "${client_file}/client-linux.py" ]]; then
       rm -rf "${server_file}"
       rm -rf "${web_file}"
+      rm -rf "${plugin_file}"
     else
       rm -rf "${file}"
     fi
@@ -714,8 +774,8 @@ Uninstall_ServerStatus_server() {
       [[ ${release} == "centos" ]] && yum -y remove caddy
       [[ ${release} == "archlinux" ]] && pacman -R caddy --noconfirm
     fi
-      rm ${service}/status-server.service
-      systemctl daemon-reload
+    systemctl daemon-reload
+    systemctl reset-failed
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
     echo && echo "卸载已取消..." && echo
@@ -727,7 +787,7 @@ Start_ServerStatus_client() {
 if (systemctl -q is-active status-client) then
     echo -e "${Error} $NAME 客户端正在运行，请检查 !" && exit 1
 fi
-   service status-client start
+   systemctl start status-client
    if (systemctl -q is-active status-client)
      then
        echo -e "${Info} $NAME 客户端启动成功 !"
@@ -739,7 +799,7 @@ fi
 Stop_ServerStatus_client() {
   check_installed_client_status
 if (systemctl -q is-active status-client) then
-  service status-client stop
+  systemctl stop status-client
     if (systemctl -q is-active status-client) then
        echo -e "${Error}} $NAME 停止失败 !"
       else
@@ -751,8 +811,7 @@ fi
 }
 
 Restart_ServerStatus_client() {
-  check_installed_client_status
-      service status-client restart
+  systemctl restart status-client
 if (systemctl -q is-active status-client) then
      echo -e "${Info} $NAME 重启成功 !"
 else
@@ -767,16 +826,12 @@ Uninstall_ServerStatus_client() {
   read -erp "(默认: n):" unyn
   [[ -z ${unyn} ]] && unyn="n"
   if [[ ${unyn} == [Yy] ]]; then
-    service status-client stop
+    systemctl stop status-client
     systemctl disable status-client
-    Read_config_client
-    if [[ -e "${server_file}/sergate" ]]; then
-      rm -rf "${client_file}"
-    fi
-      systemctl stop status-client
-      rm -rf "${client_file}"
-      rm ${service}/status-client.service
-      systemctl daemon-reload
+    rm ${service}/status-client.service -f
+    systemctl daemon-reload
+    systemctl reset-failed
+    rm -rf "${client_file}"
     echo && echo "ServerStatus 卸载完成 !" && echo
   else
     echo && echo "卸载已取消..." && echo
@@ -798,15 +853,17 @@ View_ServerStatus_client() {
 }
 
 View_client_Log() {
-  [[ ! -e ${client_log_file} ]] && echo -e "${Error} 没有找到日志文件 !" && exit 1
-  echo && echo -e "${Tip} 按 ${Red_font_prefix}Ctrl+C${Font_color_suffix} 终止查看日志" && echo -e "如果需要查看完整日志内容，请用 ${Red_font_prefix}cat ${client_log_file}${Font_color_suffix} 命令。" && echo
-  tail -f ${client_log_file}
+    journalctl -u status-client.service --no-pager -f
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
 }
 
 View_server_Log() {
-  [[ ! -e ${server_log_file} ]] && echo -e "${Error} 没有找到日志文件 !" && exit 1
-  echo && echo -e "${Tip} 按 ${Red_font_prefix}Ctrl+C${Font_color_suffix} 终止查看日志" && echo -e "如果需要查看完整日志内容，请用 ${Red_font_prefix}cat ${server_log_file}${Font_color_suffix} 命令。" && echo
-  tail -f ${server_log_file}
+    journalctl -u status-server.service --no-pager -f
+    if [[ $# == 0 ]]; then
+        before_show_menu
+    fi
 }
 
 Update_Shell() {
@@ -961,6 +1018,7 @@ menu_server() {
   esac
 }
 
+check_sys
 action=$1
 if [[ -n $action ]]; then
   if [[ $action == "s" ]]; then
