@@ -20,7 +20,7 @@ service="/usr/lib/systemd/system"
 jq_file="${file}/jq"
 [[ ! -e ${jq_file} ]] && jq_file="/usr/bin/jq"
 
-github_prefix="https://raw.githubusercontent.com/jwstaceyOvO/ServerStatus/master"
+github_prefix="https://raw.githubusercontent.com/cppla/ServerStatus/master"
 
 NAME="ServerStatus"
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
@@ -251,8 +251,8 @@ Set_password() {
   else
     echo -e "请输入 $NAME 服务端中对应配置的密码[password]（字母/数字）"
   fi
-  read -erp "(默认: doub.io):" password_s
-  [[ -z "$password_s" ]] && password_s="doub.io"
+  read -erp "(默认: serverstatus):" password_s
+  [[ -z "$password_s" ]] && password_s="serverstatus"
   echo && echo "	================================================"
   echo -e "	密码[password]: ${Red_background_prefix} ${password_s} ${Font_color_suffix}"
   echo "	================================================" && echo
