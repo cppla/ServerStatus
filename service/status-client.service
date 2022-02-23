@@ -1,0 +1,9 @@
+[Unit]
+Description=ServerStatus-Client
+After=network.target
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/ServerStatus/clients/client-linux.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
