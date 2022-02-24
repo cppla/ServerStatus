@@ -155,14 +155,14 @@ function uptime() {
 				var trafficdiff_in = result.servers[i].network_in - result.servers[i].last_network_in;
 				var trafficdiff_out = result.servers[i].network_out - result.servers[i].last_network_out;
 				if(trafficdiff_in < 1024*1024*1024*1024)
-					monthtraffic += (trafficdiff_in/1024/1024/1024).toFixed(2) + "G";
+					monthtraffic += (trafficdiff_in/1024/1024/1024).toFixed(1) + "G";
 				else
-					monthtraffic += (trafficdiff_in/1024/1024/1024/1024).toFixed(2) + "T";
+					monthtraffic += (trafficdiff_in/1024/1024/1024/1024).toFixed(1) + "T";
 				monthtraffic += " | "
 				if(trafficdiff_out < 1024*1024*1024*1024)
-					monthtraffic += (trafficdiff_out/1024/1024/1024).toFixed(2) + "G";
+					monthtraffic += (trafficdiff_out/1024/1024/1024).toFixed(1) + "G";
 				else
-					monthtraffic += (trafficdiff_out/1024/1024/1024/1024).toFixed(2) + "T";
+					monthtraffic += (trafficdiff_out/1024/1024/1024/1024).toFixed(1) + "T";
 				TableRow.children["month_traffic"].children[0].children[0].className = "progress-bar progress-bar-success";
 				TableRow.children["month_traffic"].children[0].children[0].innerHTML = "<small>"+monthtraffic+"</small>";
 
@@ -173,7 +173,7 @@ function uptime() {
 				if(result.servers[i].load == -1) {
 				    TableRow.children["load"].innerHTML = "–";
 				} else {
-				    TableRow.children["load"].innerHTML = result.servers[i].load_1.toFixed(2);
+				    TableRow.children["load"].innerHTML = result.servers[i].load_1.toFixed(1);
 				}
 
 				// Network
@@ -192,14 +192,14 @@ function uptime() {
 				//Traffic
 				var trafficstr = "";
 				if(result.servers[i].network_in < 1024*1024*1024*1024)
-					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(2) + "G";
+					trafficstr += (result.servers[i].network_in/1024/1024/1024).toFixed(1) + "G";
                 else
-                    trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(2) + "T";
+                    trafficstr += (result.servers[i].network_in/1024/1024/1024/1024).toFixed(1) + "T";
 				trafficstr += " | "
 				if(result.servers[i].network_out < 1024*1024*1024*1024)
-				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(2) + "G";
+				    trafficstr += (result.servers[i].network_out/1024/1024/1024).toFixed(1) + "G";
 				else
-					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(2) + "T";
+					trafficstr += (result.servers[i].network_out/1024/1024/1024/1024).toFixed(1) + "T";
 				TableRow.children["traffic"].innerHTML = trafficstr;
 
 				// CPU
