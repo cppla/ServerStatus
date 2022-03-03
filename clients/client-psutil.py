@@ -6,9 +6,17 @@
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
+import threading
+import psutil
+import errno
+import json
+import sys
+import os
+import timeit
+import time
+import socket
 SERVER = "127.0.0.1"
 USER = "s01"
-
 
 
 PORT = 35601
@@ -21,33 +29,34 @@ CU = "cu.tz.cloudcpp.com"
 CT = "ct.tz.cloudcpp.com"
 CM = "cm.tz.cloudcpp.com"
 
-import socket
-import time
-import timeit
-import os
-import sys
-import json
-import errno
-import psutil
-import threading
 try:
     from queue import Queue     # python3
 except ImportError:
     from Queue import Queue     # python2
 
+
 def get_uptime():
     return int(time.time() - psutil.boot_time())
+
+
+def get_type():
+    type = subprocess.getoutput("systemd-detect-virt")
+    return str(type)
+
 
 def get_memory():
     Mem = psutil.virtual_memory()
     return int(Mem.total / 1024.0), int(Mem.used / 1024.0)
 
+
 def get_swap():
     Mem = psutil.swap_memory()
     return int(Mem.total/1024.0), int(Mem.used/1024.0)
 
+
 def get_hdd():
-    valid_fs = [ "ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs", "fuseblk", "zfs", "simfs", "ntfs", "fat32", "exfat", "xfs" ]
+    valid_fs = ["ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs",
+                "fuseblk", "zfs", "simfs", "ntfs", "fat32", "exfat", "xfs"]
     disks = dict()
     size = 0
     used = 0
@@ -60,8 +69,10 @@ def get_hdd():
         used += usage.used
     return int(size/1024.0/1024.0), int(used/1024.0/1024.0)
 
+
 def get_cpu():
     return psutil.cpu_percent(interval=INTERVAL)
+
 
 def liuliang():
     NET_IN = 0
@@ -77,6 +88,7 @@ def liuliang():
             NET_IN += v[1]
             NET_OUT += v[0]
     return NET_IN, NET_OUT
+
 
 def tupd():
     '''
@@ -97,10 +109,11 @@ def tupd():
             # cpu is high, default: 0
             # d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
         else:
-            t,u,p,d = 0,0,0,0
-        return t,u,p,d
+            t, u, p, d = 0, 0, 0, 0
+        return t, u, p, d
     except:
-        return 0,0,0,0
+        return 0, 0, 0, 0
+
 
 def get_network(ip_version):
     if(ip_version == 4):
@@ -112,6 +125,7 @@ def get_network(ip_version):
         return True
     except:
         return False
+
 
 lostRate = {
     '10010': 0.0,
@@ -132,6 +146,7 @@ netSpeed = {
     'avgtx': 0
 }
 
+
 def _ping_thread(host, mark, port):
     lostPacket = 0
     packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
@@ -144,7 +159,7 @@ def _ping_thread(host, mark, port):
             else:
                 IP = socket.getaddrinfo(host, None, socket.AF_INET6)[0][4][0]
         except Exception:
-                pass
+            pass
 
     while True:
         if packet_queue.full():
@@ -159,7 +174,7 @@ def _ping_thread(host, mark, port):
             if error.errno == errno.ECONNREFUSED:
                 pingTime[mark] = int((timeit.default_timer() - b) * 1000)
                 packet_queue.put(1)
-            #elif error.errno == errno.ETIMEDOUT:
+            # elif error.errno == errno.ETIMEDOUT:
             else:
                 lostPacket += 1
                 packet_queue.put(0)
@@ -168,6 +183,7 @@ def _ping_thread(host, mark, port):
             lostRate[mark] = float(lostPacket) / packet_queue.qsize()
 
         time.sleep(INTERVAL)
+
 
 def _net_speed():
     while True:
@@ -189,6 +205,7 @@ def _net_speed():
         netSpeed["avgrx"] = avgrx
         netSpeed["avgtx"] = avgtx
         time.sleep(INTERVAL)
+
 
 def get_realtime_date():
     t1 = threading.Thread(
@@ -227,6 +244,7 @@ def get_realtime_date():
     t3.start()
     t4.start()
 
+
 def byte_str(object):
     '''
     bytes to str, str to bytes
@@ -239,6 +257,7 @@ def byte_str(object):
         return bytes.decode(object)
     else:
         print(type(object))
+
 
 if __name__ == '__main__':
     for argc in sys.argv:
@@ -285,10 +304,12 @@ if __name__ == '__main__':
                 raise socket.error
 
             while 1:
+                Type = get_type()
                 CPU = get_cpu()
                 NET_IN, NET_OUT = liuliang()
                 Uptime = get_uptime()
-                Load_1, Load_5, Load_15 = os.getloadavg() if 'linux' in sys.platform else (0.0, 0.0, 0.0)
+                Load_1, Load_5, Load_15 = os.getloadavg(
+                ) if 'linux' in sys.platform else (0.0, 0.0, 0.0)
                 MemoryTotal, MemoryUsed = get_memory()
                 SwapTotal, SwapUsed = get_swap()
                 HDDTotal, HDDUsed = get_hdd()
@@ -300,6 +321,7 @@ if __name__ == '__main__':
                 else:
                     timer -= 1*INTERVAL
 
+                array['type'] = Type
                 array['uptime'] = Uptime
                 array['load_1'] = Load_1
                 array['load_5'] = Load_5
