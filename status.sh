@@ -20,7 +20,7 @@ service="/usr/lib/systemd/system"
 jq_file="${file}/jq"
 [[ ! -e ${jq_file} ]] && jq_file="/usr/bin/jq"
 
-github_prefix="https://raw.githubusercontent.com/cppla/ServerStatus/master"
+github_prefix="https://raw.githubusercontent.com/jwstaceyOvO/ServerStatus/master"
 
 NAME="ServerStatus"
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m"
@@ -58,7 +58,7 @@ check_installed_client_status() {
 
 Download_Server_Status_server() {
   cd "/tmp" || exit 1
-  wget -N --no-check-certificate https://github.com/cppla/ServerStatus/archive/refs/heads/master.zip
+  wget -N --no-check-certificate https://github.com/jwstaceyOvO/ServerStatus/archive/refs/heads/master.zip
     [[ ! -e "master.zip" ]] && echo -e "${Error} ServerStatus 服务端下载失败 !" && exit 1
   unzip master.zip
   rm -rf master.zip
@@ -135,7 +135,6 @@ Write_server_config() {
             "username": "s01",
             "password": "password",
             "name": "vps-1",
-            "type": "KVM",
             "host": "azure",
             "location": "Hong Kong",
             "monthstart": 1
@@ -267,15 +266,6 @@ Set_name() {
   echo "	================================================" && echo
 }
 
-Set_type() {
-  echo -e "请输入 $NAME 服务端要设置的节点虚拟化类型[type]（例如 OpenVZ / KVM）"
-  read -erp "(默认: KVM):" type_s
-  [[ -z "$type_s" ]] && type_s="KVM"
-  echo && echo "	================================================"
-  echo -e "	虚拟化类型[type]: ${Red_background_prefix} ${type_s} ${Font_color_suffix}"
-  echo "	================================================" && echo
-}
-
 Set_location() {
   echo -e "请输入 $NAME 服务端要设置的节点位置[location]（支持中文，前提是你的系统和SSH工具支持中文输入）"
   read -erp "(默认: Hong Kong):" location_s
@@ -298,7 +288,6 @@ Set_config_server() {
   Set_username "server"
   Set_password "server"
   Set_name
-  Set_type
   Set_location
   Set_monthstart
 }
@@ -320,12 +309,11 @@ Set_ServerStatus_server() {
  ${Green_font_prefix} 3.${Font_color_suffix} 修改 节点配置 - 节点用户名
  ${Green_font_prefix} 4.${Font_color_suffix} 修改 节点配置 - 节点密码
  ${Green_font_prefix} 5.${Font_color_suffix} 修改 节点配置 - 节点名称
- ${Green_font_prefix} 6.${Font_color_suffix} 修改 节点配置 - 节点虚拟化
- ${Green_font_prefix} 7.${Font_color_suffix} 修改 节点配置 - 节点位置
- ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 月流量重置日
- ${Green_font_prefix} 9.${Font_color_suffix} 修改 节点配置 - 全部参数
+ ${Green_font_prefix} 6.${Font_color_suffix} 修改 节点配置 - 节点位置
+ ${Green_font_prefix} 7.${Font_color_suffix} 修改 节点配置 - 月流量重置日
+ ${Green_font_prefix} 8.${Font_color_suffix} 修改 节点配置 - 全部参数
 ————————
- ${Green_font_prefix}10.${Font_color_suffix} 修改 服务端监听端口" && echo
+ ${Green_font_prefix} 9.${Font_color_suffix} 修改 服务端监听端口" && echo
   read -erp "(默认: 取消):" server_num
   [[ -z "${server_num}" ]] && echo "已取消..." && exit 1
   if [[ ${server_num} == "1" ]]; then
@@ -339,14 +327,12 @@ Set_ServerStatus_server() {
   elif [[ ${server_num} == "5" ]]; then
     Modify_ServerStatus_server_name
   elif [[ ${server_num} == "6" ]]; then
-    Modify_ServerStatus_server_type
-  elif [[ ${server_num} == "7" ]]; then
     Modify_ServerStatus_server_location
-  elif [[ ${server_num} == "8" ]]; then
+  elif [[ ${server_num} == "7" ]]; then
     Modify_ServerStatus_server_monthstart  
-  elif [[ ${server_num} == "9" ]]; then
+  elif [[ ${server_num} == "8" ]]; then
     Modify_ServerStatus_server_all
-  elif [[ ${server_num} == "10" ]]; then
+  elif [[ ${server_num} == "9" ]]; then
     Read_config_server
     Set_server_port
     Write_server_config_conf
@@ -367,7 +353,6 @@ List_ServerStatus_server() {
     now_text_username=$(echo -e "${now_text}" | grep "username" | awk -F ": " '{print $2}')
     now_text_password=$(echo -e "${now_text}" | grep "password" | awk -F ": " '{print $2}')
     now_text_name=$(echo -e "${now_text}" | grep "name" | grep -v "username" | awk -F ": " '{print $2}')
-    now_text_type=$(echo -e "${now_text}" | grep "type" | awk -F ": " '{print $2}')
     now_text_location=$(echo -e "${now_text}" | grep "location" | awk -F ": " '{print $2}')
     now_text_monthstart=$(echo -e "${now_text}" | grep "monthstart" | awk -F ": " '{print $2}')
     if [[ ${now_text_disabled} == "false" ]]; then
@@ -375,7 +360,7 @@ List_ServerStatus_server() {
     else
       now_text_disabled_status="${Red_font_prefix}禁用${Font_color_suffix}"
     fi
-    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 虚拟化: ${Green_font_prefix}${now_text_type}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 月流量重置日: ${Green_font_prefix}${now_text_monthstart}${Font_color_suffix}\n"
+    conf_list_all=${conf_list_all}"用户名: ${Green_font_prefix}${now_text_username}${Font_color_suffix} 密码: ${Green_font_prefix}${now_text_password}${Font_color_suffix} 节点名: ${Green_font_prefix}${now_text_name}${Font_color_suffix} 位置: ${Green_font_prefix}${now_text_location}${Font_color_suffix} 月流量重置日: ${Green_font_prefix}${now_text_monthstart}${Font_color_suffix}\n"
   done
   echo && echo -e "节点总数 ${Green_font_prefix}${conf_text_total}${Font_color_suffix}"
   echo -e "${conf_list_all}"
@@ -389,7 +374,6 @@ Add_ServerStatus_server() {
   sed -i '3i\            "monthstart": '"${monthstart_s}"'' ${server_conf}
   sed -i '3i\            "location": "'"${location_s}"'",' ${server_conf}
   sed -i '3i\            "host": "'"None"'",' ${server_conf}
-  sed -i '3i\            "type": "'"${type_s}"'",' ${server_conf}
   sed -i '3i\            "name": "'"${name_s}"'",' ${server_conf}
   sed -i '3i\            "password": "'"${password_s}"'",' ${server_conf}
   sed -i '3i\            "username": "'"${username_s}"'",' ${server_conf}
@@ -406,7 +390,7 @@ Del_ServerStatus_server() {
   del_username=$(cat -n ${server_conf} | grep '"username": "'"${del_server_username}"'"' | awk '{print $1}')
   if [[ -n ${del_username} ]]; then
     del_username_min=$((del_username - 1))
-    del_username_max=$((del_username + 7))
+    del_username_max=$((del_username + 6))
     del_username_max_text=$(sed -n "${del_username_max}p" ${server_conf})
     del_username_max_text_last=${del_username_max_text:((${#del_username_max_text} - 1))}
     if [[ ${del_username_max_text_last} != "," ]]; then
@@ -471,23 +455,6 @@ Modify_ServerStatus_server_name() {
   fi
 }
 
-Modify_ServerStatus_server_type() {
-  List_ServerStatus_server
-  echo -e "请输入要修改的节点用户名"
-  read -erp "(默认: 取消):" manually_username
-  [[ -z "${manually_username}" ]] && echo -e "已取消..." && exit 1
-  Set_username_num=$(cat -n ${server_conf} | grep '"username": "'"${manually_username}"'"' | awk '{print $1}')
-  if [[ -n ${Set_username_num} ]]; then
-    Set_type
-    Set_type_num_a=$((Set_username_num + 3))
-    Set_type_num_a_text=$(sed -n "${Set_type_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_type_num_a}"'s/"type": "'"${Set_type_num_a_text}"'"/"type": "'"${type_s}"'"/g' ${server_conf}
-    echo -e "${Info} 修改成功 [ 原节点虚拟化: ${Set_type_num_a_text}, 新节点虚拟化: ${type_s} ]"
-  else
-    echo -e "${Error} 请输入正确的节点用户名 !" && exit 1
-  fi
-}
-
 Modify_ServerStatus_server_location() {
   List_ServerStatus_server
   echo -e "请输入要修改的节点用户名"
@@ -532,7 +499,6 @@ Modify_ServerStatus_server_all() {
     Set_username
     Set_password
     Set_name
-    Set_type
     Set_location
     Set_monthstart
     sed -i "${Set_username_num}"'s/"username": "'"${manually_username}"'"/"username": "'"${username_s}"'"/g' ${server_conf}
@@ -542,13 +508,10 @@ Modify_ServerStatus_server_all() {
     Set_name_num_a=$((Set_username_num + 2))
     Set_name_num_a_text=$(sed -n "${Set_name_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
     sed -i "${Set_name_num_a}"'s/"name": "'"${Set_name_num_a_text}"'"/"name": "'"${name_s}"'"/g' ${server_conf}
-    Set_type_num_a=$((Set_username_num + 3))
-    Set_type_num_a_text=$(sed -n "${Set_type_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
-    sed -i "${Set_type_num_a}"'s/"type": "'"${Set_type_num_a_text}"'"/"type": "'"${type_s}"'"/g' ${server_conf}
-    Set_location_num_a=$((Set_username_num + 5))
+    Set_location_num_a=$((Set_username_num + 4))
     Set_location_num_a_text=$(sed -n "${Set_location_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
     sed -i "${Set_location_num_a}"'s/"location": "'"${Set_location_num_a_text}"'"/"location": "'"${location_s}"'"/g' ${server_conf}
-    Set_monthstart_num_a=$((Set_username_num + 6))
+    Set_monthstart_num_a=$((Set_username_num + 5))
     Set_monthstart_num_a_text=$(sed -n "${Set_monthstart_num_a}p" ${server_conf} | sed 's/\"//g;s/,$//g' | awk -F ": " '{print $2}')
     sed -i "${Set_monthstart_num_a}"'s/"monthstart": '"${Set_monthstart_num_a_text}"'/"monthstart": '"${monthstart_s}"'/g' ${server_conf}
     echo -e "${Info} 修改成功。"
@@ -700,6 +663,7 @@ Install_ServerStatus_client() {
 
 Update_ServerStatus_server() {
   check_installed_server_status
+  systemctl stop status-server
   Download_Server_Status_server
   rm -rf /etc/init.d/status-server
   Service_Server_Status_server

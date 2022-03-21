@@ -5,9 +5,18 @@
 # 支持操作系统： Linux, OSX, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
+import threading
+import subprocess
+import errno
+import json
+import sys
+import os
+import re
+import timeit
+import time
+import socket
 SERVER = "127.0.0.1"
 USER = "s01"
-
 
 
 PORT = 35601
@@ -20,25 +29,22 @@ CU = "cu.tz.cloudcpp.com"
 CT = "ct.tz.cloudcpp.com"
 CM = "cm.tz.cloudcpp.com"
 
-import socket
-import time
-import timeit
-import re
-import os
-import sys
-import json
-import errno
-import subprocess
-import threading
 try:
     from queue import Queue     # python3
 except ImportError:
     from Queue import Queue     # python2
 
+
 def get_uptime():
     with open('/proc/uptime', 'r') as f:
         uptime = f.readline().split('.', 2)
         return int(uptime[0])
+
+
+def get_type():
+    type = subprocess.getoutput("systemd-detect-virt")
+    return str(type)
+
 
 def get_memory():
     re_parser = re.compile(r'^(?P<key>\S*):\s*(?P<value>\d*)\s*kB')
@@ -50,32 +56,38 @@ def get_memory():
         key, value = match.groups(['key', 'value'])
         result[key] = int(value)
     MemTotal = float(result['MemTotal'])
-    MemUsed = MemTotal-float(result['MemFree'])-float(result['Buffers'])-float(result['Cached'])-float(result['SReclaimable'])
+    MemUsed = MemTotal-float(result['MemFree'])-float(result['Buffers']) - \
+        float(result['Cached'])-float(result['SReclaimable'])
     SwapTotal = float(result['SwapTotal'])
     SwapFree = float(result['SwapFree'])
     return int(MemTotal), int(MemUsed), int(SwapTotal), int(SwapFree)
 
+
 def get_hdd():
-    p = subprocess.check_output(['df', '-Tlm', '--total', '-t', 'ext4', '-t', 'ext3', '-t', 'ext2', '-t', 'reiserfs', '-t', 'jfs', '-t', 'ntfs', '-t', 'fat32', '-t', 'btrfs', '-t', 'fuseblk', '-t', 'zfs', '-t', 'simfs', '-t', 'xfs']).decode("Utf-8")
+    p = subprocess.check_output(['df', '-Tlm', '--total', '-t', 'ext4', '-t', 'ext3', '-t', 'ext2', '-t', 'reiserfs', '-t', 'jfs',
+                                '-t', 'ntfs', '-t', 'fat32', '-t', 'btrfs', '-t', 'fuseblk', '-t', 'zfs', '-t', 'simfs', '-t', 'xfs']).decode("Utf-8")
     total = p.splitlines()[-1]
     used = total.split()[3]
     size = total.split()[2]
     return int(size), int(used)
 
+
 def get_time():
     with open("/proc/stat", "r") as f:
         time_list = f.readline().split(' ')[2:6]
-        for i in range(len(time_list))  :
+        for i in range(len(time_list)):
             time_list[i] = int(time_list[i])
         return time_list
+
 
 def delta_time():
     x = get_time()
     time.sleep(INTERVAL)
     y = get_time()
     for i in range(len(x)):
-        y[i]-=x[i]
+        y[i] -= x[i]
     return y
+
 
 def get_cpu():
     t = delta_time()
@@ -85,23 +97,26 @@ def get_cpu():
     result = 100-(t[len(t)-1]*100.00/st)
     return round(result, 1)
 
+
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
     with open('/proc/net/dev') as f:
         for line in f.readlines():
-            netinfo = re.findall('([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
+            netinfo = re.findall(
+                '([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
             if netinfo:
                 if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
                         or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \
                         or 'br-' in netinfo[0][0] or 'vmbr' in netinfo[0][0] \
                         or 'vnet' in netinfo[0][0] or 'kube' in netinfo[0][0] \
-                        or netinfo[0][1]=='0' or netinfo[0][9]=='0':
+                        or netinfo[0][1] == '0' or netinfo[0][9] == '0':
                     continue
                 else:
                     NET_IN += int(netinfo[0][1])
                     NET_OUT += int(netinfo[0][9])
     return NET_IN, NET_OUT
+
 
 def tupd():
     '''
@@ -116,7 +131,8 @@ def tupd():
     p = int(s[:-1])-2
     s = subprocess.check_output("ps -eLf|wc -l", shell=True)
     d = int(s[:-1])-2
-    return t,u,p,d
+    return t, u, p, d
+
 
 def get_network(ip_version):
     if(ip_version == 4):
@@ -128,6 +144,7 @@ def get_network(ip_version):
         return True
     except:
         return False
+
 
 lostRate = {
     '10010': 0.0,
@@ -148,6 +165,7 @@ netSpeed = {
     'avgtx': 0
 }
 
+
 def _ping_thread(host, mark, port):
     lostPacket = 0
     packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
@@ -160,7 +178,7 @@ def _ping_thread(host, mark, port):
             else:
                 IP = socket.getaddrinfo(host, None, socket.AF_INET6)[0][4][0]
         except Exception:
-                pass
+            pass
 
     while True:
         if packet_queue.full():
@@ -175,7 +193,7 @@ def _ping_thread(host, mark, port):
             if error.errno == errno.ECONNREFUSED:
                 pingTime[mark] = int((timeit.default_timer() - b) * 1000)
                 packet_queue.put(1)
-            #elif error.errno == errno.ETIMEDOUT:
+            # elif error.errno == errno.ETIMEDOUT:
             else:
                 lostPacket += 1
                 packet_queue.put(0)
@@ -184,6 +202,7 @@ def _ping_thread(host, mark, port):
             lostRate[mark] = float(lostPacket) / packet_queue.qsize()
 
         time.sleep(INTERVAL)
+
 
 def _net_speed():
     while True:
@@ -204,11 +223,14 @@ def _net_speed():
             now_clock = time.time()
             netSpeed["diff"] = now_clock - netSpeed["clock"]
             netSpeed["clock"] = now_clock
-            netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
-            netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
+            netSpeed["netrx"] = int(
+                (avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
+            netSpeed["nettx"] = int(
+                (avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
             netSpeed["avgrx"] = avgrx
             netSpeed["avgtx"] = avgtx
         time.sleep(INTERVAL)
+
 
 def get_realtime_date():
     t1 = threading.Thread(
@@ -247,6 +269,7 @@ def get_realtime_date():
     t3.start()
     t4.start()
 
+
 def byte_str(object):
     '''
     bytes to str, str to bytes
@@ -259,6 +282,7 @@ def byte_str(object):
         return bytes.decode(object)
     else:
         print(type(object))
+
 
 if __name__ == '__main__':
     for argc in sys.argv:
@@ -305,13 +329,14 @@ if __name__ == '__main__':
                 raise socket.error
 
             while True:
+
+                Type = get_type()
                 CPU = get_cpu()
                 NET_IN, NET_OUT = liuliang()
                 Uptime = get_uptime()
                 Load_1, Load_5, Load_15 = os.getloadavg()
                 MemoryTotal, MemoryUsed, SwapTotal, SwapFree = get_memory()
                 HDDTotal, HDDUsed = get_hdd()
-
                 array = {}
                 if not timer:
                     array['online' + str(check_ip)] = get_network(check_ip)
@@ -319,6 +344,7 @@ if __name__ == '__main__':
                 else:
                     timer -= 1*INTERVAL
 
+                array['type'] = Type
                 array['uptime'] = Uptime
                 array['load_1'] = Load_1
                 array['load_5'] = Load_5
