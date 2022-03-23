@@ -210,7 +210,11 @@ def _net_speed():
             netSpeed["avgtx"] = avgtx
         time.sleep(INTERVAL)
 
-def get_realtime_date():
+def get_realtime_data():
+    '''
+    real time get system data
+    :return:
+    '''
     t1 = threading.Thread(
         target=_ping_thread,
         kwargs={
@@ -273,7 +277,7 @@ if __name__ == '__main__':
         elif 'INTERVAL' in argc:
             INTERVAL = int(argc.split('INTERVAL=')[-1])
     socket.setdefaulttimeout(30)
-    get_realtime_date()
+    get_realtime_data()
     while True:
         try:
             print("Connecting...")
