@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # coding: utf-8
-# Update by : https://github.com/cppla/ServerStatus, Update date: 20211009
+# Update by : https://github.com/cppla/ServerStatus, Update date: 20220323
 # 依赖于psutil跨平台库
-# 版本：1.0.2, 支持Python版本：2.7 to 3.9
+# 版本：1.0.3, 支持Python版本：2.7 to 3.9
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
@@ -10,16 +10,15 @@ SERVER = "127.0.0.1"
 USER = "s01"
 
 
-
-PORT = 35601
 PASSWORD = "USER_DEFAULT_PASSWORD"
-INTERVAL = 1
-PROBEPORT = 80
-PROBE_PROTOCOL_PREFER = "ipv4"  # ipv4, ipv6
-PING_PACKET_HISTORY_LEN = 100
+PORT = 35601
 CU = "cu.tz.cloudcpp.com"
 CT = "ct.tz.cloudcpp.com"
 CM = "cm.tz.cloudcpp.com"
+PROBEPORT = 80
+PROBE_PROTOCOL_PREFER = "ipv4"  # ipv4, ipv6
+PING_PACKET_HISTORY_LEN = 100
+INTERVAL = 1
 
 import socket
 import time
@@ -131,6 +130,10 @@ netSpeed = {
     'avgrx': 0,
     'avgtx': 0
 }
+diskIO = {
+    'read': 0,
+    'write': 0
+}
 
 def _ping_thread(host, mark, port):
     lostPacket = 0
@@ -190,6 +193,53 @@ def _net_speed():
         netSpeed["avgtx"] = avgtx
         time.sleep(INTERVAL)
 
+def _disk_io():
+    """
+    the code is by: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+    good luck for opensource! modify: cpp.la
+    Calculate IO usage by comparing IO statics before and
+        after the interval.
+        Return a tuple including all currently running processes
+        sorted by IO activity and total disks I/O activity.
+    """
+    while True:
+        # first get a list of all processes and disk io counters
+        procs = [p for p in psutil.process_iter()]
+        for p in procs[:]:
+            try:
+                p._before = p.io_counters()
+            except psutil.Error:
+                procs.remove(p)
+                continue
+        disks_before = psutil.disk_io_counters()
+
+        # sleep some time, only when INTERVAL==1 , io read/write per_sec.
+        # when INTERVAL > 1, io read/write per_INTERVAL
+        time.sleep(INTERVAL)
+
+        # then retrieve the same info again
+        for p in procs[:]:
+            with p.oneshot():
+                try:
+                    p._after = p.io_counters()
+                    p._cmdline = ' '.join(p.cmdline())
+                    if not p._cmdline:
+                        p._cmdline = p.name()
+                    p._username = p.username()
+                except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                    procs.remove(p)
+        disks_after = psutil.disk_io_counters()
+
+        # finally calculate results by comparing data before and
+        # after the interval
+        for p in procs:
+            p._read_per_sec = p._after.read_bytes - p._before.read_bytes
+            p._write_per_sec = p._after.write_bytes - p._before.write_bytes
+            p._total = p._read_per_sec + p._write_per_sec
+
+        diskIO["read"] = disks_after.read_bytes - disks_before.read_bytes
+        diskIO["write"] = disks_after.write_bytes - disks_before.write_bytes
+
 def get_realtime_data():
     '''
     real time get system data
@@ -222,14 +272,12 @@ def get_realtime_data():
     t4 = threading.Thread(
         target=_net_speed,
     )
-    t1.setDaemon(True)
-    t2.setDaemon(True)
-    t3.setDaemon(True)
-    t4.setDaemon(True)
-    t1.start()
-    t2.start()
-    t3.start()
-    t4.start()
+    t5 = threading.Thread(
+        target=_disk_io(),
+    )
+    for ti in [t1, t2, t3, t4, t5]:
+        ti.setDaemon(True)
+        ti.start()
 
 def byte_str(object):
     '''
@@ -328,6 +376,8 @@ if __name__ == '__main__':
                 array['time_189'] = pingTime.get('189')
                 array['time_10086'] = pingTime.get('10086')
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
+                array['io_read'] = diskIO.get("read")
+                array['io_write'] = diskIO.get("write")
 
                 s.send(byte_str("update " + json.dumps(array) + "\n"))
         except KeyboardInterrupt:
