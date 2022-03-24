@@ -214,6 +214,7 @@ def _net_speed():
         time.sleep(INTERVAL)
 
 def _disk_io():
+    # todo, 这里希望能有人贡献下代码
     diskIO["read"] = 0
     diskIO["write"] = 0
 
