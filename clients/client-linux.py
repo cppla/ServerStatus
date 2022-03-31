@@ -215,6 +215,7 @@ def _net_speed():
 
 def _disk_io():
     '''
+    good luck for opensource! by: cpp.la
     磁盘IO：因为IOPS原因，SSD和HDD、包括RAID卡，ZFS等阵列技术。IO对性能的影响还需要结合自身服务器情况来判断。
     比如我这里是机械硬盘，大量做随机小文件读写，那么很低的读写也就能造成硬盘长时间的等待。
     如果这里做连续性IO，那么普通机械硬盘写入到100Mb/s，那么也能造成硬盘长时间的等待。
