@@ -74,6 +74,7 @@ function uptime() {
 						"<td id=\"cpu\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"memory\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"hdd\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
+						"<td id=\"io\">加载中</td>" +
 						"<td id=\"ping\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 					"</tr>" +
 					"<tr class=\"expandRow " + hack + "\"><td colspan=\"16\"><div class=\"accordian-body collapse\" id=\"rt" + i + "\">" +
@@ -135,6 +136,7 @@ function uptime() {
 					TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["hdd"].children[0].children[0].style.width = "100%";
 					TableRow.children["hdd"].children[0].children[0].innerHTML = "<small>关闭</small>";
+					TableRow.children["io"].innerHTML = "–";
 					TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["ping"].children[0].children[0].style.width = "100%";
 					TableRow.children["ping"].children[0].children[0].innerHTML = "<small>关闭</small>";
@@ -294,6 +296,8 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["hdd"].children[0].children[0].style.width = "100%";
 				TableRow.children["hdd"].children[0].children[0].innerHTML = "<small>错误</small>";
+				TableRow.children["io"].children[0].children[0].className = "progress-bar progress-bar-error";
+				TableRow.children["io"].children[0].children[0].innerHTML = "<small>错误</small>";
 				TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-error";
 				TableRow.children["ping"].children[0].children[0].style.width = "100%";
 				TableRow.children["ping"].children[0].children[0].innerHTML = "<small>错误</small>";
