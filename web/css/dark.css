@@ -19,8 +19,8 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
 #month_traffic { min-width: 85px; max-width: 95px;}
 #network { min-width: 115px; }
-#cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
-#io { width: 90px; }
+#cpu, #ram, #hdd { min-width: 20px; max-width: 60px; }
+#io { width: 115px; }
 #ping { max-width: 95px; }
 
 @media only screen and (max-width: 1080px) {
