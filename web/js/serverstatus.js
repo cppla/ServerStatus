@@ -20,16 +20,24 @@ function bytesToSize(bytes, precision, si)
 	var ret;
 	si = typeof si !== 'undefined' ? si : 0;
 	if(si != 0) {
-		var megabyte = 1000 * 1000;
+		var kilobyte = 1000;
+		var megabyte = kilobyte * 1000;
 		var gigabyte = megabyte * 1000;
 		var terabyte = gigabyte * 1000;
 	} else {
-		var megabyte = 1024 * 1024;
+		var kilobyte = 1024;
+		var megabyte = kilobyte * 1024;
 		var gigabyte = megabyte * 1024;
 		var terabyte = gigabyte * 1024;
 	}
 
-	if ((bytes >= megabyte) && (bytes < gigabyte)) {
+	if ((bytes >= 0) && (bytes < kilobyte)) {
+		return bytes + ' B';
+
+	} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+		ret = (bytes / kilobyte).toFixed(precision) + ' K';
+
+	} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
 		ret = (bytes / megabyte).toFixed(precision) + ' M';
 
 	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {

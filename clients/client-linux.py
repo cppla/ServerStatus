@@ -307,7 +307,7 @@ def get_realtime_data():
         target=_net_speed,
     )
     t5 = threading.Thread(
-        target=_disk_io(),
+        target=_disk_io,
     )
     for ti in [t1, t2, t3, t4, t5]:
         ti.setDaemon(True)
