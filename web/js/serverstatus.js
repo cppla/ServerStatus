@@ -251,7 +251,7 @@ function uptime() {
 					io += (result.servers[i].io_write/1024).toFixed(1) + "K";
 				else
 					io += (result.servers[i].io_write/1024/1024).toFixed(1) + "M";
-				TableRow.children["network"].innerHTML = io;
+				TableRow.children["io"].innerHTML = io;
 
                 // delay time
 
