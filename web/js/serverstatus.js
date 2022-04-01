@@ -238,6 +238,9 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].innerHTML = HDD + "%";
 				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
 
+				//IO
+				TableRow.children["io"].innerHTML = bytesToSize(result.servers[i].io_read, 2) + "💿" + bytesToSize(result.servers[i].io_write, 2);
+
                 // delay time
 
 				// tcp, udp, process, thread count

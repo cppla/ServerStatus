@@ -73,6 +73,8 @@ class CMain
 			int64_t m_udpCount;
 			int64_t m_processCount;
 			int64_t m_threadCount;
+			int64_t m_IORead;
+			int64_t m_IOWrite;
 			double m_CPU;
 			char m_aCustom[512];
 			// Options
