@@ -20,7 +20,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 #month_traffic { min-width: 85px; max-width: 95px;}
 #network { min-width: 115px; }
 #cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
-#io { min-width: 55px; }
+#io { width: 90px; }
 #ping { max-width: 95px; }
 
 @media only screen and (max-width: 1080px) {

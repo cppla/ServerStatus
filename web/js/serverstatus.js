@@ -20,24 +20,16 @@ function bytesToSize(bytes, precision, si)
 	var ret;
 	si = typeof si !== 'undefined' ? si : 0;
 	if(si != 0) {
-		var kilobyte = 1000;
-		var megabyte = kilobyte * 1000;
+		var megabyte = 1000 * 1000;
 		var gigabyte = megabyte * 1000;
 		var terabyte = gigabyte * 1000;
 	} else {
-		var kilobyte = 1024;
-		var megabyte = kilobyte * 1024;
+		var megabyte = 1024 * 1024;
 		var gigabyte = megabyte * 1024;
 		var terabyte = gigabyte * 1024;
 	}
 
-	if ((bytes >= 0) && (bytes < kilobyte)) {
-		return bytes + ' B';
-
-	} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
-		ret = (bytes / kilobyte).toFixed(precision) + ' K';
-
-	} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+	if ((bytes >= megabyte) && (bytes < gigabyte)) {
 		ret = (bytes / megabyte).toFixed(precision) + ' M';
 
 	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
@@ -248,8 +240,18 @@ function uptime() {
 				TableRow.children["hdd"].children[0].children[0].innerHTML = HDD + "%";
 				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
 
-				//IO
-				TableRow.children["io"].innerHTML = bytesToSize(result.servers[i].io_read, 2) + "💿" + bytesToSize(result.servers[i].io_write, 2);
+				//IO， 过小的B字节单位没有意义
+				var io = "";
+				if(result.servers[i].io_read < 1024*1024)
+					io += (result.servers[i].io_read/1024).toFixed(1) + "K";
+				else
+					io += (result.servers[i].io_read/1024/1024).toFixed(1) + "M";
+				io += "💿"
+				if(result.servers[i].io_write < 1024*1024)
+					io += (result.servers[i].io_write/1024).toFixed(1) + "K";
+				else
+					io += (result.servers[i].io_write/1024/1024).toFixed(1) + "M";
+				TableRow.children["network"].innerHTML = io;
 
                 // delay time
 
