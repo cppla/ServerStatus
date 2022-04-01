@@ -35,6 +35,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
+	#io, tr td:nth-child(13)          	{ display:none; visibility:hidden; }
 	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 620px) {
@@ -45,6 +46,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
+	#io, tr td:nth-child(13)          	{ display:none; visibility:hidden; }
 	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 533px) {
@@ -55,6 +57,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
+	#io, tr td:nth-child(13)          	{ display:none; visibility:hidden; }
 	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 450px) {
@@ -67,5 +70,6 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
 	#cpu, #ram, #hdd 					{ min-width: 25px; max-width: 50px; }
+	#io, tr td:nth-child(13)          	{ display:none; visibility:hidden; }
 	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
