@@ -19,14 +19,15 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 .expandRow > td { padding: 0 !important; border-top: 0px !important; }
 #month_traffic { min-width: 85px; max-width: 95px;}
 #network { min-width: 115px; }
-#cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
+#cpu, #ram, #hdd { min-width: 20px; max-width: 60px; }
+#io { width: 115px; }
 #ping { max-width: 95px; }
 
 @media only screen and (max-width: 1080px) {
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
-	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
+	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 720px) {
 	body								{ font-size: 10px; }
@@ -34,7 +35,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#type, tr td:nth-child(4)			{ display:none; visibility:hidden; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
-	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
+	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 620px) {
 	body								{ font-size: 10px; }
@@ -44,7 +45,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
-	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
+	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 533px) {
 	body								{ font-size: 10px; }
@@ -54,7 +55,7 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#location, tr td:nth-child(5)		{ display:none; visibility:hidden; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
-	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
+	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
 @media only screen and (max-width: 450px) {
 	body								{ font-size: 10px; }
@@ -66,5 +67,5 @@ tr.odd.expandRow > :hover { background: #212e36 !important; }
 	#uptime, tr td:nth-child(6)			{ display:none; visibility:hidden; }
 	#traffic, tr td:nth-child(9)		{ display:none; visibility:hidden; }
 	#cpu, #ram, #hdd 					{ min-width: 25px; max-width: 50px; }
-	#ping, tr td:nth-child(13)          { display:none; visibility:hidden; }
+	#ping, tr td:nth-child(14)          { display:none; visibility:hidden; }
 }
