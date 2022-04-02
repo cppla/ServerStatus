@@ -252,7 +252,7 @@ function uptime() {
 					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
 					io += parseInt(result.servers[i].io_write/1024/1024) + "M";
-				TableRow.children["io"].children[0].children[0].className = "progress-bar progress-bar-info";
+				TableRow.children["io"].children[0].children[0].className = "progress-bar progress-bar-success";
 				TableRow.children["io"].children[0].children[0].innerHTML = "<small>"+io+"</small>";
 
                 // delay time
