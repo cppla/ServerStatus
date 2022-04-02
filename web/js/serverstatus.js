@@ -243,14 +243,14 @@ function uptime() {
 				//IO， 过小的B字节单位没有意义
 				var io = "";
 				if(result.servers[i].io_read < 1024*1024)
-					io += (result.servers[i].io_read/1024).toFixed(1) + "K";
+					io += parseInt(result.servers[i].io_read/1024) + "K";
 				else
-					io += (result.servers[i].io_read/1024/1024).toFixed(1) + "M";
+					io += parseInt(result.servers[i].io_read/1024/1024) + "M";
 				io += "💿"
 				if(result.servers[i].io_write < 1024*1024)
-					io += (result.servers[i].io_write/1024).toFixed(1) + "K";
+					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
-					io += (result.servers[i].io_write/1024/1024).toFixed(1) + "M";
+					io += parseInt(result.servers[i].io_write/1024/1024) + "M";
 				TableRow.children["io"].innerHTML = io;
 
                 // delay time
