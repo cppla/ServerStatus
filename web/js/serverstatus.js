@@ -74,7 +74,7 @@ function uptime() {
 						"<td id=\"cpu\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"memory\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"hdd\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
-						"<td id=\"io\">加载中</td>" +
+						"<td id=\"io\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 						"<td id=\"ping\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 					"</tr>" +
 					"<tr class=\"expandRow " + hack + "\"><td colspan=\"16\"><div class=\"accordian-body collapse\" id=\"rt" + i + "\">" +
@@ -136,7 +136,8 @@ function uptime() {
 					TableRow.children["hdd"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["hdd"].children[0].children[0].style.width = "100%";
 					TableRow.children["hdd"].children[0].children[0].innerHTML = "<small>关闭</small>";
-					TableRow.children["io"].innerHTML = "–";
+					TableRow.children["io"].children[0].children[0].className = "progress-bar progress-bar-danger";
+					TableRow.children["io"].children[0].children[0].innerHTML = "<small>关闭</small>";
 					TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
 					TableRow.children["ping"].children[0].children[0].style.width = "100%";
 					TableRow.children["ping"].children[0].children[0].innerHTML = "<small>关闭</small>";
@@ -251,7 +252,8 @@ function uptime() {
 					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
 					io += parseInt(result.servers[i].io_write/1024/1024) + "M";
-				TableRow.children["io"].innerHTML = io;
+				TableRow.children["io"].children[0].children[0].className = "progress-bar progress-bar-info";
+				TableRow.children["io"].children[0].children[0].innerHTML = "<small>"+io+"</small>";
 
                 // delay time
 
