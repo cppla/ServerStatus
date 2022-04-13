@@ -127,9 +127,13 @@ sudo pip3 install psutil
 ![Shell View](http://dl.cpp.la/Archive/serverstatus-shell.png)
 
 
-# 相关开源项目： 
+# Make Better        
 
 * BotoX：https://github.com/BotoX/ServerStatus
 * mojeda: https://github.com/mojeda 
 * mojeda's ServerStatus: https://github.com/mojeda/ServerStatus
 * BlueVM's project: http://www.lowendtalk.com/discussion/comment/169690#Comment_169690
+
+# Jetbrains    
+
+<a href="https://www.jetbrains.com/?from=ServerStatus"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_square.png" width="100px"></a>
