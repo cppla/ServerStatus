@@ -243,7 +243,7 @@ function uptime() {
 					io += parseInt(result.servers[i].io_read/1024) + "K";
 				else
 					io += parseInt(result.servers[i].io_read/1024/1024) + "M";
-				io += "💿"
+				io += "💾"
 				if(result.servers[i].io_write < 1024*1024)
 					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
