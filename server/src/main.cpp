@@ -434,7 +434,7 @@ int CMain::ReadConfig()
         json_value *pNJsonData = json_parse_ex(&nJsonSettings, pNFileData, strlen(pNFileData), aError);
         if(pNJsonData)
         {
-            const json_value &rStart = (*pNJsonData)["servers"];
+            const json_value &cStart = (*pNJsonData)["servers"];
             if(rStart.type == json_array)
             {
                 int ID = 0;
@@ -442,14 +442,18 @@ int CMain::ReadConfig()
                 {
                     if(ID < 0 || ID >= NET_MAX_CLIENTS)
                         continue;
-
-                    // check name and host for match , when ServerStatus reload month traffic.
-                    if(strcmp(Client(ID)->m_aName, rStart[i]["name"].u.string.ptr)==0 && strcmp(Client(ID)->m_aHost, rStart[i]["host"].u.string.ptr)==0)
+                    for(unsigned j = 0; j < cStart.u.array.length; j++)
                     {
-                        Client(ID)->m_LastNetworkIN = rStart[i]["last_network_in"].u.integer;
-                        Client(ID)->m_LastNetworkOUT = rStart[i]["last_network_out"].u.integer;
+                        if(strcmp(Client(ID)->m_aName, cStart[j]["name"].u.string.ptr)==0 &&
+                            strcmp(Client(ID)->m_aType, cStart[j]["type"].u.string.ptr)==0 &&
+                            strcmp(Client(ID)->m_aHost, cStart[j]["host"].u.string.ptr)==0 &&
+                            strcmp(Client(ID)->m_aLocation, cStart[j]["location"].u.string.ptr)==0)
+                        {
+                            Client(ID)->m_LastNetworkIN = cStart[j]["last_network_in"].u.integer;
+                            Client(ID)->m_LastNetworkOUT = cStart[j]["last_network_out"].u.integer;
+                            break;
+                        }
                     }
-
                     ID++;
                 }
             }
