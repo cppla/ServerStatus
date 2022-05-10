@@ -41,11 +41,12 @@ function bytesToSize(bytes, precision, si)
 	} else {
 		return bytes + ' B';
 	}
-	if(si != 0) {
+	return ret;
+	/*if(si != 0) {
 		return ret + 'B';
 	} else {
 		return ret + 'iB';
-	}
+	}*/
 }
 
 function uptime() {
@@ -243,7 +244,7 @@ function uptime() {
 					io += parseInt(result.servers[i].io_read/1024) + "K";
 				else
 					io += parseInt(result.servers[i].io_read/1024/1024) + "M";
-				io += "💾"
+				io += " / "
 				if(result.servers[i].io_write < 1024*1024)
 					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
@@ -252,7 +253,7 @@ function uptime() {
 				TableRow.children["hdd"].children[0].setAttribute("data-placement", "right");
 				TableRow.children["hdd"].children[0].setAttribute("title", io);
 				// Expand for HDD.
-				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2);
+				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘/读/写: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2) + " / " + io;
 
                 // delay time
 
