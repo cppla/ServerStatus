@@ -249,11 +249,8 @@ function uptime() {
 					io += parseInt(result.servers[i].io_write/1024) + "K";
 				else
 					io += parseInt(result.servers[i].io_write/1024/1024) + "M";
-				TableRow.children["hdd"].children[0].setAttribute("data-toggle", "tooltip");
-				TableRow.children["hdd"].children[0].setAttribute("data-placement", "right");
-				TableRow.children["hdd"].children[0].setAttribute("title", io);
 				// Expand for HDD.
-				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘/读/写: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2) + " / " + io;
+				ExpandRow[0].children["expand_hdd"].innerHTML = "硬盘|读写: " + bytesToSize(result.servers[i].hdd_used*1024*1024, 2) + " / " + bytesToSize(result.servers[i].hdd_total*1024*1024, 2) + " | " + io;
 
                 // delay time
 
