@@ -245,7 +245,7 @@ void CMain::JSONUpdateThread(void *pUser)
 		char aFileBuf[2048*NET_MAX_CLIENTS];
 		char *pBuf = aFileBuf;
 
-		str_format(pBuf, sizeof(aFileBuf), "{\n\"servers\": [\n");
+		str_format(pBuf, sizeof(aFileBuf), "{\n\"servers\": {\n");
 		pBuf += strlen(pBuf);
 
 		for(int i = 0; i < NET_MAX_CLIENTS; i++)
@@ -278,7 +278,8 @@ void CMain::JSONUpdateThread(void *pUser)
                 }
 
 				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf),
-				 "{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\" },\n",
+				 "\"%s\":{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\" },\n",
+				    pClients[i].m_aUsername,
 					pClients[i].m_aName,pClients[i].m_aType,pClients[i].m_aHost,pClients[i].m_aLocation,
 					pClients[i].m_Stats.m_Online4 ? "true" : "false",pClients[i].m_Stats.m_Online6 ? "true" : "false",
 					aUptime, pClients[i].m_Stats.m_Load_1, pClients[i].m_Stats.m_Load_5, pClients[i].m_Stats.m_Load_15, pClients[i].m_Stats.m_ping_10010, pClients[i].m_Stats.m_ping_189, pClients[i].m_Stats.m_ping_10086,
@@ -295,16 +296,16 @@ void CMain::JSONUpdateThread(void *pUser)
 			{
 			    // sava network traffic record to json when close client
 			    // last_network_in == last network in record, last_network_out == last network out record
-				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 " },\n",
+				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "\"%s\":{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 " },\n",pClients[i].m_aUsername,
 					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation, pClients[i].m_LastNetworkIN, pClients[i].m_LastNetworkOUT);
 				pBuf += strlen(pBuf);
 			}
 		}
 		if(!m_pJSONUpdateThreadData->m_ReloadRequired)
-			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"updated\": \"%lld\"\n}", (long long)time(/*ago*/0));
+			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n},\n\"updated\": \"%lld\"\n}", (long long)time(/*ago*/0));
 		else
 		{
-			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"updated\": \"%lld\",\n\"reload\": true\n}", (long long)time(/*ago*/0));
+			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n},\n\"updated\": \"%lld\",\n\"reload\": true\n}", (long long)time(/*ago*/0));
 			m_pJSONUpdateThreadData->m_ReloadRequired--;
 		}
 		pBuf += strlen(pBuf);
@@ -442,17 +443,11 @@ int CMain::ReadConfig()
                 {
                     if(ID < 0 || ID >= NET_MAX_CLIENTS)
                         continue;
-                    for(unsigned j = 0; j < cStart.u.array.length; j++)
+                    char *uName = rStart[i]["username"].u.string.ptr;
+                    if(strlen(cStart[uName]["name"]) != 0)
                     {
-                        if(strcmp(Client(ID)->m_aName, cStart[j]["name"].u.string.ptr)==0 &&
-                            strcmp(Client(ID)->m_aType, cStart[j]["type"].u.string.ptr)==0 &&
-                            strcmp(Client(ID)->m_aHost, cStart[j]["host"].u.string.ptr)==0 &&
-                            strcmp(Client(ID)->m_aLocation, cStart[j]["location"].u.string.ptr)==0)
-                        {
-                            Client(ID)->m_LastNetworkIN = cStart[j]["last_network_in"].u.integer;
-                            Client(ID)->m_LastNetworkOUT = cStart[j]["last_network_out"].u.integer;
-                            break;
-                        }
+                        Client(ID)->m_LastNetworkIN = cStart[uName]["last_network_in"].u.integer;
+                        Client(ID)->m_LastNetworkOUT = cStart[uName]["last_network_out"].u.integer;
                     }
                     ID++;
                 }
