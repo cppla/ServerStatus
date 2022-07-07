@@ -411,6 +411,25 @@ int CMain::ReadConfig()
 		}
 	}
 
+	// watch dog
+	// support by: https://cpp.la
+	ID = 0;
+	const json_value &jStart = (*pJsonData)["watchdog"];
+	if(jStart.type == json_array)
+    {
+        for(unsigned i = 0; i < jStart.u.array.length; i++)
+        {
+            if(ID < 0 || ID >= NET_MAX_CLIENTS)
+                continue;
+
+            str_copy(Watchdog(ID)->m_aName, jStart[i]["name"].u.string.ptr, sizeof(Watchdog(ID)->m_aName));
+            str_copy(Watchdog(ID)->m_aRule, jStart[i]["rule"].u.string.ptr, sizeof(Watchdog(ID)->m_aRule));
+            str_copy(Watchdog(ID)->m_aCallback, jStart[i]["callback"].u.string.ptr, sizeof(Watchdog(ID)->m_aCallback));
+
+            ID++;
+        }
+    }
+
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
 	// support by: https://cpp.la
     IOHANDLE nFile = io_open(m_Config.m_aJSONFile, IOFLAG_READ);

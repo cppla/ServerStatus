@@ -1,5 +1,5 @@
-{"servers":
-	[
+{
+	"servers": [
 		{
 			"username": "s01",
 			"name": "node1",
@@ -36,6 +36,28 @@
 			"location": "🇰🇷",
 			"password": "USER_DEFAULT_PASSWORD",
 			"monthstart": 1
+		}
+	],
+	"watchdog": [
+		{
+			"name": "cpu high warning",
+			"rule": "cpu>90",
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "memory high warning",
+			"rule": "(memory_used/memory_total)*100>90",
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "ipv4 offline warning",
+			"rule": "online4=false",
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "you can parse an expression combining any known field",
+			"rule": "(hdd_used/hdd_total)*100>95",
+			"callback": "https://yourSMSurl"
 		}
 	]
 }

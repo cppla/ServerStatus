@@ -82,6 +82,12 @@ class CMain
 		} m_Stats;
 	} m_aClients[NET_MAX_CLIENTS];
 
+	struct CWatchDog{
+	    char m_aName[128];
+	    char m_aRule[128];
+	    char m_aCallback[128];
+	} m_aCWatchDogs[NET_MAX_CLIENTS];
+
 	struct CJSONUpdateThreadData
 	{
 		CClient *pClients;
@@ -98,6 +104,8 @@ public:
 	int HandleMessage(int ClientNetID, char *pMessage);
 	int ReadConfig();
 	int Run();
+
+    CWatchDog *Watchdog(int ruleID) { return &m_aCWatchDogs[ruleID]; }
 
 	CClient *Client(int ClientID) { return &m_aClients[ClientID]; }
 	CClient *ClientNet(int ClientNetID);
