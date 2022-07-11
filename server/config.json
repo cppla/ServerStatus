@@ -51,7 +51,7 @@
 		},
 		{
 			"name": "ipv4 offline warning",
-			"rule": "online4=false",
+			"rule": "online4==0",
 			"callback": "https://yourSMSurl"
 		},
 		{
