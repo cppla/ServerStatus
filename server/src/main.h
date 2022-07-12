@@ -107,10 +107,10 @@ public:
 
     CWatchDog *Watchdog(int ruleID) { return &m_aCWatchDogs[ruleID]; }
     void WatchdogMessage(double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
-                         double time_10010, double time_189, double time_10086, int tcp, int udp, int process, int thread,
-                         int64_t network_rx, int64_t network_tx, int64_t network_in, int64_t network_out,
-                         int memory_total, int memory_used,int swap_total, int swap_used, int hdd_total,
-                         int hdd_used, int io_read, int io_write, int cpu,int online4, int online6);
+                         double time_10010, double time_189, double time_10086, double tcp, double udp, double process, double thread,
+                         double network_rx, double network_tx, double network_in, double network_out,double memory_total,
+                         double memory_used,double swap_total, double swap_used, double hdd_total,
+                         double hdd_used, double io_read, double io_write, double cpu,double online4, double online6);
 
 	CClient *Client(int ClientID) { return &m_aClients[ClientID]; }
 	CClient *ClientNet(int ClientNetID);
