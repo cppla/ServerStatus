@@ -191,6 +191,18 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 		if(rStart["custom"].type == json_string)
 			str_copy(pClient->m_Stats.m_aCustom, rStart["custom"].u.string.ptr, sizeof(pClient->m_Stats.m_aCustom));
 
+		//copy message for watchdog to analysis
+        WatchdogMessage(pClient->m_Stats.m_Load_1, pClient->m_Stats.m_Load_5, pClient->m_Stats.m_Load_15,
+                        pClient->m_Stats.m_ping_10010, pClient->m_Stats.m_ping_189, pClient->m_Stats.m_ping_10086,
+                        pClient->m_Stats.m_time_10010, pClient->m_Stats.m_time_189, pClient->m_Stats.m_time_10086,
+                        pClient->m_Stats.m_tcpCount, pClient->m_Stats.m_udpCount, pClient->m_Stats.m_processCount,
+                        pClient->m_Stats.m_threadCount, pClient->m_Stats.m_NetworkRx, pClient->m_Stats.m_NetworkTx,
+                        pClient->m_Stats.m_NetworkIN, pClient->m_Stats.m_NetworkOUT,pClient->m_Stats.m_MemTotal,
+                        pClient->m_Stats.m_MemUsed, pClient->m_Stats.m_SwapTotal, pClient->m_Stats.m_SwapUsed,
+                        pClient->m_Stats.m_HDDTotal, pClient->m_Stats.m_HDDUsed, pClient->m_Stats.m_IORead,
+                        pClient->m_Stats.m_IOWrite, pClient->m_Stats.m_CPU, pClient->m_Stats.m_Online4,
+                        pClient->m_Stats.m_Online6);
+
 		if(m_Config.m_Verbose)
 		{
 			if(rStart["online4"].type)
@@ -232,6 +244,20 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 		m_Server.Network()->Send(ClientNetID, "1");
 
 	return 1;
+}
+
+void CMain::WatchdogMessage(double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
+                            double time_10010, double time_189, double time_10086, int tcp, int udp, int process, int thread,
+                            int64_t network_rx, int64_t network_tx, int64_t network_in, int64_t network_out, int memory_total, int memory_used,
+                            int swap_total, int swap_used, int hdd_total, int hdd_used, int io_read, int io_write, int cpu,
+                            int online4, int online6)
+{
+    printf("%f\t%f\t%f\n", load_1, load_5, load_15);
+    printf("%f\t%f\t%f\n", ping_10010, ping_189, ping_10086);
+    printf("%f\t%f\t%f\n", time_10010, time_189, time_10086);
+    printf("%d\t%d\t%d\t%d\t%ld\t%ld\t%ld\t%ld\t\n", tcp, udp, process, thread, network_rx, network_tx, network_in, network_out);
+    printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n", memory_total, memory_used, swap_total, swap_used, hdd_total, hdd_used, io_read, io_write);
+    printf("%d\t%d\t%d\t\n", cpu, online4, online6);
 }
 
 void CMain::JSONUpdateThread(void *pUser)
