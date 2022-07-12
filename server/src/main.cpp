@@ -97,6 +97,13 @@ void CMain::OnDelClient(int ClientNetID)
 {
 	int ClientID = ClientNetToClient(ClientNetID);
 	dbg_msg("main", "OnDelClient(ncid=%d, cid=%d)", ClientNetID, ClientID);
+    //copy offline message for watchdog
+    WatchdogMessage(ClientNetID,
+                    0, 0, 0, 0, 0, 0,
+                    0, 0, 0,0, 0, 0,
+                    0, 0, 0, 0, 0, 0,
+                    0, 0, 0,0, 0, 0,
+                    0, 0, 0, 0);
 	if(ClientID >= 0 && ClientID < NET_MAX_CLIENTS)
 	{
 		Client(ClientID)->m_Connected = false;
@@ -193,7 +200,8 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 			str_copy(pClient->m_Stats.m_aCustom, rStart["custom"].u.string.ptr, sizeof(pClient->m_Stats.m_aCustom));
 
 		//copy message for watchdog to analysis
-        WatchdogMessage(pClient->m_Stats.m_Load_1, pClient->m_Stats.m_Load_5, pClient->m_Stats.m_Load_15,
+        WatchdogMessage(ClientNetID,
+                        pClient->m_Stats.m_Load_1, pClient->m_Stats.m_Load_5, pClient->m_Stats.m_Load_15,
                         pClient->m_Stats.m_ping_10010, pClient->m_Stats.m_ping_189, pClient->m_Stats.m_ping_10086,
                         pClient->m_Stats.m_time_10010, pClient->m_Stats.m_time_189, pClient->m_Stats.m_time_10086,
                         pClient->m_Stats.m_tcpCount, pClient->m_Stats.m_udpCount, pClient->m_Stats.m_processCount,
@@ -248,7 +256,7 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 }
 
 
-void CMain::WatchdogMessage(double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
+void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
                             double time_10010, double time_189, double time_10086, double tcp, double udp, double process, double thread,
                             double network_rx, double network_tx, double network_in, double network_out, double memory_total, double memory_used,
                             double swap_total, double swap_used, double hdd_total, double hdd_used, double io_read, double io_write, double cpu,
@@ -301,8 +309,14 @@ void CMain::WatchdogMessage(double load_1, double load_5, double load_15, double
 
         if (expression.value() > 0)
         {
-            printf("name: %s\n", Watchdog(ID)->m_aName);
-            printf("debug \n");
+            int ClientID = ClientNetToClient(ClientNetID);
+            printf("node info: %s\n", Client(ClientID)->m_aUsername);
+            printf("node info: %s\n", Client(ClientID)->m_aName);
+            printf("node info: %s\n", Client(ClientID)->m_aType);
+            printf("node info: %s\n", Client(ClientID)->m_aHost);
+            printf("node info: %s\n\n", Client(ClientID)->m_aLocation);
+            printf("watchdog name: %s\n", Watchdog(ID)->m_aName);
+            printf("watchdog rule: %s\n", Watchdog(ID)->m_aRule);
         }
 
         ID++;
