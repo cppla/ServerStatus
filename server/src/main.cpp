@@ -310,15 +310,19 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         if (expression.value() > 0)
         {
             int ClientID = ClientNetToClient(ClientNetID);
-            printf("node info: %s\n", Client(ClientID)->m_aUsername);
-            printf("node info: %s\n", Client(ClientID)->m_aName);
-            printf("node info: %s\n", Client(ClientID)->m_aType);
-            printf("node info: %s\n", Client(ClientID)->m_aHost);
-            printf("node info: %s\n\n", Client(ClientID)->m_aLocation);
-            printf("watchdog name: %s\n", Watchdog(ID)->m_aName);
-            printf("watchdog rule: %s\n", Watchdog(ID)->m_aRule);
+            time_t currentStamp = (long long)time(/*ago*/0);
+            if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > 1800)
+            {
+                Client(ClientID)->m_AlarmLastTime = currentStamp;
+                printf("node info: %s\n", Client(ClientID)->m_aUsername);
+                printf("node info: %s\n", Client(ClientID)->m_aName);
+                printf("node info: %s\n", Client(ClientID)->m_aType);
+                printf("node info: %s\n", Client(ClientID)->m_aHost);
+                printf("node info: %s\n\n", Client(ClientID)->m_aLocation);
+                printf("watchdog name: %s\n", Watchdog(ID)->m_aName);
+                printf("watchdog rule: %s\n", Watchdog(ID)->m_aRule);
+            }
         }
-
         ID++;
     }
 }
@@ -675,3 +679,4 @@ int main(int argc, const char *argv[])
 
 	return RetVal;
 }
+

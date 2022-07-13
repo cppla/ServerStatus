@@ -38,10 +38,11 @@ class CMain
 		char m_aPassword[128];
         int m_aMonthStart;          //track month network traffic. by: https://cpp.la
 
-        int64_t m_LastNetworkIN;
-        int64_t m_LastNetworkOUT;
-		int64 m_TimeConnected;
-		int64 m_LastUpdate;
+        int64_t m_LastNetworkIN;    //restore month traffic info.
+        int64_t m_LastNetworkOUT;   //restore month traffic info.
+		int64_t m_TimeConnected;
+		int64_t m_LastUpdate;
+        int64_t m_AlarmLastTime;    //record last alarm time.
 
 		struct CStats
 		{
