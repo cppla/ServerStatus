@@ -311,7 +311,7 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         {
             int ClientID = ClientNetToClient(ClientNetID);
             time_t currentStamp = (long long)time(/*ago*/0);
-            if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > 1800)
+            if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
                 Client(ClientID)->m_AlarmLastTime = currentStamp;
                 printf("node info: %s\n", Client(ClientID)->m_aUsername);
@@ -517,6 +517,7 @@ int CMain::ReadConfig()
 
             str_copy(Watchdog(ID)->m_aName, jStart[i]["name"].u.string.ptr, sizeof(Watchdog(ID)->m_aName));
             str_copy(Watchdog(ID)->m_aRule, jStart[i]["rule"].u.string.ptr, sizeof(Watchdog(ID)->m_aRule));
+            Watchdog(ID)->m_aInterval = jStart[i]["interval"].u.integer;
             str_copy(Watchdog(ID)->m_aCallback, jStart[i]["callback"].u.string.ptr, sizeof(Watchdog(ID)->m_aCallback));
 
             ID++;

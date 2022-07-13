@@ -42,21 +42,25 @@
 		{
 			"name": "cpu high warning",
 			"rule": "cpu>90",
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "memory high warning",
 			"rule": "(memory_used/memory_total)*100>90",
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "ipv4 offline warning",
 			"rule": "online4=0",
+			"interval": 1800,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "you can parse an expression combining any known field",
 			"rule": "(hdd_used/hdd_total)*100>95",
+			"interval": 1800,
 			"callback": "https://yourSMSurl"
 		}
 	]

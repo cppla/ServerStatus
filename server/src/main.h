@@ -86,6 +86,7 @@ class CMain
 	struct CWatchDog{
 	    char m_aName[128];
 	    char m_aRule[128];
+        int  m_aInterval;
 	    char m_aCallback[128];
 	} m_aCWatchDogs[NET_MAX_CLIENTS];
 
