@@ -315,22 +315,25 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
             if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
                 Client(ClientID)->m_AlarmLastTime = currentStamp;
-                printf("node info: %s\n", Client(ClientID)->m_aUsername);
-                printf("node info: %s\n", Client(ClientID)->m_aName);
-                printf("node info: %s\n", Client(ClientID)->m_aType);
-                printf("node info: %s\n", Client(ClientID)->m_aHost);
-                printf("node info: %s\n\n", Client(ClientID)->m_aLocation);
-                printf("watchdog name: %s\n", Watchdog(ID)->m_aName);
-                printf("watchdog rule: %s\n", Watchdog(ID)->m_aRule);
                 CURL *curl;
                 CURLcode res;
-
+                //todo 这里需要换乘线程
                 curl_global_init(CURL_GLOBAL_ALL);
 
                 curl = curl_easy_init();
                 if(curl) {
-                    curl_easy_setopt(curl, CURLOPT_URL, "https://cpp.la");
-                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "name=daniel&project=curl");
+                    char urlBuffer[2048] = { 0 };
+                    sprintf(urlBuffer, "%s %%0A【告警名称】 %s %%0A【告警规则】 %s  %%0A ---------------- %%0A【用户名】 %s %%0A【节点名】 %s %%0A【虚拟化】 %s %%0A【主机名】 %s %%0A【位  置】 %s",
+                            Watchdog(ID)->m_aCallback,
+                            Watchdog(ID)->m_aName,
+                            Watchdog(ID)->m_aRule,
+                            Client(ClientID)->m_aUsername,
+                            Client(ClientID)->m_aName,
+                            Client(ClientID)->m_aType,
+                            Client(ClientID)->m_aHost,
+                            Client(ClientID)->m_aLocation);
+                    curl_easy_setopt(curl, CURLOPT_URL, urlBuffer);
+                    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "todo=nihao");
                     res = curl_easy_perform(curl);
                     if(res != CURLE_OK)
                         fprintf(stderr, "curl_easy_perform() failed: %s\n",

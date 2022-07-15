@@ -87,7 +87,7 @@ class CMain
 	    char m_aName[128];
 	    char m_aRule[128];
         int  m_aInterval;
-	    char m_aCallback[128];
+	    char m_aCallback[1024];
 	} m_aCWatchDogs[NET_MAX_CLIENTS];
 
 	struct CJSONUpdateThreadData
