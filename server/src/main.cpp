@@ -322,12 +322,13 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
 
                 curl = curl_easy_init();
                 if(curl) {
+                    //standard time
                     char standardTime[32]= { 0 };
                     strftime(standardTime, sizeof(standardTime), "%Y-%m-%d %H:%M:%S",localtime(&currentStamp));
 
-                    char urlBuffer[2048] = { 0 };
-                    sprintf(urlBuffer, "%s %%0A【告警名称】 %s %%0A【告警规则】 %s  %%0A【告警时间】 %s  %%0A ---------------- %%0A【用户名】 %s %%0A【节点名】 %s %%0A【虚拟化】 %s %%0A【主机名】 %s %%0A【位  置】 %s",
-                            Watchdog(ID)->m_aCallback,
+                    //url encode
+                    char encodeBuffer[2048] = { 0 };
+                    sprintf(encodeBuffer, " \n【告警名称】 %s \n【告警规则】 %s  \n【告警时间】 %s  \n ---------------- \n【用户名】 %s \n【节点名】 %s \n【虚拟化】 %s \n【主机名】 %s \n【位  置】 %s",
                             Watchdog(ID)->m_aName,
                             Watchdog(ID)->m_aRule,
                             standardTime,
@@ -336,12 +337,19 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                             Client(ClientID)->m_aType,
                             Client(ClientID)->m_aHost,
                             Client(ClientID)->m_aLocation);
+                    char *encodeUrl = curl_easy_escape(curl, encodeBuffer, strlen(encodeBuffer));
+
+                    //standard url
+                    char urlBuffer[2048] = { 0 };
+                    sprintf(urlBuffer, "%s%s",Watchdog(ID)->m_aCallback, encodeUrl);
+
+
                     curl_easy_setopt(curl, CURLOPT_URL, urlBuffer);
-                    //curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "todo=nihao");
                     res = curl_easy_perform(curl);
                     if(res != CURLE_OK)
-                        fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                                curl_easy_strerror(res));
+                        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+                    if(encodeUrl)
+                        curl_free(encodeUrl);
                     curl_easy_cleanup(curl);
                 }
                 curl_global_cleanup();
