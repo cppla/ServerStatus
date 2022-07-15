@@ -8,6 +8,7 @@
 #include "server.h"
 #include "main.h"
 #include "exprtk.hpp"
+#include "curl/curl.h"
 
 #if defined(CONF_FAMILY_UNIX)
 	#include <signal.h>
@@ -321,6 +322,22 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                 printf("node info: %s\n\n", Client(ClientID)->m_aLocation);
                 printf("watchdog name: %s\n", Watchdog(ID)->m_aName);
                 printf("watchdog rule: %s\n", Watchdog(ID)->m_aRule);
+                CURL *curl;
+                CURLcode res;
+
+                curl_global_init(CURL_GLOBAL_ALL);
+
+                curl = curl_easy_init();
+                if(curl) {
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://cpp.la");
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "name=daniel&project=curl");
+                    res = curl_easy_perform(curl);
+                    if(res != CURLE_OK)
+                        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                                curl_easy_strerror(res));
+                    curl_easy_cleanup(curl);
+                }
+                curl_global_cleanup();
             }
         }
         ID++;

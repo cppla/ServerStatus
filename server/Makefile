@@ -26,7 +26,7 @@ $(ODIR)/%.o: $(SDIR)/%.cpp
 	$(CXX) -c $(INC) $(CXXFLAGS) $< -o $@
 
 $(OUT): $(OBJS)
-	$(CXX) $(LIBS) $^ -o $(OUT)
+	$(CXX) $(LIBS) $^ -o $(OUT) -lcurl
 
 .PHONY: clean
 

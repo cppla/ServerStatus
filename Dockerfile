@@ -3,7 +3,7 @@ FROM debian:buster as builder
 
 MAINTAINER cppla https://cpp.la
 
-RUN apt-get update -y && apt-get -y install gcc g++ make
+RUN apt-get update -y && apt-get -y install gcc g++ make libcurl4-openssl-dev
 
 COPY . .
 
