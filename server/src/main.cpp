@@ -314,19 +314,23 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
             time_t currentStamp = (long long)time(/*ago*/0);
             if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
+                //todo 这里需要换成线程
                 Client(ClientID)->m_AlarmLastTime = currentStamp;
                 CURL *curl;
                 CURLcode res;
-                //todo 这里需要换乘线程
                 curl_global_init(CURL_GLOBAL_ALL);
 
                 curl = curl_easy_init();
                 if(curl) {
+                    char standardTime[32]= { 0 };
+                    strftime(standardTime, sizeof(standardTime), "%Y-%m-%d %H:%M:%S",localtime(&currentStamp));
+
                     char urlBuffer[2048] = { 0 };
-                    sprintf(urlBuffer, "%s %%0A【告警名称】 %s %%0A【告警规则】 %s  %%0A ---------------- %%0A【用户名】 %s %%0A【节点名】 %s %%0A【虚拟化】 %s %%0A【主机名】 %s %%0A【位  置】 %s",
+                    sprintf(urlBuffer, "%s %%0A【告警名称】 %s %%0A【告警规则】 %s  %%0A【告警时间】 %s  %%0A ---------------- %%0A【用户名】 %s %%0A【节点名】 %s %%0A【虚拟化】 %s %%0A【主机名】 %s %%0A【位  置】 %s",
                             Watchdog(ID)->m_aCallback,
                             Watchdog(ID)->m_aName,
                             Watchdog(ID)->m_aRule,
+                            standardTime,
                             Client(ClientID)->m_aUsername,
                             Client(ClientID)->m_aName,
                             Client(ClientID)->m_aType,
