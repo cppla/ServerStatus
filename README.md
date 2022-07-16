@@ -6,11 +6,9 @@
 [![Python Support](https://img.shields.io/badge/python-2.7%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Beta%201.0.8-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Beta%201.0.9-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-latest.png)
-
-`curl -sSL https://get.docker.com/ | sh && apt -y install docker-compose`    
 
 # 目录介绍：
 
@@ -26,15 +24,12 @@
 【服务端】：
 ```bash
 
-`OneTouch`:     
+`Docker`:     
 
 wget --no-check-certificate -qO ~/serverstatus-config.json https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json && mkdir ~/serverstatus-monthtraffic    
 docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest     
 
-`ServerStatus`: docker-compose up -d    
-
-`ServerStatus with tgbot`: TG_CHAT_ID=你的电报ID TG_BOT_TOKEN=你的电报密钥 docker-compose -f docker-compose-telegram.yml up -d   
-
+`Docker-compose`: docker-compose up -d
 ```
 
 【客户端】：
@@ -52,9 +47,9 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 git clone https://github.com/cppla/ServerStatus.git
 ```
 
-【服务端配置】:  
+###【服务端配置】:  
           
-一、生成服务端程序              
+#### 一、生成服务端程序              
 ```
 `Debian/Ubuntu`: apt-get -y install gcc g++ make libcurl4-openssl-dev
 `Centos/Redhat`: yum -y install gcc gcc-c++ make libcurl-devel
@@ -64,10 +59,11 @@ cd ServerStatus/server && make
 ```
 如果没错误提示，OK，ctrl+c关闭；如果有错误提示，检查35601端口是否被占用    
 
-二、修改配置文件         
-修改config.json文件，注意username, password的值需要和客户端对应一致                 
+#### 二、修改配置文件         
+修改config.json文件，注意username, password的值需要和客户端对应一致。watchdog规则可以为任何已知字段的表达式                 
 ```
-{"servers":
+{
+    "servers":
 	[
 		{
 			"username": "s01",
@@ -78,30 +74,57 @@ cd ServerStatus/server && make
 			"password": "USER_DEFAULT_PASSWORD",
 			"monthstart": 1
 		},
+	],
+	"watchdog":
+	[
+	    {
+			"name": "cpu高负载告警",
+			"rule": "cpu>90",
+			"interval": 1200,
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "内存高负载告警",
+			"rule": "(memory_used/memory_total)*100>95",
+			"interval": 600,
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "ipv4宕机告警",
+			"rule": "online4=0",
+			"interval": 1800,
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "你可以组合任何已知字段的表达式",
+			"rule": "(hdd_used/hdd_total)*100>95",
+			"interval": 1800,
+			"callback": "https://yourSMSurl"
+		}
 	]
 }       
 ```
 
-三、拷贝ServerStatus/status到你的网站目录        
+#### 三、拷贝ServerStatus/status到你的网站目录        
 例如：
 ```
 sudo cp -r ServerStatus/web/* /home/wwwroot/default
 ```
 
-四、运行服务端：             
+#### 四、运行服务端：             
 web-dir参数为上一步设置的网站根目录，务必修改成自己网站的路径   
 ```
 ./sergate --config=config.json --web-dir=/home/wwwroot/default   
 ```
 
-【客户端配置】：          
+###【客户端配置】：          
 客户端有两个版本，client-linux为普通linux，client-psutil为跨平台版，普通版不成功，换成跨平台版即可。        
 
-一、client-linux版配置：       
+#### 一、client-linux版配置：       
 1、vim client-linux.py, 修改SERVER地址，username帐号， password密码        
 2、python3 client-linux.py 运行即可。      
 
-二、client-psutil版配置:                
+#### 二、client-psutil版配置:                
 1、安装psutil跨平台依赖库       
 ```
 `Debian/Ubuntu`: apt -y install python3-pip && pip3 install psutil    

@@ -42,12 +42,12 @@
 		{
 			"name": "cpu high warning",
 			"rule": "cpu>90",
-			"interval": 600,
+			"interval": 1200,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "memory high warning",
-			"rule": "(memory_used/memory_total)*100>90",
+			"rule": "(memory_used/memory_total)*100>95",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
