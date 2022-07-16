@@ -557,7 +557,8 @@ int CMain::ReadConfig()
             ID++;
         }
         str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
-    }
+    } else
+        str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
 
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
 	// support by: https://cpp.la
