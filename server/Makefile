@@ -6,7 +6,7 @@ CFLAGS = -Wall -O2
 
 #CXX = clang++
 CXX = g++
-CXXFLAGS = -Wall -O2
+CXXFLAGS = -Wall -O2 -std=c++11
 
 ODIR = obj
 SDIR = src

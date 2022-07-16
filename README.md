@@ -56,8 +56,10 @@ git clone https://github.com/cppla/ServerStatus.git
           
 一、生成服务端程序              
 ```
-cd ServerStatus/server
-make
+`Debian/Ubuntu`: apt-get -y install gcc g++ make libcurl4-openssl-dev
+`Centos/Redhat`: yum -y install gcc gcc-c++ make libcurl-devel
+
+cd ServerStatus/server && make
 ./sergate
 ```
 如果没错误提示，OK，ctrl+c关闭；如果有错误提示，检查35601端口是否被占用    
@@ -100,26 +102,14 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 2、python3 client-linux.py 运行即可。      
 
 二、client-psutil版配置:                
-1、安装psutil跨平台依赖库      
+1、安装psutil跨平台依赖库       
+```
+`Debian/Ubuntu`: apt -y install python3-pip && pip3 install psutil    
+`Centos/Redhat`: yum -y install python3-pip gcc python3-devel && pip3 install psutil      
+`Windows`: https://pypi.org/project/psutil/    
+```
 2、vim client-psutil.py, 修改SERVER地址，username帐号， password密码       
-3、python3 client-psutil.py 运行即可。           
-```
-### for Centos：
-sudo yum -y install epel-release
-sudo yum -y install python3-pip
-sudo yum clean all
-sudo yum -y install gcc
-sudo yum -y install python3-devel
-sudo pip3 install psutil
-
-### for Ubuntu/Debian:
-sudo apt -y install python3-pip
-sudo pip3 install psutil
-
-### for Windows:
-地址：https://pypi.org/project/psutil/    
-下载psutil for windows, 安装即可
-```
+3、python3 client-psutil.py 运行即可。    
 
 打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python3 client-linux.py &  
 

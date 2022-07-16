@@ -349,7 +349,7 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 6L);
                     res = curl_easy_perform(curl);
                     if(res != CURLE_OK)
-                        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+                        fprintf(stderr, "watchdog failed: %s\n", curl_easy_strerror(res));
                     if(encodeUrl)
                         curl_free(encodeUrl);
                     curl_easy_cleanup(curl);
