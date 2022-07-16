@@ -10,6 +10,8 @@
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-latest.png)
 
+`Watchdog🐶告警已经加入，支持telegram·Server酱, PushDeer。 Next：WeChat, Email`    
+
 # 目录介绍：
 
 * clients       	客户端文件
