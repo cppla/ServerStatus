@@ -42,12 +42,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 
 # 手动安装教程：     
    
-【克隆代码】:
-```
-git clone https://github.com/cppla/ServerStatus.git
-```
-
-##【服务端配置】:   
+**【服务端配置】**           
           
 #### 一、生成服务端程序              
 ```
@@ -105,7 +100,8 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 ./sergate --config=config.json --web-dir=/home/wwwroot/default   
 ```
 
-##【客户端配置】：           
+**【客户端配置】**    
+
 客户端有两个版本，client-linux为普通linux，client-psutil为跨平台版，普通版不成功，换成跨平台版即可。        
 
 #### 一、client-linux版配置：       
@@ -122,7 +118,7 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 2、vim client-psutil.py, 修改SERVER地址，username帐号， password密码       
 3、python3 client-psutil.py 运行即可。    
 
-打开云探针页面，就可以正常的监控。接下来把服务器和客户端脚本自行加入开机启动，或者进程守护，或以后台方式运行即可！例如： nohup python3 client-linux.py &  
+服务器和客户端自行加入开机启动，或进程守护，或后台方式运行。 例如： nohup python3 client-linux.py &    
 
 `extra scene (run web/ssview.py)`
 ![Shell View](http://dl.cpp.la/Archive/serverstatus-shell.png)
