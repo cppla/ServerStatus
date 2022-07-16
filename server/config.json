@@ -59,7 +59,7 @@
 		},
 		{
 			"name": "you can parse an expression combining any known field",
-			"rule": "(hdd_used/hdd_total)*100>95",
+			"rule": "load_5>10",
 			"interval": 1800,
 			"callback": "https://yourSMSurl"
 		}

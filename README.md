@@ -47,7 +47,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 git clone https://github.com/cppla/ServerStatus.git
 ```
 
-###【服务端配置】:  
+##【服务端配置】:   
           
 #### 一、生成服务端程序              
 ```
@@ -78,21 +78,9 @@ cd ServerStatus/server && make
 	"watchdog":
 	[
 	    {
-			"name": "cpu高负载告警",
-			"rule": "cpu>90",
+			"name": "服务器负载高监控",
+			"rule": "load_5>10",
 			"interval": 1200,
-			"callback": "https://yourSMSurl"
-		},
-		{
-			"name": "内存高负载告警",
-			"rule": "(memory_used/memory_total)*100>95",
-			"interval": 600,
-			"callback": "https://yourSMSurl"
-		},
-		{
-			"name": "ipv4宕机告警",
-			"rule": "online4=0",
-			"interval": 1800,
 			"callback": "https://yourSMSurl"
 		},
 		{
@@ -117,7 +105,7 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 ./sergate --config=config.json --web-dir=/home/wwwroot/default   
 ```
 
-###【客户端配置】：          
+##【客户端配置】：           
 客户端有两个版本，client-linux为普通linux，client-psutil为跨平台版，普通版不成功，换成跨平台版即可。        
 
 #### 一、client-linux版配置：       
