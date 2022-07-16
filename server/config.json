@@ -47,7 +47,7 @@
 		},
 		{
 			"name": "memory high warning",
-			"rule": "(memory_used/memory_total)*100>95",
+			"rule": "(memory_used/memory_total)*100>90",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
