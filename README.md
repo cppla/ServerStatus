@@ -10,7 +10,7 @@
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus-latest.png)
 
-`Watchdog🐶告警已经加入，支持telegram, Server酱, PushDeer。 Next：WeChat, Email`    
+`Watchdog🐶已经加入，触发式告警。 interval只是为了防止频繁收到报警信息造成骚扰，并不是探测间隔。`    
 
 # 目录介绍：
 
