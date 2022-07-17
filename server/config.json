@@ -41,8 +41,8 @@
 	"watchdog": [
 		{
 			"name": "cpu high warning",
-			"rule": "cpu>90",
-			"interval": 1200,
+			"rule": "cpu>98",
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
