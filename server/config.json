@@ -52,9 +52,9 @@
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "ipv4 offline warning",
-			"rule": "online4=0",
-			"interval": 1800,
+			"name": "offline warning",
+			"rule": "online4=0&online6=0",
+			"interval": 300,
 			"callback": "https://yourSMSurl"
 		},
 		{
