@@ -19,7 +19,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 #cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
 #ping { max-width: 95px; }
 
-@media only screen and (max-width: 1080px) {
+@media only screen and (max-width: 1200px) {
         #type, tr td:nth-child(4)                       { display:none; visibility:hidden; }
         #location, tr td:nth-child(5)           { display:none; visibility:hidden; }
         #uptime, tr td:nth-child(6)                     { display:none; visibility:hidden; }
