@@ -84,7 +84,7 @@ cd ServerStatus/server && make
 	],
 	"watchdog":
 	[
-	    {
+	        {
 			"name": "服务器负载高监控",
 			"rule": "cpu>90&load_5>3",
 			"interval": 600,
