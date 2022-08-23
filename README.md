@@ -86,8 +86,8 @@ cd ServerStatus/server && make
 	[
 	    {
 			"name": "服务器负载高监控",
-			"rule": "load_5>10",
-			"interval": 1200,
+			"rule": "cpu>90&load_5>3",
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
