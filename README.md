@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
 [![Version](https://img.shields.io/badge/Version-Build%201.0.9-red)](https://github.com/cppla/ServerStatus)
 
-![Latest Version](http://dl.cpp.la/Archive/serverstatus-latest.png)
+![Latest Version](http://dl.cpp.la/Archive/serverstatus_1.0.9.png)
 
 `Watchdog🐶已经加入，触发式告警。 interval只是为了防止频繁收到报警信息造成骚扰，并不是探测间隔。`    
 
