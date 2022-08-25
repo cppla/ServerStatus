@@ -63,9 +63,7 @@ cd ServerStatus/server && make
 ! watchdog interval 最小通知间隔。    
 ! watchdog callback Telegram：https://api.telegram.org/bot你自己的密钥/sendMessage?parse_mode=HTML&disable_web_page_preview=true&chat_id=你自己的标识&text=
 ! watchdog callback Server酱: https://sctapi.ftqq.com/你自己的密钥.send?title=ServerStatus&desp=
-! watchdog callback PushDeer: https://api2.pushdeer.com/message/push?pushkey=你自己的密钥&text=
-! watchdog callback Email【测试中, 10条/天】: https://api.cloudcpp.com/serverstatus?type=email&email=你自己的邮箱&content=            
-! watchdog callback WeChat: todo   
+! watchdog callback PushDeer: https://api2.pushdeer.com/message/push?pushkey=你自己的密钥&text= 
 ```
 
 ```
