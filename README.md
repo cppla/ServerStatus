@@ -69,7 +69,7 @@ cd ServerStatus/server && make
 
 ```
 {
-    "servers":
+        "servers":
 	[
 		{
 			"username": "s01",
