@@ -83,6 +83,7 @@ function uptime() {
 						"<div id=\"expand_hdd\">加载中</div>" +
 						"<div id=\"expand_tupd\">加载中</div>" +
 						"<div id=\"expand_ping\">加载中</div>" +
+						"<div id=\"expand_lost\">加载中</div>" +
 						"<div id=\"expand_custom\">加载中</div>" +
 					"</div></td></tr>"
 				);
@@ -262,6 +263,8 @@ function uptime() {
                 var PING_10010 = result.servers[i].ping_10010.toFixed(0);
                 var PING_189 = result.servers[i].ping_189.toFixed(0);
                 var PING_10086 = result.servers[i].ping_10086.toFixed(0);
+				ExpandRow[0].children["expand_lost"].innerHTML = "丢包：联通/电信/移动: " + PING_10010 + "% / " + PING_189 + "% / " + PING_10086 + "%"
+
                 if (PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20)
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-warning";
                 else
