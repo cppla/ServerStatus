@@ -22,7 +22,7 @@
 			"disabled": true,
 			"username": "s03",
 			"name": "node3",
-			"type": "Nothing",
+			"type": "hyper",
 			"host": "host3",
 			"location": "🇫🇷",
 			"password": "USER_DEFAULT_PASSWORD",
@@ -41,26 +41,26 @@
 	"watchdog": [
 		{
 			"name": "cpu high warning",
-			"rule": "cpu>98",
+			"rule": "cpu>90&load_1>3",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "memory high warning",
 			"rule": "(memory_used/memory_total)*100>90",
-			"interval": 600,
+			"interval": 300,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "offline warning",
 			"rule": "online4=0&online6=0",
-			"interval": 300,
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "you can parse an expression combining any known field",
-			"rule": "load_5>10",
-			"interval": 1800,
+			"rule": "load_5>3",
+			"interval": 900,
 			"callback": "https://yourSMSurl"
 		}
 	]
