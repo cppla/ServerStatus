@@ -266,7 +266,9 @@ function uptime() {
 				ExpandRow[0].children["expand_lost"].innerHTML = "丢包：联通/电信/移动: " + PING_10010 + "% / " + PING_189 + "% / " + PING_10086 + "%"
 
                 if (PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20)
-                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-warning";
+                    TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
+                else if (PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10)
+                	TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-warning";
                 else
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-success";
 	            TableRow.children["ping"].children[0].children[0].innerHTML = PING_10010 + "%💻" + PING_189 + "%💻" + PING_10086 + "%";
