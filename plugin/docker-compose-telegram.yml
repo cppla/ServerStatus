@@ -2,7 +2,7 @@ version: "3"
 services:
   serverstatus:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     image: serverstatus_server
     container_name: serverstatus
@@ -11,14 +11,14 @@ services:
       serverstatus-network:
         ipv4_address: 172.23.0.2
     volumes:
-      - ./server/config.json:/ServerStatus/server/config.json 
-      - ./web/json:/usr/share/nginx/html/json
+      - ../server/config.json:/ServerStatus/server/config.json 
+      - ../web/json:/usr/share/nginx/html/json
     ports:
       - 35601:35601
       - 8080:80
   bot:
     build:
-      context: ./plugin
+      context: .
       dockerfile: Dockerfile-telegram
     image: serverstatus_bot
     container_name: bot4sss
