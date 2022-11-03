@@ -206,43 +206,47 @@ def _disk_io():
     如果这里做连续性IO，那么普通机械硬盘写入到100Mb/s，那么也能造成硬盘长时间的等待。
     磁盘读写有误差：4k，8k ，https://stackoverflow.com/questions/34413926/psutil-vs-dd-monitoring-disk-i-o
     """
-    while True:
-        # first get a list of all processes and disk io counters
-        procs = [p for p in psutil.process_iter()]
-        for p in procs[:]:
-            try:
-                p._before = p.io_counters()
-            except psutil.Error:
-                procs.remove(p)
-                continue
-        disks_before = psutil.disk_io_counters()
-
-        # sleep some time, only when INTERVAL==1 , io read/write per_sec.
-        # when INTERVAL > 1, io read/write per_INTERVAL
-        time.sleep(INTERVAL)
-
-        # then retrieve the same info again
-        for p in procs[:]:
-            with p.oneshot():
+    if "darwin" in sys.platform:
+        diskIO["read"] = 0
+        diskIO["write"] = 0
+    else:
+        while True:
+            # first get a list of all processes and disk io counters
+            procs = [p for p in psutil.process_iter()]
+            for p in procs[:]:
                 try:
-                    p._after = p.io_counters()
-                    p._cmdline = ' '.join(p.cmdline())
-                    if not p._cmdline:
-                        p._cmdline = p.name()
-                    p._username = p.username()
-                except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                    p._before = p.io_counters()
+                except psutil.Error:
                     procs.remove(p)
-        disks_after = psutil.disk_io_counters()
+                    continue
+            disks_before = psutil.disk_io_counters()
 
-        # finally calculate results by comparing data before and
-        # after the interval
-        for p in procs:
-            p._read_per_sec = p._after.read_bytes - p._before.read_bytes
-            p._write_per_sec = p._after.write_bytes - p._before.write_bytes
-            p._total = p._read_per_sec + p._write_per_sec
+            # sleep some time, only when INTERVAL==1 , io read/write per_sec.
+            # when INTERVAL > 1, io read/write per_INTERVAL
+            time.sleep(INTERVAL)
 
-        diskIO["read"] = disks_after.read_bytes - disks_before.read_bytes
-        diskIO["write"] = disks_after.write_bytes - disks_before.write_bytes
+            # then retrieve the same info again
+            for p in procs[:]:
+                with p.oneshot():
+                    try:
+                        p._after = p.io_counters()
+                        p._cmdline = ' '.join(p.cmdline())
+                        if not p._cmdline:
+                            p._cmdline = p.name()
+                        p._username = p.username()
+                    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                        procs.remove(p)
+            disks_after = psutil.disk_io_counters()
+
+            # finally calculate results by comparing data before and
+            # after the interval
+            for p in procs:
+                p._read_per_sec = p._after.read_bytes - p._before.read_bytes
+                p._write_per_sec = p._after.write_bytes - p._before.write_bytes
+                p._total = p._read_per_sec + p._write_per_sec
+
+            diskIO["read"] = disks_after.read_bytes - disks_before.read_bytes
+            diskIO["write"] = disks_after.write_bytes - disks_before.write_bytes
 
 def get_realtime_data():
     '''
