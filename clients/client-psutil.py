@@ -210,6 +210,7 @@ def _disk_io():
     比如我这里是机械硬盘，大量做随机小文件读写，那么很低的读写也就能造成硬盘长时间的等待。
     如果这里做连续性IO，那么普通机械硬盘写入到100Mb/s，那么也能造成硬盘长时间的等待。
     磁盘读写有误差：4k，8k ，https://stackoverflow.com/questions/34413926/psutil-vs-dd-monitoring-disk-i-o
+    macos，暂不处理。
     """
     if "darwin" in sys.platform:
         diskIO["read"] = 0
