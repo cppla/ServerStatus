@@ -46,18 +46,23 @@ def get_swap():
     return int(Mem.total/1024.0), int(Mem.used/1024.0)
 
 def get_hdd():
-    valid_fs = [ "ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs", "fuseblk", "zfs", "simfs", "ntfs", "fat32", "exfat", "xfs" ]
-    disks = dict()
-    size = 0
-    used = 0
-    for disk in psutil.disk_partitions():
-        if not disk.device in disks and disk.fstype.lower() in valid_fs:
-            disks[disk.device] = disk.mountpoint
-    for disk in disks.values():
-        usage = psutil.disk_usage(disk)
-        size += usage.total
-        used += usage.used
-    return int(size/1024.0/1024.0), int(used/1024.0/1024.0)
+    # todo, 兼容macos ,beta
+    if "darwin" in sys.platform:
+        return int(psutil.disk_usage("/").total/1024.0/1024.0), int(psutil.disk_usage("/").used/1024.0/1024.0)
+    else:
+        valid_fs = ["ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs", "fuseblk", "zfs", "simfs", "ntfs", "fat32",
+                    "exfat", "xfs"]
+        disks = dict()
+        size = 0
+        used = 0
+        for disk in psutil.disk_partitions():
+            if not disk.device in disks and disk.fstype.lower() in valid_fs:
+                disks[disk.device] = disk.mountpoint
+        for disk in disks.values():
+            usage = psutil.disk_usage(disk)
+            size += usage.total
+            used += usage.used
+        return int(size/1024.0/1024.0), int(used/1024.0/1024.0)
 
 def get_cpu():
     return psutil.cpu_percent(interval=INTERVAL)
