@@ -48,7 +48,7 @@ def get_swap():
 def get_hdd():
     # todo, 兼容macos ,beta
     if "darwin" in sys.platform:
-        return int(psutil.disk_usage("/").total/1024.0/1024.0), int(psutil.disk_usage("/").used/1024.0/1024.0)
+        return int(psutil.disk_usage("/").total/1024.0/1024.0), int((psutil.disk_usage("/").total-psutil.disk_usage("/").free)/1024.0/1024.0)
     else:
         valid_fs = ["ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs", "fuseblk", "zfs", "simfs", "ntfs", "fat32",
                     "exfat", "xfs"]
