@@ -224,7 +224,7 @@ function uptime() {
 				TableRow.children["memory"].children[0].children[0].style.width = Mem + "%";
 				TableRow.children["memory"].children[0].children[0].innerHTML = Mem + "%";
 				// 内存|swap
-				ExpandRow[0].children["expand_mem"].innerHTML = "内存|虚存: " + bytesToSize(result.servers[i].memory_used*1024, 0) + " / " + bytesToSize(result.servers[i].memory_total*1024, 0) + " | " + bytesToSize(result.servers[i].swap_used*1024, 0) + " / " + bytesToSize(result.servers[i].swap_total*1024, 0);
+				ExpandRow[0].children["expand_mem"].innerHTML = "内存|虚存: " + bytesToSize(result.servers[i].memory_used*1024, 1) + " / " + bytesToSize(result.servers[i].memory_total*1024, 1) + " | " + bytesToSize(result.servers[i].swap_used*1024, 0) + " / " + bytesToSize(result.servers[i].swap_total*1024, 0);
 
 				// HDD
 				var HDD = ((result.servers[i].hdd_used/result.servers[i].hdd_total)*100.0).toFixed(0);
