@@ -223,7 +223,7 @@ def _disk_io():
     磁盘读写有误差：4k，8k ，https://stackoverflow.com/questions/34413926/psutil-vs-dd-monitoring-disk-i-o
     macos，暂不处理。
     """
-    if "darwin" in sys.platform:
+    if "darwin" in sys.platform or "win" in sys.platform:
         diskIO["read"] = 0
         diskIO["write"] = 0
     else:
