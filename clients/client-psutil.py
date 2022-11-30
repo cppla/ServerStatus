@@ -93,13 +93,24 @@ def tupd():
             u = int(os.popen('ss -u|wc -l').read()[:-1])-1
             p = int(os.popen('ps -ef|wc -l').read()[:-1])-2
             d = int(os.popen('ps -eLf|wc -l').read()[:-1])-2
+        elif sys.platform.startswith("darwin") is True:
+            t = int(os.popen('lsof -nP -iTCP  | wc -l').read()[:-1]) - 1
+            u = int(os.popen('lsof -nP -iUDP  | wc -l').read()[:-1]) - 1
+            p = len(psutil.pids())
+            d = 0
+            for k in psutil.pids():
+                try:
+                    d += psutil.Process(k).num_threads()
+                except:
+                    pass
+
         elif sys.platform.startswith("win") is True:
             t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
             u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
             p = len(psutil.pids())
             d = 0
             # cpu is high, default: 0
-            # d = sum([psutil.Process(k).num_threads() for k in [x for x in psutil.pids()]])
+            # d = sum([psutil.Process(k).num_threads() for k in psutil.pids()])
         else:
             t,u,p,d = 0,0,0,0
         return t,u,p,d
