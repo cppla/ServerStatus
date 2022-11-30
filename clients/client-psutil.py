@@ -46,7 +46,6 @@ def get_swap():
     return int(Mem.total/1024.0), int(Mem.used/1024.0)
 
 def get_hdd():
-    # todo, 兼容macos ,beta
     if "darwin" in sys.platform:
         return int(psutil.disk_usage("/").total/1024.0/1024.0), int((psutil.disk_usage("/").total-psutil.disk_usage("/").free)/1024.0/1024.0)
     else:
@@ -108,9 +107,8 @@ def tupd():
             t = int(os.popen('netstat -an|find "TCP" /c').read()[:-1])-1
             u = int(os.popen('netstat -an|find "UDP" /c').read()[:-1])-1
             p = len(psutil.pids())
-            d = 0
-            # cpu is high, default: 0
-            # d = sum([psutil.Process(k).num_threads() for k in psutil.pids()])
+            # if you find cpu is high, please set d=0
+            d = sum([psutil.Process(k).num_threads() for k in psutil.pids()])
         else:
             t,u,p,d = 0,0,0,0
         return t,u,p,d
@@ -221,7 +219,7 @@ def _disk_io():
     比如我这里是机械硬盘，大量做随机小文件读写，那么很低的读写也就能造成硬盘长时间的等待。
     如果这里做连续性IO，那么普通机械硬盘写入到100Mb/s，那么也能造成硬盘长时间的等待。
     磁盘读写有误差：4k，8k ，https://stackoverflow.com/questions/34413926/psutil-vs-dd-monitoring-disk-i-o
-    macos，暂不处理。
+    macos/win，暂不处理。
     """
     if "darwin" in sys.platform or "win" in sys.platform:
         diskIO["read"] = 0
