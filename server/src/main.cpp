@@ -343,8 +343,11 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                     sprintf(urlBuffer, "%s%s",Watchdog(ID)->m_aCallback, encodeUrl);
 
 
-                    curl_easy_setopt(curl, CURLOPT_POST, 1);
+                    curl_easy_setopt(curl, CURLOPT_POST, 1L);
                     curl_easy_setopt(curl, CURLOPT_URL, urlBuffer);
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS,"signature=ServerStatus");
+                    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+                    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
                     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
                     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 6L);
                     res = curl_easy_perform(curl);
