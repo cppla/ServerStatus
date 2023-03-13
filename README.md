@@ -90,6 +90,24 @@ cd ServerStatus/server && make
 			"callback": "https://yourSMSurl"
 		},
 		{
+                        "name": "服务器内存使用率过高监控",
+                        "rule": "(memory_used/memory_total)*100>90",
+                        "interval": 600,
+                        "callback": "https://yourSMSurl"
+                },
+                {
+                        "name": "服务器宕机告警",
+                        "rule": "online4=0&online6=0",
+                        "interval": 600,
+                        "callback": "https://yourSMSurl"
+                },
+		{
+                        "name": "DDOS和CC攻击监控",
+                        "rule": "tcp_count>1000",
+                        "interval": 300,
+                        "callback": "https://yourSMSurl"
+                },
+		{
 			"name": "你可以组合任何已知字段的表达式",
 			"rule": "(hdd_used/hdd_total)*100>95",
 			"interval": 1800,

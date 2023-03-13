@@ -58,6 +58,12 @@
 			"callback": "https://yourSMSurl"
 		},
 		{
+                        "name": "ddcc attack",
+                        "rule": "tcp_count>1000",
+                        "interval": 300,
+                        "callback": "https://yourSMSurl"
+                },
+		{
 			"name": "you can parse an expression combining any known field",
 			"rule": "load_5>3",
 			"interval": 900,
