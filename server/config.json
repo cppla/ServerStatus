@@ -64,6 +64,12 @@
                         "callback": "https://yourSMSurl"
                 },
 		{
+                        "name": "month traffic warning",
+                        "rule": "(network_out-last_network_out)/1024/1024/1024>999",
+                        "interval": 3600,
+                        "callback": "https://yourSMSurl"
+                },
+		{
 			"name": "you can parse an expression combining any known field",
 			"rule": "load_5>3",
 			"interval": 900,
