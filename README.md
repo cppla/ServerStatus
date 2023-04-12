@@ -103,7 +103,7 @@ cd ServerStatus/server && make
                 },
 		{
                         "name": "DDOS和CC攻击监控",
-                        "rule": "tcp_count>1000",
+                        "rule": "tcp_count>500",
                         "interval": 300,
                         "callback": "https://yourSMSurl"
                 },

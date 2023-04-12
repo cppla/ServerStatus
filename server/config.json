@@ -59,7 +59,7 @@
 		},
 		{
                         "name": "ddcc attack",
-                        "rule": "tcp_count>1000",
+                        "rule": "tcp_count>500",
                         "interval": 300,
                         "callback": "https://yourSMSurl"
                 },

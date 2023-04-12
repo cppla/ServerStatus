@@ -9,7 +9,7 @@ COPY . .
 
 WORKDIR /server
 
-RUN make
+RUN make -j
 RUN pwd && ls -a
 
 # glibc env run
