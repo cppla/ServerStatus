@@ -258,7 +258,7 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 
 
 void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
-                            double time_10010, double time_189, double time_10086, double tcp, double udp, double process, double thread,
+                            double time_10010, double time_189, double time_10086, double tcp_count, double udp_count, double process_count, double thread_count,
                             double network_rx, double network_tx, double network_in, double network_out, double memory_total, double memory_used,
                             double swap_total, double swap_used, double hdd_total, double hdd_used, double io_read, double io_write, double cpu,
                             double online4, double online6)
@@ -281,10 +281,10 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         symbol_table.add_variable("time_10010",time_10010);
         symbol_table.add_variable("time_189",time_189);
         symbol_table.add_variable("time_10086",time_10086);
-        symbol_table.add_variable("tcp",tcp);
-        symbol_table.add_variable("udp",udp);
-        symbol_table.add_variable("process",process);
-        symbol_table.add_variable("thread",thread);
+        symbol_table.add_variable("tcp_count",tcp_count);
+        symbol_table.add_variable("udp_count",udp_count);
+        symbol_table.add_variable("process_count",process_count);
+        symbol_table.add_variable("thread_count",thread_count);
         symbol_table.add_variable("network_rx",network_rx);
         symbol_table.add_variable("network_tx",network_tx);
         symbol_table.add_variable("network_in",network_in);
