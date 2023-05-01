@@ -481,7 +481,7 @@ body .layui-table-tips .layui-layer-content{box-shadow:0 1px 6px rgba(0,0,0,.12)
 .layui-slider-input.layui-input,
 .layui-slider-input .layui-input {background-color: var(--lay-color-bg-2);}
 
-body {background: #212e36 url('../img/dark.png');}
+body {background: #212e36;}
 .layui-panel {overflow-x: auto;}
 .layui-table th, .layui-table td { text-align: center;white-space: nowrap; }
 .collapse { text-align: center; }
