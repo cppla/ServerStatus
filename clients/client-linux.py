@@ -155,17 +155,18 @@ def _ping_thread(host, mark, port):
     lostPacket = 0
     packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
 
-    IP = host
-    if host.count(':') < 1:     # if not plain ipv6 address, means ipv4 address or hostname
-        try:
-            if PROBE_PROTOCOL_PREFER == 'ipv4':
-                IP = socket.getaddrinfo(host, None, socket.AF_INET)[0][4][0]
-            else:
-                IP = socket.getaddrinfo(host, None, socket.AF_INET6)[0][4][0]
-        except Exception:
+    while True:
+        # flush dns , every time.
+        IP = host
+        if host.count(':') < 1:  # if not plain ipv6 address, means ipv4 address or hostname
+            try:
+                if PROBE_PROTOCOL_PREFER == 'ipv4':
+                    IP = socket.getaddrinfo(host, None, socket.AF_INET)[0][4][0]
+                else:
+                    IP = socket.getaddrinfo(host, None, socket.AF_INET6)[0][4][0]
+            except Exception:
                 pass
 
-    while True:
         if packet_queue.full():
             if packet_queue.get() == 0:
                 lostPacket -= 1
