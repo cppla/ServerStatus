@@ -402,6 +402,7 @@ a:hover{color:var(--lay-color-text-3)}
 .layui-table-mend{background-color: var(--lay-color-bg-2)}
 .layui-table-click,.layui-table-hover,.layui-table[lay-even] tbody tr:nth-child(even){background-color:var(--lay-color-bg-2)}
 .layui-table td,.layui-table th,.layui-table-col-set,.layui-table-fixed-r,.layui-table-grid-down,.layui-table-header,.layui-table-mend,.layui-table-page,.layui-table-tips-main,.layui-table-tool,.layui-table-total,.layui-table-view,.layui-table[lay-skin=line],.layui-table[lay-skin=row]{border-color: var(--lay-color-border-2)}
+.layui-table tr:hover { background-color: #f5f5f5; }
 .layui-table-view .layui-table td[data-edit]:hover:after{border:1px solid var(--lay-color-primary-active)}
 .layui-table-init{background-color: var(--lay-color-bg-2);}
 .layui-table-init .layui-icon{color:var(--lay-color-gray-8);}

@@ -4,6 +4,8 @@ var $ = layui.jquery, layer = layui.layer, element = layui.element;
 var error = 0;
 var d = 0;
 var server_status = new Array();
+var online = 0;
+var offline = 0;
 
 function timeSince(date) {
 	if (date == 0)
@@ -84,6 +86,8 @@ function uptime() {
 		if (result.reload)
 			setTimeout(function () { location.reload() }, 1000);
 
+		online = 0;
+		offline = 0;
 		for (var i = 0, rlen = result.servers.length; i < rlen; i++) {
 			var TableRow = $("#servers tr#r" + i);
 			var ExpandRow = $("#servers #rt" + i);
@@ -133,12 +137,16 @@ function uptime() {
 
 			// online_status
 			if (result.servers[i].online4 && !result.servers[i].online6) {
+				online += 1;
 				$(TableRow).find("#online_status .layui-badge").alterClass("layui-bg-*").addClass("layui-bg-green").text("IPv4");
 			} else if (result.servers[i].online4 && result.servers[i].online6) {
+				online += 1;
 				$(TableRow).find("#online_status .layui-badge").alterClass("layui-bg-*").addClass("layui-bg-green").text("双栈");
 			} else if (!result.servers[i].online4 && result.servers[i].online6) {
+				online += 1;
 				$(TableRow).find("#online_status .layui-badge").alterClass("layui-bg-*").addClass("layui-bg-green").text("IPv6");
 			} else {
+				offline += 1;
 				$(TableRow).find("#online_status .layui-badge").alterClass("layui-bg-*").addClass("layui-bg-red").text("关闭");
 			}
 
@@ -298,6 +306,7 @@ function uptime() {
 
 		d = new Date(result.updated * 1000);
 		error = 0;
+		$("#updated").html("总计" + result.servers.length + "台 在线" + online + "台 离线" + offline + "台，最后更新: " + timeSince(d));
 	}).fail(function (update_error) {
 		if (!error) {
 			$("#servers > tr.accordion-toggle").each(function (i) {
@@ -324,15 +333,9 @@ function uptime() {
 
 }
 
-function updateTime() {
-	if (!error)
-		$("#updated").html("最后更新: " + timeSince(d));
-}
 
 uptime();
-updateTime();
 setInterval(uptime, 2000);
-setInterval(updateTime, 2000);
 
 
 function getActiveStyleSheet() {
