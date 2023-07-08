@@ -12,7 +12,7 @@
 
 `Watchdog🐶已经加入，触发式告警。 interval只是为了防止频繁收到报警信息造成骚扰，并不是探测间隔。`    
 
-# 目录介绍：
+# 目录：
 
 * clients       	客户端文件
 * server       	 	服务端文件  
@@ -21,7 +21,7 @@
 * server/config.json	探针配置文件                                
 * web/json      	探针月流量        
 
-# 自动部署：
+# 部署：
 
 【服务端】：
 ```bash
@@ -41,6 +41,11 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 eg:
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
 ```
+
+# 主题：            
+
+* layui：https://github.com/zeyudada/StatusServerLayui        
+<img src=https://dl.cpp.la/Archive/serverstatus_layui.png width=200 height=100 /> 
 
 # 手动安装教程：     
    
