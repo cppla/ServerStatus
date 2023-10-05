@@ -44,8 +44,12 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 
 # 主题：            
 
-* layui：https://github.com/zeyudada/StatusServerLayui        
-<img src=https://dl.cpp.la/Archive/serverstatus_layui.png width=200 height=100 /> 
+* layui：https://github.com/zeyudada/StatusServerLayui ，预览：https://sslt.8zyw.cn            
+<img src=https://dl.cpp.la/Archive/serverstatus_layui.png width=200 height=100 />
+
+* light：https://github.com/orilights/ServerStatus-Theme-Light ，预览：https://tz.cloudcpp.com/index3.html    
+<img src=https://github.com/orilights/ServerStatus-Theme-Light/blob/main/docs/screenshot.png width=200 height=100 />  
+
 
 # 手动安装教程：     
    
