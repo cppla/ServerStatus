@@ -105,14 +105,14 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警",
-                        "rule": "online4=0&online6=0",
+                        "name": "服务器宕机告警，排除经常掉线的",
+                        "rule": "online4=0&online6=0&username!=s21",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
 		{
                         "name": "DDOS和CC攻击监控",
-                        "rule": "tcp_count>500",
+                        "rule": "tcp_count>600",
                         "interval": 300,
                         "callback": "https://yourSMSurl"
                 },
@@ -165,7 +165,7 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 服务器和客户端自行加入开机启动，或进程守护，或后台方式运行。 例如： nohup python3 client-linux.py &    
 
 `extra scene (run web/ssview.py)`
-![Shell View](http://dl.cpp.la/Archive/serverstatus-shell.png)
+![Shell View](https://dl.cpp.la/Archive/serverstatus-shell.png?version=2023)
 
 
 # Make Better        
