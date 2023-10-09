@@ -3,7 +3,6 @@ body { background: #ebebeb url('../img/light.png'); }
 .navbar-brand { color: #fff; padding: 10px; font-size: 20px; }
 .dropdown .dropdown-toggle { padding-bottom: 10px; padding-top: 10px; }
 .navbar-inverse .navbar-brand { color: #fff; padding: 10px; font-size: 20px; }
-.container { width: 1280px; }
 .content { background: #ffffff; padding: 20px; border-radius: 5px; border: 1px #cecece solid; -webkit-box-shadow: 0 1px 10px rgba(0, 0, 0, .1); -moz-box-shadow: 0 1px 10px rgba(0, 0, 0, .1); box-shadow: 0 1px 10px rgba(0, 0, 0, .1); margin-bottom: 20px; }
 .table { background: #ffffff; margin-bottom: 0; border-collapse: collapse; border-radius: 3px; }
 .table th, .table td { text-align: center; }
