@@ -3,6 +3,7 @@ body { background: #ebebeb url('../img/light.png'); }
 .navbar-brand { color: #fff; padding: 10px; font-size: 20px; }
 .dropdown .dropdown-toggle { padding-bottom: 10px; padding-top: 10px; }
 .navbar-inverse .navbar-brand { color: #fff; padding: 10px; font-size: 20px; }
+.container { width: 1280px; }
 .content { background: #ffffff; padding: 20px; border-radius: 5px; border: 1px #cecece solid; -webkit-box-shadow: 0 1px 10px rgba(0, 0, 0, .1); -moz-box-shadow: 0 1px 10px rgba(0, 0, 0, .1); box-shadow: 0 1px 10px rgba(0, 0, 0, .1); margin-bottom: 20px; }
 .table { background: #ffffff; margin-bottom: 0; border-collapse: collapse; border-radius: 3px; }
 .table th, .table td { text-align: center; }
@@ -17,7 +18,7 @@ tr.odd.expandRow > :hover { background: #FFF !important; }
 #month_traffic { min-width: 85px; max-width: 95px;}
 #network { min-width: 110px; }
 #cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
-#ping { max-width: 100px; }
+#ping { max-width: 110px; }
 
 @media only screen and (max-width: 1200px) {
         #type, tr td:nth-child(4)                       { display:none; visibility:hidden; }
