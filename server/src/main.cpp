@@ -325,11 +325,10 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                     char standardTime[32]= { 0 };
                     strftime(standardTime, sizeof(standardTime), "%Y-%m-%d %H:%M:%S",localtime(&currentStamp));
 
-                    //url encode
+                    //url encode, Rules conflict with url special characters，eg：&, del rules, by https://cpp.la, 2023-10-09
                     char encodeBuffer[2048] = { 0 };
-                    sprintf(encodeBuffer, " \n\n【告警名称】 %s \n\n【告警规则】 %s  \n\n【告警时间】 %s  \n\n ---------------- \n\n【用户名】 %s \n\n【节点名】 %s \n\n【虚拟化】 %s \n\n【主机名】 %s \n\n【位  置】 %s",
+                    sprintf(encodeBuffer, "【告警名称】 %s \n\n【告警时间】 %s  \n\n【用户名】 %s \n\n【节点名】 %s \n\n【虚拟化】 %s \n\n【主机名】 %s \n\n【位  置】 %s",
                             Watchdog(ID)->m_aName,
-                            Watchdog(ID)->m_aRule,
                             standardTime,
                             Client(ClientID)->m_aUsername,
                             Client(ClientID)->m_aName,
