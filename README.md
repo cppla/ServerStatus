@@ -106,8 +106,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警,排除海外机器",
-                        "rule": "online4=0&online6=0&time_10010<160&time_189<160&time_10086<160",
+                        "name": "服务器宕机告警，闪断引起的误报问题等待解决",
+                        "rule": "online4=0&online6=0",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
