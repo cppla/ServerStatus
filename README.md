@@ -94,8 +94,8 @@ cd ServerStatus/server && make
 	"watchdog":
 	[
 	        {
-			"name": "服务器负载高监控，排除负载一直大于15的物理机",
-			"rule": "cpu>90&load_1>4&load_5<15",
+			"name": "服务器负载高监控，排除内存大于32G物理机",
+			"rule": "cpu>90&load_1>4&memory_total<33554432",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
