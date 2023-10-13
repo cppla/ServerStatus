@@ -271,13 +271,7 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         typedef exprtk::parser<double>       parser_t;
         const std::string expression_string = Watchdog(ID)->m_aRule;
 
-        int ClientID = ClientNetToClient(ClientNetID);
         symbol_table_t symbol_table;
-        symbol_table.add_variable("username", Client(ClientID)->m_aUsername);
-        symbol_table.add_variable("name", Client(ClientID)->m_aName);
-        symbol_table.add_variable("type", Client(ClientID)->m_aType);
-        symbol_table.add_variable("host", Client(ClientID)->m_aHost);
-        symbol_table.add_variable("location", Client(ClientID)->m_aLocation);
         symbol_table.add_variable("load_1",load_1);
         symbol_table.add_variable("load_5",load_5);
         symbol_table.add_variable("load_15",load_15);
@@ -316,6 +310,7 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
 
         if (expression.value() > 0)
         {
+	    int ClientID = ClientNetToClient(ClientNetID);
             time_t currentStamp = (long long)time(/*ago*/0);
             if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
