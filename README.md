@@ -67,7 +67,7 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式（不包括name, type, host, location, uptime，字符串无法参与计算）
+! watchdog rule 可以为任何已知字段的表达式（不包括name, type, host, location, uptime，字符串无法参与计算）       
 ! watchdog interval 最小通知间隔
 ! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
