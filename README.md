@@ -94,8 +94,8 @@ cd ServerStatus/server && make
 	"watchdog":
 	[
 	        {
-			"name": "服务器负载高监控",
-			"rule": "cpu>90&load_5>3",
+			"name": "服务器负载高监控，排除物理机",
+			"rule": "cpu>90&load_1>4&load_5<10",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
