@@ -107,7 +107,7 @@ cd ServerStatus/server && make
                 },
                 {
                         "name": "服务器宕机告警，排除经常掉线的",
-                        "rule": "online4=0&online6=0&username!=s21",
+                        "rule": "online4=0&online6=0&name!=俄勒冈",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
