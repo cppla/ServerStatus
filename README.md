@@ -67,9 +67,9 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式。         
-! watchdog interval 最小通知间隔。
-! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调。   
+! watchdog rule 可以为任何已知字段的表达式（不包括name, type, host, location, uptime，字符串无法参与计算）
+! watchdog interval 最小通知间隔
+! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
 ! watchdog callback Telegram: https://api.telegram.org/bot你自己的密钥/sendMessage?parse_mode=HTML&disable_web_page_preview=true&chat_id=你自己的标识&text=
 ! watchdog callback Server酱: https://sctapi.ftqq.com/你自己的密钥.send?title=ServerStatus&desp=
@@ -106,8 +106,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警，排除经常掉线的",
-                        "rule": "online4=0&online6=0&name!=俄勒冈",
+                        "name": "服务器宕机告警,排除海外机器",
+                        "rule": "online4=0&online6=0&time_10010<160&time_189<160&time_10086<160",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
