@@ -270,8 +270,19 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         typedef exprtk::expression<double>   expression_t;
         typedef exprtk::parser<double>       parser_t;
         const std::string expression_string = Watchdog(ID)->m_aRule;
+        int ClientID = ClientNetToClient(ClientNetID);
+        std::string username = Client(ClientID)->m_aUsername;
+        std::string name = Client(ClientID)->m_aName;
+        std::string type = Client(ClientID)->m_aType;
+        std::string host = Client(ClientID)->m_aHost;
+        std::string location = Client(ClientID)->m_aLocation;
 
         symbol_table_t symbol_table;
+        symbol_table.add_stringvar("username", username);
+        symbol_table.add_stringvar("name", name);
+        symbol_table.add_stringvar("type", type);
+        symbol_table.add_stringvar("host", host);
+        symbol_table.add_stringvar("location", location);
         symbol_table.add_variable("load_1",load_1);
         symbol_table.add_variable("load_5",load_5);
         symbol_table.add_variable("load_15",load_15);
@@ -310,7 +321,6 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
 
         if (expression.value() > 0)
         {
-	    int ClientID = ClientNetToClient(ClientNetID);
             time_t currentStamp = (long long)time(/*ago*/0);
             if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
@@ -330,11 +340,11 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                     sprintf(encodeBuffer, "【告警名称】 %s \n\n【告警时间】 %s  \n\n【用户名】 %s \n\n【节点名】 %s \n\n【虚拟化】 %s \n\n【主机名】 %s \n\n【位  置】 %s",
                             Watchdog(ID)->m_aName,
                             standardTime,
-                            Client(ClientID)->m_aUsername,
-                            Client(ClientID)->m_aName,
-                            Client(ClientID)->m_aType,
-                            Client(ClientID)->m_aHost,
-                            Client(ClientID)->m_aLocation);
+                            username.c_str(),
+                            name.c_str(),
+                            type.c_str(),
+                            host.c_str(),
+                            location.c_str());
                     char *encodeUrl = curl_easy_escape(curl, encodeBuffer, strlen(encodeBuffer));
 
                     //standard url
