@@ -340,11 +340,11 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
                     sprintf(encodeBuffer, "【告警名称】 %s \n\n【告警时间】 %s  \n\n【用户名】 %s \n\n【节点名】 %s \n\n【虚拟化】 %s \n\n【主机名】 %s \n\n【位  置】 %s",
                             Watchdog(ID)->m_aName,
                             standardTime,
-                            username,
-                            name,
-                            type,
-                            host,
-                            location);
+                            username.c_str(),
+                            name.c_str(),
+                            type.c_str(),
+                            host.c_str(),
+                            location.c_str());
                     char *encodeUrl = curl_easy_escape(curl, encodeBuffer, strlen(encodeBuffer));
 
                     //standard url
