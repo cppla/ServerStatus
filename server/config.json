@@ -40,26 +40,26 @@
 	],
 	"watchdog": [
 		{
-			"name": "cpu high warning",
-			"rule": "cpu>90&load_1>3",
+			"name": "cpu high warning,exclude username s01",
+			"rule": "cpu>90&load_1>5&username!='s01'",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "memory high warning",
-			"rule": "(memory_used/memory_total)*100>90",
+			"name": "memory high warning, exclude less than 1GB vps",
+			"rule": "(memory_used/memory_total)*100>90&memory_total>1048576",
 			"interval": 300,
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "offline warning",
-			"rule": "online4=0&online6=0",
+			"name": "offline warning,exclude name node1",
+			"rule": "online4=0&online6=0&name!='node1'",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
-                        "name": "ddcc attack",
-                        "rule": "tcp_count>500",
+                        "name": "ddcc attack,limit type Oracle",
+                        "rule": "tcp_count>600&type='Oracle'",
                         "interval": 300,
                         "callback": "https://yourSMSurl"
                 },
