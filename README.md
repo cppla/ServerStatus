@@ -6,11 +6,11 @@
 [![Python Support](https://img.shields.io/badge/python-3.6%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Build%201.1.0-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Build%201.1.1-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus_1.0.9.png)
 
-`Watchdog🐶已经加入，触发式告警。 interval只是为了防止频繁收到报警信息造成骚扰，并不是探测间隔。`    
+`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。`    
 
 # 目录：
 
@@ -48,7 +48,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 <img src=https://dl.cpp.la/Archive/serverstatus_layui.png width=200 height=100 />
 
 * light：https://github.com/orilights/ServerStatus-Theme-Light ，预览：https://tz.cloudcpp.com/index3.html    
-<img src=https://github.com/orilights/ServerStatus-Theme-Light/blob/main/docs/screenshot.png width=200 height=100 />  
+<img src=https://dl.cpp.la/Archive/serverstatus_light.png width=200 height=100 />  
 
 
 # 手动安装教程：     
@@ -67,7 +67,7 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式（不包括name, type, host, location, uptime，字符串无法参与计算）       
+! watchdog rule 可以为任何已知字段的表达式       
 ! watchdog interval 最小通知间隔
 ! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
@@ -94,8 +94,8 @@ cd ServerStatus/server && make
 	"watchdog":
 	[
 	        {
-			"name": "服务器负载高监控，排除内存大于32G物理机",
-			"rule": "cpu>90&load_1>4&memory_total<33554432",
+			"name": "服务器负载高监控，排除内存大于32G物理机，同时排除俄勒冈机器",
+			"rule": "cpu>90&load_1>4&memory_total<33554432&name!='俄勒冈'",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
@@ -106,8 +106,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警",
-                        "rule": "online4=0&online6=0",
+                        "name": "服务器宕机告警，排出俄勒冈，排除s02",
+                        "rule": "online4=0&online6=0&name!='俄勒冈'&username!='s02'",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
