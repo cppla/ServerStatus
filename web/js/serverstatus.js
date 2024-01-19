@@ -82,7 +82,6 @@ function uptime() {
 						"<div id=\"expand_hdd\">加载中</div>" +
 						"<div id=\"expand_tupd\">加载中</div>" +
 						"<div id=\"expand_ping\">加载中</div>" +
-						"<div id=\"expand_lost\">加载中</div>" +
 						"<div id=\"expand_custom\">加载中</div>" +
 					"</div></td></tr>"
 				);
@@ -255,13 +254,14 @@ function uptime() {
 
 				// tcp, udp, process, thread count
 				ExpandRow[0].children["expand_tupd"].innerHTML = "TCP/UDP/进/线: " + result.servers[i].tcp_count + " / " + result.servers[i].udp_count + " / " + result.servers[i].process_count+ " / " + result.servers[i].thread_count;
-				ExpandRow[0].children["expand_ping"].innerHTML = "联通/电信/移动: " + result.servers[i].time_10010 + "ms / " + result.servers[i].time_189 + "ms / " + result.servers[i].time_10086 + "ms"
 
                 // ping
                 var PING_10010 = result.servers[i].ping_10010.toFixed(0);
                 var PING_189 = result.servers[i].ping_189.toFixed(0);
                 var PING_10086 = result.servers[i].ping_10086.toFixed(0);
-				ExpandRow[0].children["expand_lost"].innerHTML = "丢包：联通/电信/移动: " + PING_10010 + "% / " + PING_189 + "% / " + PING_10086 + "%"
+
+				// ping ms + lost rate
+				ExpandRow[0].children["expand_ping"].innerHTML = "CU/CT/CM: " + result.servers[i].time_10010 + "ms ("+result.servers[i].ping_10010.toFixed(0)+"%) / " + result.servers[i].time_189 + "ms ("+result.servers[i].ping_189.toFixed(0)+"%) / " + result.servers[i].time_10086 + "ms ("+result.servers[i].ping_10086.toFixed(0)+"%)"
 
                 if (PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20)
                     TableRow.children["ping"].children[0].children[0].className = "progress-bar progress-bar-danger";
