@@ -92,6 +92,18 @@ void CMain::OnNewClient(int ClientNetID, int ClientID)
 		Client(ClientID)->m_Stats.m_Online4 = true;
 	else if(Client(ClientID)->m_ClientNetType == NETTYPE_IPV6)
 		Client(ClientID)->m_Stats.m_Online6 = true;
+
+    // Send monitor to client
+    // support by cpp.la
+    int ID = 0;
+    char monitorBuffer[2048];
+    while (strcmp(Monitors(ID)->m_aName, "NULL"))
+    {
+        memset(monitorBuffer, 0, sizeof(monitorBuffer));
+        sprintf(monitorBuffer, "{\"name\":\"%s\",\"host\":\"%s\",\"interval\":%d,\"type\":\"%s\",\"monitor\":%d}", Monitors(ID)->m_aName, Monitors(ID)->m_aHost, Monitors(ID)->m_aInterval, Monitors(ID)->m_aType, ID);
+        m_Server.Network()->Send(ClientNetID, monitorBuffer);
+        ID++;
+    }
 }
 
 void CMain::OnDelClient(int ClientNetID)
@@ -571,6 +583,28 @@ int CMain::ReadConfig()
         str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
     } else
         str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
+
+    // monitor
+    // support by: https://cpp.la
+    ID = 0;
+    const json_value &mStart = (*pJsonData)["monitors"];
+    if(mStart.type == json_array)
+    {
+        for(unsigned i = 0; i < mStart.u.array.length; i++)
+        {
+            if(ID < 0 || ID >= NET_MAX_CLIENTS)
+                continue;
+
+            str_copy(Monitors(ID)->m_aName, mStart[i]["name"].u.string.ptr, sizeof(Monitors(ID)->m_aName));
+            str_copy(Monitors(ID)->m_aHost, mStart[i]["host"].u.string.ptr, sizeof(Monitors(ID)->m_aHost));
+            Monitors(ID)->m_aInterval = mStart[i]["interval"].u.integer;
+            str_copy(Monitors(ID)->m_aType, mStart[i]["type"].u.string.ptr, sizeof(Monitors(ID)->m_aType));
+
+            ID++;
+        }
+        str_copy(Monitors(ID)->m_aName, "NULL", sizeof(Monitors(ID)->m_aName));
+    } else
+        str_copy(Monitors(ID)->m_aName, "NULL", sizeof(Monitors(ID)->m_aName));
 
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
 	// support by: https://cpp.la

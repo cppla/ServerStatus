@@ -77,7 +77,7 @@ class CMain
 			int64_t m_IORead;
 			int64_t m_IOWrite;
 			double m_CPU;
-			char m_aCustom[512];
+			char m_aCustom[1024];
 			// Options
 			bool m_Pong;
 		} m_Stats;
@@ -89,6 +89,13 @@ class CMain
         int  m_aInterval;
 	    char m_aCallback[1024];
 	} m_aCWatchDogs[NET_MAX_CLIENTS];
+
+    struct CMonitors{
+        char m_aName[128];
+        char m_aHost[128];
+        int  m_aInterval;
+        char m_aType[128];
+    } m_aCMonitors[NET_MAX_CLIENTS];
 
 	struct CJSONUpdateThreadData
 	{
@@ -108,6 +115,8 @@ public:
 	int Run();
 
     CWatchDog *Watchdog(int ruleID) { return &m_aCWatchDogs[ruleID]; }
+    CMonitors *Monitors(int ruleID) { return &m_aCMonitors[ruleID]; }
+
     void WatchdogMessage(int ClientNetID,
                          double load_1, double load_5, double load_15, double ping_10010, double ping_189, double ping_10086,
                          double time_10010, double time_189, double time_10086, double tcp_count, double udp_count, double process_count, double thread_count,
