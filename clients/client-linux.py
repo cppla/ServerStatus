@@ -3,6 +3,7 @@
 # Update by : https://github.com/cppla/ServerStatus, Update date: 20220530
 # 版本：1.0.3, 支持Python版本：2.7 to 3.10
 # 支持操作系统： Linux, OSX, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
+# ONLINE_PACKET_HISTORY_LEN， 探测间隔60s，记录24小时在线率（1440）；探测间隔60s，记录7天（10080）；探测时间30s，记录24小时（2880）
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
 SERVER = "127.0.0.1"
@@ -17,6 +18,7 @@ CM = "cm.tz.cloudcpp.com"
 PROBEPORT = 80
 PROBE_PROTOCOL_PREFER = "ipv4"  # ipv4, ipv6
 PING_PACKET_HISTORY_LEN = 100
+ONLINE_PACKET_HISTORY_LEN = 1440
 INTERVAL = 1
 
 import socket
@@ -319,7 +321,7 @@ def get_realtime_data():
 
 def _monitor_thread(name, host, interval, type):
     lostPacket = 0
-    packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
+    packet_queue = Queue(maxsize=ONLINE_PACKET_HISTORY_LEN)
     while True:
         if name not in monitorServer.keys():
             monitorServer[name] = {
