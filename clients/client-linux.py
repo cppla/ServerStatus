@@ -455,6 +455,7 @@ if __name__ == '__main__':
             if data.find("You are connecting via") < 0:
                 data = byte_str(s.recv(1024))
                 print(data)
+                monitorServer.clear()
                 for i in data.split('\n'):
                     if "monitor" in i and "type" in i and "{" in i and "}" in i:
                         jdata = json.loads(i[i.find("{"):i.find("}")+1])
