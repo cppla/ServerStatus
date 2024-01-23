@@ -6,11 +6,11 @@
 [![Python Support](https://img.shields.io/badge/python-3.6%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Build%201.1.1-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Build%201.1.2-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus_1.0.9.png)
 
-`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。`    
+`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复 `    
 
 # 目录：
 
@@ -67,7 +67,7 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式。注意Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，todo等待修复       
+! watchdog rule 可以为任何已知字段的表达式。注意Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复       
 ! watchdog interval 最小通知间隔
 ! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
@@ -132,7 +132,7 @@ cd ServerStatus/server && make
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "你可以组合任何已知字段的表达式，注意Exprtk库目前不支持中文等Unicode字符",
+			"name": "你可以组合任何已知字段的表达式",
 			"rule": "(hdd_used/hdd_total)*100>95",
 			"interval": 1800,
 			"callback": "https://yourSMSurl"
