@@ -93,7 +93,7 @@ cd ServerStatus/server && make
 	],
 	"monitors": [
 		{
-			"name": "你可以监测自己的网站以及MySQL、Redis",
+			"name": "监测网站以及MySQL、Redis，默认为七天在线率",
 			"host": "https://www.baidu.com",
 			"interval": 60,
 			"type": "https"
