@@ -40,19 +40,19 @@
 	],
 	"monitors": [
 		{
-			"name": "百度一下",
+			"name": "baidu",
 			"host": "https://www.baidu.com",
 			"interval": 60,
 			"type": "https"
 		},
 		{
-			"name": "502论坛",
+			"name": "502BBS",
 			"host": "https://www.hostloc.com",
 			"interval": 60,
 			"type": "https"
 		},
 		{
-			"name": "DNS服务",
+			"name": "myDNS",
 			"host": "114.114.114.114:53",
 			"interval": 60,
 			"type": "tcp"
