@@ -93,7 +93,7 @@ cd ServerStatus/server && make
 	],
 	"monitors": [
 		{
-			"name": "百度一下",
+			"name": "你可以监测自己的网站以及MySQL、Redis",
 			"host": "https://www.baidu.com",
 			"interval": 60,
 			"type": "https"
