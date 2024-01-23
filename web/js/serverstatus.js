@@ -91,7 +91,7 @@ function uptime() {
 			}
 			if (!MableRow.length) {
 				$("#monitors").append(
-					"<tr id=\"r" + i + "\" data-toggle=\"collapse\" data-target=\"#rt" + i + "\" class=\"accordion-toggle " + hack + "\">" +
+					"<tr id=\"r" + i + "\" data-target=\"#rt" + i + "\" class=\"accordion-toggle " + hack + "\">" +
 					"<td id=\"monitor_status\"><div class=\"progress\"><div style=\"width: 100%;\" class=\"progress-bar progress-bar-warning\"><small>加载中</small></div></div></td>" +
 					"<td id=\"monitor_node\">加载中</td>" +
 					"<td id=\"monitor_location\">加载中</td>" +
