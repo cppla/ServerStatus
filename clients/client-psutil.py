@@ -312,13 +312,7 @@ def _monitor_thread(name, host, interval, type):
     packet_queue = Queue(maxsize=ONLINE_PACKET_HISTORY_LEN)
     while True:
         if name not in monitorServer.keys():
-            monitorServer[name] = {
-                "type": type,
-                "dns_time": 0,
-                "connect_time": 0,
-                "download_time": 0,
-                "online_rate": 1
-            }
+            break
         if packet_queue.full():
             if packet_queue.get() == 0:
                 lostPacket -= 1
@@ -444,10 +438,16 @@ if __name__ == '__main__':
             if data.find("You are connecting via") < 0:
                 data = byte_str(s.recv(1024))
                 print(data)
-                monitorServer.clear()
                 for i in data.split('\n'):
                     if "monitor" in i and "type" in i and "{" in i and "}" in i:
                         jdata = json.loads(i[i.find("{"):i.find("}")+1])
+                        monitorServer[jdata.get("name")] = {
+                            "type": jdata.get("type"),
+                            "dns_time": 0,
+                            "connect_time": 0,
+                            "download_time": 0,
+                            "online_rate": 1
+                        }
                         t = threading.Thread(
                             target=_monitor_thread,
                             kwargs={
@@ -514,11 +514,13 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             raise
         except socket.error:
+            monitorServer.clear()
             print("Disconnected...")
             if 's' in locals().keys():
                 del s
             time.sleep(3)
         except Exception as e:
+            monitorServer.clear()
             print("Caught Exception:", e)
             if 's' in locals().keys():
                 del s
