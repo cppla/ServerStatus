@@ -6,11 +6,11 @@
 [![Python Support](https://img.shields.io/badge/python-3.6%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Build%201.1.1-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Build%201.1.2-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Version](http://dl.cpp.la/Archive/serverstatus_1.0.9.png)
 
-`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。`    
+`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复 `    
 
 # 目录：
 
@@ -67,7 +67,7 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式       
+! watchdog rule 可以为任何已知字段的表达式。注意Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复       
 ! watchdog interval 最小通知间隔
 ! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
@@ -89,13 +89,21 @@ cd ServerStatus/server && make
 			"location": "🇨🇳",
 			"password": "USER_DEFAULT_PASSWORD",
 			"monthstart": 1
-		},
+		}
+	],
+	"monitors": [
+		{
+			"name": "监测网站以及MySQL、Redis，默认为七天在线率",
+			"host": "https://www.baidu.com",
+			"interval": 60,
+			"type": "https"
+		}
 	],
 	"watchdog":
 	[
 	        {
-			"name": "服务器负载高监控，排除内存大于32G物理机，同时排除俄勒冈机器",
-			"rule": "cpu>90&load_1>4&memory_total<33554432&name!='俄勒冈'",
+			"name": "服务器负载高监控，排除内存大于32G物理机，同时排除node1机器",
+			"rule": "cpu>90&load_1>4&memory_total<33554432&name!='node1'",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
@@ -106,8 +114,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警，排出俄勒冈，排除s02",
-                        "rule": "online4=0&online6=0&name!='俄勒冈'&username!='s02'",
+                        "name": "服务器宕机告警，排出node1，排除s02",
+                        "rule": "online4=0&online6=0&name!='node1'&username!='s02'",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },

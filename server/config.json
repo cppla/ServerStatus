@@ -38,6 +38,26 @@
 			"monthstart": 1
 		}
 	],
+	"monitors": [
+		{
+			"name": "百度一下",
+			"host": "https://www.baidu.com",
+			"interval": 60,
+			"type": "https"
+		},
+		{
+			"name": "502论坛",
+			"host": "https://www.hostloc.com",
+			"interval": 60,
+			"type": "https"
+		},
+		{
+			"name": "DNS服务",
+			"host": "114.114.114.114:53",
+			"interval": 60,
+			"type": "tcp"
+		}
+	],
 	"watchdog": [
 		{
 			"name": "cpu high warning,exclude username s01",
@@ -58,17 +78,17 @@
 			"callback": "https://yourSMSurl"
 		},
 		{
-                        "name": "ddcc attack,limit type Oracle",
-                        "rule": "tcp_count>600&type='Oracle'",
-                        "interval": 300,
-                        "callback": "https://yourSMSurl"
-                },
+			"name": "ddcc attack,limit type Oracle",
+			"rule": "tcp_count>600&type='Oracle'",
+			"interval": 300,
+			"callback": "https://yourSMSurl"
+		},
 		{
-                        "name": "month traffic warning",
-                        "rule": "(network_out-last_network_out)/1024/1024/1024>999",
-                        "interval": 3600,
-                        "callback": "https://yourSMSurl"
-                },
+			"name": "month traffic warning",
+			"rule": "(network_out-last_network_out)/1024/1024/1024>999",
+			"interval": 3600,
+			"callback": "https://yourSMSurl"
+		},
 		{
 			"name": "you can parse an expression combining any known field",
 			"rule": "load_5>3",
