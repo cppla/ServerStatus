@@ -278,6 +278,23 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
     int ID = 0;
     while (strcmp(Watchdog(ID)->m_aName, "NULL"))
     {
+//        Exprtk库默认使用窄字符类型，但可能会出现中文等Unicode字符无法正确解析的问题。
+//        todo: 为解决此问题，可以使用宽字符类型替换Exprtk库中默认的窄字符类型。
+//        #include <string>
+//        #include <vector>
+//        #include <exprtk.hpp>
+//        typedef exprtk::expression<wchar_t> expression_type;
+//        typedef exprtk::parser<wchar_t> parser_type;
+//        int main()
+//      {
+//                std::wstring expression_string = L"sin(x)";
+//                expression_type expression;
+//                parser_type parser;
+//                parser.compile(expression_string, expression);
+//                double x = 3.14;
+//                double result = expression.value();
+//                return 0;
+//       }
         typedef exprtk::symbol_table<double> symbol_table_t;
         typedef exprtk::expression<double>   expression_t;
         typedef exprtk::parser<double>       parser_t;

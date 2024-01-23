@@ -46,7 +46,7 @@
 			"type": "https"
 		},
 		{
-			"name": "主机交流",
+			"name": "502论坛",
 			"host": "https://www.hostloc.com",
 			"interval": 60,
 			"type": "https"

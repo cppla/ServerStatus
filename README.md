@@ -67,7 +67,7 @@ cd ServerStatus/server && make
 
 #### 二、修改配置文件         
 ```diff
-! watchdog rule 可以为任何已知字段的表达式       
+! watchdog rule 可以为任何已知字段的表达式。注意Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，todo等待修复       
 ! watchdog interval 最小通知间隔
 ! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
 
@@ -89,13 +89,21 @@ cd ServerStatus/server && make
 			"location": "🇨🇳",
 			"password": "USER_DEFAULT_PASSWORD",
 			"monthstart": 1
-		},
+		}
+	],
+	"monitors": [
+		{
+			"name": "百度一下",
+			"host": "https://www.baidu.com",
+			"interval": 60,
+			"type": "https"
+		}
 	],
 	"watchdog":
 	[
 	        {
-			"name": "服务器负载高监控，排除内存大于32G物理机，同时排除俄勒冈机器",
-			"rule": "cpu>90&load_1>4&memory_total<33554432&name!='俄勒冈'",
+			"name": "服务器负载高监控，排除内存大于32G物理机，同时排除node1机器",
+			"rule": "cpu>90&load_1>4&memory_total<33554432&name!='node1'",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
@@ -106,8 +114,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警，排出俄勒冈，排除s02",
-                        "rule": "online4=0&online6=0&name!='俄勒冈'&username!='s02'",
+                        "name": "服务器宕机告警，排出node1，排除s02",
+                        "rule": "online4=0&online6=0&name!='node1'&username!='s02'",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
@@ -124,7 +132,7 @@ cd ServerStatus/server && make
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "你可以组合任何已知字段的表达式",
+			"name": "你可以组合任何已知字段的表达式，注意Exprtk库目前不支持中文等Unicode字符",
 			"rule": "(hdd_used/hdd_total)*100>95",
 			"interval": 1800,
 			"callback": "https://yourSMSurl"
