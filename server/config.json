@@ -46,13 +46,7 @@
 			"type": "https"
 		},
 		{
-			"name": "502BBS",
-			"host": "https://www.hostloc.com",
-			"interval": 60,
-			"type": "https"
-		},
-		{
-			"name": "myDNS",
+			"name": "114",
 			"host": "114.114.114.114:53",
 			"interval": 60,
 			"type": "tcp"

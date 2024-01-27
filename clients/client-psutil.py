@@ -329,7 +329,7 @@ def _monitor_thread(name, host, interval, type):
                 k = socket.create_connection((IP, 80), timeout=6)
                 monitorServer[name]["connect_time"] = int((timeit.default_timer() - m) * 1000)
                 m = timeit.default_timer()
-                k.sendall("GET / HTTP/1.2\r\nHost:{}\r\nConnection:close\r\n\r\n".format(address).encode('utf-8'))
+                k.sendall("GET / HTTP/1.2\r\nHost:{}\r\nUser-Agent:ServerStatus/cppla\r\nConnection:close\r\n\r\n".format(address).encode('utf-8'))
                 response = b""
                 while True:
                     data = k.recv(4096)
@@ -355,7 +355,7 @@ def _monitor_thread(name, host, interval, type):
                 monitorServer[name]["connect_time"] = int((timeit.default_timer() - m) * 1000)
                 m = timeit.default_timer()
                 kk = context.wrap_socket(k, server_hostname=address)
-                kk.sendall("GET / HTTP/1.2\r\nHost:{}\r\nConnection:close\r\n\r\n".format(address).encode('utf-8'))
+                kk.sendall("GET / HTTP/1.2\r\nHost:{}\r\nUser-Agent:ServerStatus/cppla\r\nConnection:close\r\n\r\n".format(address).encode('utf-8'))
                 response = b""
                 while True:
                     data = kk.recv(4096)
