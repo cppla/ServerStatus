@@ -42,13 +42,13 @@
 		{
 			"name": "baidu",
 			"host": "https://www.baidu.com",
-			"interval": 60,
+			"interval": 180,
 			"type": "https"
 		},
 		{
 			"name": "114",
 			"host": "114.114.114.114:53",
-			"interval": 60,
+			"interval": 180,
 			"type": "tcp"
 		}
 	],
