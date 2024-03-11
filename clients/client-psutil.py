@@ -4,7 +4,7 @@
 # 依赖于psutil跨平台库
 # 版本：1.0.3, 支持Python版本：2.7 to 3.10
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
-# ONLINE_PACKET_HISTORY_LEN， 探测间隔120s，记录24小时在线率（720）；探测时间180s，记录24小时（480）；探测间隔60s，记录7天（10080）
+# ONLINE_PACKET_HISTORY_LEN， 探测间隔120s，记录24小时在线率（720）；探测时间300s，记录24小时（288）；探测间隔60s，记录7天（10080）
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
 SERVER = "127.0.0.1"

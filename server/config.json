@@ -42,13 +42,19 @@
 		{
 			"name": "baidu",
 			"host": "https://www.baidu.com",
-			"interval": 180,
+			"interval": 300,
+			"type": "https"
+		},
+		{
+			"name": "aliyun",
+			"host": "https://www.aliyun.com",
+			"interval": 300,
 			"type": "https"
 		},
 		{
 			"name": "114",
 			"host": "114.114.114.114:53",
-			"interval": 180,
+			"interval": 300,
 			"type": "tcp"
 		}
 	],
