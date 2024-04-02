@@ -110,13 +110,6 @@ void CMain::OnDelClient(int ClientNetID)
 {
 	int ClientID = ClientNetToClient(ClientNetID);
 	dbg_msg("main", "OnDelClient(ncid=%d, cid=%d)", ClientNetID, ClientID);
-    //copy offline message for watchdog
-    WatchdogMessage(ClientNetID,
-                    0, 0, 0, 0, 0, 0,
-                    0, 0, 0,0, 0, 0,
-                    0, 0, 0, 0, 0, 0,
-                    0, 0, 0,0, 0, 0,
-                    0, 0, 0, 0);
 	if(ClientID >= 0 && ClientID < NET_MAX_CLIENTS)
 	{
 		Client(ClientID)->m_Connected = false;
@@ -124,6 +117,13 @@ void CMain::OnDelClient(int ClientNetID)
 		Client(ClientID)->m_ClientNetType = NETTYPE_INVALID;
 		mem_zero(&Client(ClientID)->m_Stats, sizeof(CClient::CStats));
 	}
+    //copy offline message for watchdog
+    WatchdogMessage(ClientNetID,
+                    0, 0, 0, 0, 0, 0,
+                    0, 0, 0,0, 0, 0,
+                    0, 0, 0, 0, 0, 0,
+                    0, 0, 0,0, 0, 0,
+                    0, 0, 0, 0);
 }
 
 int CMain::HandleMessage(int ClientNetID, char *pMessage)
@@ -353,6 +353,11 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
             time_t currentStamp = (long long)time(/*ago*/0);
             if ((currentStamp-Client(ClientID)->m_AlarmLastTime) > Watchdog(ID)->m_aInterval)
             {
+                if (!Client(ClientID)->m_Stats.m_Online4 && !Client(ClientID)->m_Stats.m_Online6)
+                {
+                    //休眠5分钟如果5分钟后状态发生了变更，消息不发出。
+                    printf("download\n");
+                }
                 Client(ClientID)->m_AlarmLastTime = currentStamp;
                 CURL *curl;
                 CURLcode res;
