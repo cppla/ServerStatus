@@ -24,7 +24,6 @@ services:
 
 networks:
   serverstatus-network:
-    name: serverstatus-network
     ipam:
       config:
         - subnet: 172.23.0.0/24

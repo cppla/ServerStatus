@@ -543,7 +543,7 @@ void CMain::offlineAlarmThread(void *pUser)
                 time_t currentStamp = (long long)time(/*ago*/0);
                 if ((currentStamp-pClients->m_AlarmLastTime) > pWatchDogs[ID].m_aInterval)
                 {
-                    printf("客户端下线, Client disconnects and sends alert information\n");
+                    printf("客户端下线且超过阈值, Client disconnects and sends alert information\n");
                     pClients->m_AlarmLastTime = currentStamp;
                     CURL *curl;
                     CURLcode res;
@@ -588,6 +588,8 @@ void CMain::offlineAlarmThread(void *pUser)
                     }
                     curl_global_cleanup();
                 }
+                else
+                    printf("客户端下线但未超过阈值，No alarm if the threshold is not exceeded\n");
             }
             ID++;
         }
@@ -596,6 +598,7 @@ void CMain::offlineAlarmThread(void *pUser)
     {
         printf("网络波动，No alarm information is sent due to network fluctuations\n");
     }
+    fflush(stdout);
 }
 
 int CMain::ReadConfig()
