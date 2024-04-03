@@ -6,7 +6,7 @@
 [![Python Support](https://img.shields.io/badge/python-3.6%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
 [![C++ Compiler](http://img.shields.io/badge/C++-GNU-blue.svg?style=flat&logo=cplusplus)](https://github.com/cppla/ServerStatus)
 [![License](https://img.shields.io/badge/license-MIT-4EB1BA.svg?style=flat-square)](https://github.com/cppla/ServerStatus)
-[![Version](https://img.shields.io/badge/Version-Build%201.1.2-red)](https://github.com/cppla/ServerStatus)
+[![Version](https://img.shields.io/badge/Version-Build%201.1.3-red)](https://github.com/cppla/ServerStatus)
 
 ![Latest Host Version](https://dl.cpp.la/Archive/serverstatus_1.1.2_host.png)
 ![Latest Server Version](https://dl.cpp.la/Archive/serverstatus_1.1.2_server.png)
@@ -115,8 +115,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
                 {
-                        "name": "服务器宕机告警，排出node1，排除s02",
-                        "rule": "online4=0&online6=0&name!='node1'&username!='s02'",
+                        "name": "服务器宕机告警",
+                        "rule": "online4=0&online6=0",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },

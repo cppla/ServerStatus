@@ -72,8 +72,8 @@
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "offline warning,exclude name node1",
-			"rule": "online4=0&online6=0&name!='node1'",
+			"name": "offline warning",
+			"rule": "online4=0&online6=0",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
