@@ -119,6 +119,7 @@ void CMain::OnDelClient(int ClientNetID)
 	}
     m_OfflineAlarmThreadData.pClients = m_aClients;
     m_OfflineAlarmThreadData.pWatchDogs = m_aCWatchDogs;
+    m_OfflineAlarmThreadData.m_ReloadRequired = ClientID;
     thread_create(offlineAlarmThread, &m_OfflineAlarmThreadData);
 }
 
@@ -504,8 +505,9 @@ void CMain::offlineAlarmThread(void *pUser)
     CJSONUpdateThreadData *m_OfflineAlarmThreadData = (CJSONUpdateThreadData *)pUser;
     CClient *pClients = m_OfflineAlarmThreadData->pClients;
     CWatchDog *pWatchDogs = m_OfflineAlarmThreadData->pWatchDogs;
+    volatile short ClientID = m_OfflineAlarmThreadData->m_ReloadRequired;
     thread_sleep(6000);
-    if(!pClients->m_Connected)
+    if(!pClients[ClientID].m_Connected)
     {
         int ID = 0;
         while (strcmp(pWatchDogs[ID].m_aName, "NULL"))
@@ -514,13 +516,13 @@ void CMain::offlineAlarmThread(void *pUser)
             typedef exprtk::expression<double>   expression_t;
             typedef exprtk::parser<double>       parser_t;
             const std::string expression_string = pWatchDogs[ID].m_aRule;
-            std::string username = pClients->m_aUsername;
-            std::string name = pClients->m_aName;
-            std::string type = pClients->m_aType;
-            std::string host = pClients->m_aHost;
-            std::string location = pClients->m_aLocation;
-            std::double_t online4 = pClients->m_Stats.m_Online4;
-            std::double_t online6 = pClients->m_Stats.m_Online6;
+            std::string username = pClients[ClientID].m_aUsername;
+            std::string name = pClients[ClientID].m_aName;
+            std::string type = pClients[ClientID].m_aType;
+            std::string host = pClients[ClientID].m_aHost;
+            std::string location = pClients[ClientID].m_aLocation;
+            std::double_t online4 = pClients[ClientID].m_Stats.m_Online4;
+            std::double_t online6 = pClients[ClientID].m_Stats.m_Online6;
 
             symbol_table_t symbol_table;
             symbol_table.add_stringvar("username", username);
@@ -541,10 +543,10 @@ void CMain::offlineAlarmThread(void *pUser)
             if (expression.value() > 0)
             {
                 time_t currentStamp = (long long)time(/*ago*/0);
-                if ((currentStamp-pClients->m_AlarmLastTime) > pWatchDogs[ID].m_aInterval)
+                if ((currentStamp-pClients[ClientID].m_AlarmLastTime) > pWatchDogs[ID].m_aInterval)
                 {
                     printf("客户端下线且超过阈值, Client disconnects and sends alert information\n");
-                    pClients->m_AlarmLastTime = currentStamp;
+                    pClients[ClientID].m_AlarmLastTime = currentStamp;
                     CURL *curl;
                     CURLcode res;
                     curl_global_init(CURL_GLOBAL_ALL);
@@ -560,11 +562,11 @@ void CMain::offlineAlarmThread(void *pUser)
                         sprintf(encodeBuffer, "【告警名称】 %s \n\n【告警时间】 %s  \n\n【用户名】 %s \n\n【节点名】 %s \n\n【虚拟化】 %s \n\n【主机名】 %s \n\n【位  置】 %s",
                                 pWatchDogs[ID].m_aName,
                                 standardTime,
-                                pClients->m_aUsername,
-                                pClients->m_aName,
-                                pClients->m_aType,
-                                pClients->m_aHost,
-                                pClients->m_aLocation);
+                                pClients[ClientID].m_aUsername,
+                                pClients[ClientID].m_aName,
+                                pClients[ClientID].m_aType,
+                                pClients[ClientID].m_aHost,
+                                pClients[ClientID].m_aLocation);
                         char *encodeUrl = curl_easy_escape(curl, encodeBuffer, strlen(encodeBuffer));
 
                         //standard url
