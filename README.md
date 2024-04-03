@@ -11,7 +11,7 @@
 ![Latest Host Version](https://dl.cpp.la/Archive/serverstatus_1.1.2_host.png)
 ![Latest Server Version](https://dl.cpp.la/Archive/serverstatus_1.1.2_server.png)
 
-`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。 同时为了防止海外机器闪断报警，也加入username、name、type等静态字符串参数的计算支持。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复。 `    
+`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复。 `    
 
 # 目录：
 
