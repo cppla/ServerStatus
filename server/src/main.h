@@ -101,10 +101,12 @@ class CMain
 	{
 		CClient *pClients;
 		CConfig *pConfig;
+        CWatchDog *pWatchDogs;
 		volatile short m_ReloadRequired;
-	} m_JSONUpdateThreadData;
+	} m_JSONUpdateThreadData, m_OfflineAlarmThreadData;
 
 	static void JSONUpdateThread(void *pUser);
+    static void offlineAlarmThread(void *pUser);
 public:
 	CMain(CConfig Config);
 
