@@ -13,7 +13,7 @@ RUN make -j
 RUN pwd && ls -a
 
 # glibc env run
-FROM nginx:latest
+FROM nginx:1.19
 
 RUN mkdir -p /ServerStatus/server/ && ln -sf /dev/null /var/log/nginx/access.log && ln -sf /dev/null /var/log/nginx/error.log
 
