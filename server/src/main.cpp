@@ -506,7 +506,7 @@ void CMain::offlineAlarmThread(void *pUser)
     CClient *pClients = m_OfflineAlarmThreadData->pClients;
     CWatchDog *pWatchDogs = m_OfflineAlarmThreadData->pWatchDogs;
     volatile short ClientID = m_OfflineAlarmThreadData->m_ReloadRequired;
-    thread_sleep(15000);
+    thread_sleep(25000);
     if(!pClients[ClientID].m_Connected)
     {
         int ID = 0;
