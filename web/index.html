@@ -1,135 +1,118 @@
 <!DOCTYPE html>
-<!--
-        json字段保持完整, 自行自定义前端展示
-        ლ(•̀ _ •́ ლ)
-        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
-        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
-        ლ(•̀ _ •́ ლ)ლ(•̀ _ •́ ლ)
-        ლ(•̀ _ •́ ლ)
-        follow me, better solution for you. by:https://cpp.la
--->
 <html lang="zh-CN">
-	<head>
-		<title>云监控</title>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="云监控">
-		<meta name="author" content="AI">
-		<link rel="stylesheet" href="css/bootstrap.min.css">
-		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
-		<link rel="stylesheet" href="css/light.css" title="light">
-		<link rel="stylesheet" href="css/dark.css" title="dark">
-		<style>
-			body {
-				padding-top: 70px;
-				padding-bottom: 30px;
-			}
-		</style>
-	</head>
-	<body>
-		<div role="navigation" class="navbar navbar-inverse navbar-fixed-top">
-			<div class="navbar-inner">
-				<div class="container">
-					<div class="navbar-header">
-						<button data-target=".navbar-collapse" data-toggle="collapse" class="navbar-toggle" type="button">
-							<span class="sr-only">Toggle navigation</span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-						<a href="#" class="navbar-brand">云监控</a>
-					</div>
-					<div class="navbar-collapse collapse">
-						<ul class="nav navbar-nav">
-							<li class="dropdown">
-								<a data-toggle="tab" class="dropdown-toggle" href="#server">首页</a>
-							</li>
-							<li class="dropdown">
-								<a data-toggle="tab" class="dropdown-toggle" href="#monitor">服务</a>
-							</li>
-							<li class="dropdown">
-								<a data-toggle="dropdown" class="dropdown-toggle" href="#">风格<b class="caret"></b></a>
-								<ul class="dropdown-menu">
-									<li><a href="#" onclick="setActiveStyleSheet('dark', true)">黑夜</a></li>
-									<li><a href="#" onclick="setActiveStyleSheet('light', true)">白天</a></li>
-									<li><a href="/index3.html">简洁</a></li>
-								</ul>
-							</li>
-						</ul>
-					</div><!--/.nav-collapse -->
-				</div>
-			</div>
-		</div>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="云监控,ServerStatus中文版,ServerStatus,ServerStatus cppla">
+    <meta name="author" content="ServerStatus">
+    <title>云监控</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="css/light.css" title="light">
+    <link rel="stylesheet" href="css/dark.css" title="dark">
+    <style>
+        body {
+            padding-top: 70px;
+            padding-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">云监控</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="#server" data-toggle="tab">首页</a></li>
+                <li><a href="#monitor" data-toggle="tab">服务</a></li>
+                <li>
+                    <a href="#" data-toggle="dropdown">风格 <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" onclick="setActiveStyleSheet('dark', true)">黑夜</a></li>
+                        <li><a href="#" onclick="setActiveStyleSheet('light', true)">白天</a></li>
+                        <li><a href="/index3.html">简洁</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
-		<div class="container content">
-			<div id="loading-notice">
-				<noscript>
-					<div class="alert alert-danger" style="text-align: center;">
-						<strong>Enable JavaScript</strong> , please do it.
-					</div>
-				</noscript>
-				<div style="text-align: center;">
-					警告:如果出现此消息，请确保您已启用Javascript! <br />否则云监控主服务没启动或已关闭.
-				</div>
-				<p></p>
-			</div>
+<div class="container content">
+    <noscript>
+        <div class="alert alert-danger text-center">
+            <strong>请启用 JavaScript</strong>，否则无法正常使用本站功能。
+        </div>
+    </noscript>
+    <div id="loading-notice" class="text-center">
+        警告：如果出现此消息，请确保您已启用 Javascript！<br>
+        否则云监控主服务没启动或已关闭。
+    </div>
 
-			<div class="tab-content">
-				<div class="tab-pane fade in active" id="server">
-					<!--主机-->
-					<table class="table table-striped table-condensed table-hover">
-						<thead>
-						<tr>
-							<th id="online_status" style="text-align: center;">🔗协议</th>
-							<th id="month_traffic" style="text-align: center;">📊月流量↓|↑</th>
-							<th id="name">📌节点</th>
-							<th id="type">🗂️虚拟化</th>
-							<th id="location">🌍位置</th>
-							<th id="uptime">⏱️在线</th>
-							<th id="load">负载</th>
-							<th id="network">🚦网络↓|↑</th>
-							<th id="traffic">📋总流量↓|↑</th>
-							<th id="cpu">🎯核芯</th>
-							<th id="ram">⚡️内存</th>
-							<th id="hdd">💾硬盘</th>
-							<th id="ping">🌐CU|CT|CM</th>
-						</tr>
-						</thead>
-						<tbody id="servers">
-						<!-- Servers here \o/ -->
-						</tbody>
-					</table>
-				</div>
-				<div class="tab-pane fade" id="monitor">
-					<!--服务-->
-					<table class="table table-striped table-condensed table-hover">
-						<thead>
-						<tr>
-							<th id="monitor_status" style="text-align: center;">🔗协议</th>
-							<th id="monitor_node">📌监测节点</th>
-							<th id="monitor_location">🌍监测位置</th>
-							<th id="monitor_text" style="text-align: center;">📋监测内容</th>
-						</tr>
-						</thead>
-						<tbody id="monitors">
-						<!-- Monitors here \o/ -->
-						</tbody>
-					</table>
-				</div>
-			</div>
+    <div class="tab-content">
+        <div class="tab-pane fade in active" id="server">
+            <!--主机-->
+            <table class="table table-striped table-condensed table-hover">
+                <thead>
+                <tr>
+                    <th id="online_status" style="text-align: center;">🔗协议</th>
+                    <th id="month_traffic" style="text-align: center;">📊月流量↓|↑</th>
+                    <th id="name">📌节点</th>
+                    <th id="type">🗂️虚拟化</th>
+                    <th id="location">🌍位置</th>
+                    <th id="uptime">⏱️在线</th>
+                    <th id="load">负载</th>
+                    <th id="network">🚦网络↓|↑</th>
+                    <th id="traffic">📋总流量↓|↑</th>
+                    <th id="cpu">🎯核芯</th>
+                    <th id="ram">⚡️内存</th>
+                    <th id="hdd">💾硬盘</th>
+                    <th id="ping">🌐CU|CT|CM</th>
+                </tr>
+                </thead>
+                <tbody id="servers">
+                <!-- Servers here \o/ -->
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="monitor">
+            <!--服务-->
+            <table class="table table-striped table-condensed table-hover">
+                <thead>
+                <tr>
+                    <th id="monitor_status" style="text-align: center;">🔗协议</th>
+                    <th id="monitor_node">📌监测节点</th>
+                    <th id="monitor_location">🌍监测位置</th>
+                    <th id="monitor_text" style="text-align: center;">📋监测内容</th>
+                </tr>
+                </thead>
+                <tbody id="monitors">
+                <!-- Monitors here \o/ -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-			<br />
-			<div id="updated">Updating...</div>
-		</div>
+    <br/>
+    <div id="updated">更新中...</div>
+</div>
 
-		<div class="container">
-			<p style="text-align: center; font-size: 10px;">
-				<a href="https://github.com/cppla/ServerStatus">ServerStatus中文版</a>
-			</p>
-		</div>
-		<script src="js/jquery.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>
-		<script src="js/serverstatus.js"></script>
-	</body>
+<footer class="container">
+    <p class="text-center" style="font-size: 10px;">
+        <a href="https://github.com/cppla/ServerStatus">ServerStatus中文版</a>
+    </p>
+</footer>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/serverstatus.js"></script>
+</body>
 </html>
