@@ -103,15 +103,17 @@ tr.odd.expandRow:hover {
 }
 
 #month_traffic {
-    width: 130px;
+    min-width: 85px;
+    max-width: 95px;
 }
 
 #network {
-    width: 138px;
+    min-width: 110px;
 }
 
 #cpu, #ram, #hdd {
-    width: 90px;
+    min-width: 45px;
+    max-width: 90px;
 }
 
 #ping {
@@ -119,6 +121,14 @@ tr.odd.expandRow:hover {
 }
 
 @media only screen and (max-width: 1200px) {
+    body {
+        font-size: 10px;
+    }
+
+    .content {
+        padding: 0;
+    }
+
     #type, #location, #uptime, #ping {
         display: none;
         visibility: hidden;
@@ -129,12 +139,11 @@ tr.odd.expandRow:hover {
     body {
         font-size: 10px;
     }
+
     .content {
         padding: 0;
     }
-    #cpu, #ram, #hdd {
-        width: 50px;
-    }
+
     #month_traffic, #type, #location, #uptime, #ping {
         display: none;
         visibility: hidden;
@@ -145,12 +154,11 @@ tr.odd.expandRow:hover {
     body {
         font-size: 10px;
     }
+
     .content {
         padding: 0;
     }
-    #cpu, #ram, #hdd {
-        width: 50px;
-    }
+
     #month_traffic, #type, #location, #uptime, #traffic, #ping {
         display: none;
         visibility: hidden;
