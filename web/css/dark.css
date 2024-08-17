@@ -1,48 +1,168 @@
-body { background: #212e36 url('../img/dark.png'); color: #dcdcdc; }
-.navbar { min-height: 40px; }
-.navbar-brand { color: #FFF !important; padding: 10px; font-size: 20px; }
-.dropdown .dropdown-toggle { padding-bottom: 10px; padding-top: 10px; }
-.dropdown-menu > li > a { color: #FFF !important; background-color: #222222 !important; }
-.dropdown-menu > li > a:hover { color: #FFF !important; background: #000 !important; }
-.dropdown-menu { background: #222 !important; background-color: #222222 !important; }
-.navbar-inverse .navbar-inner { background-color:#1B1B1B; background-image:-moz-linear-gradient(top, #222222, #111111); background-image:-webkit-gradient(linear, 0 0, 0 100%, from(#222222), to(#111111)); background-image:-webkit-linear-gradient(top, #222222, #111111); background-image:-o-linear-gradient(top, #222222, #111111); background-image:linear-gradient(to bottom, #212e36, #212e36); background-repeat:repeat-x;filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff222222', endColorstr='#ff111111', GradientType=0); border-color: #252525; }
-.content { background: #212e36; padding: 20px; border-radius: 5px; border: 1px #212e36 solid; -webkit-box-shadow: 0 0px 0px rgba(0, 0, 0, 0); -moz-box-shadow: 0 0px 0px rgba(0, 0, 0, 0); box-shadow: 0 0px 0px rgba(0, 0, 0, 0); margin-bottom: 20px; }
-.table { background: #363b40; margin-bottom: 0; border-collapse: collapse; border-radius: 3px; }
-.table th { text-align: center; }
-.table-striped tbody > tr.even > td, .table-striped tbody > tr.even > th { background-color: #212e36; }
-.table-striped tbody > tr.odd > td, .table-striped tbody > tr.odd > th { background-color: #212e36; }
-.table td { text-align: center; border-color: #2F2F2F; }
-.progress { margin-bottom: 0; background: #363b40; }
-.table-hover > tbody > tr:hover > td { background: #414141; }
-tr.even.expandRow > :hover { background: #212e36 !important; }
-tr.odd.expandRow > :hover { background: #212e36 !important; }
-.expandRow > td { padding: 0 !important; border-top: 0px !important; }
-#month_traffic { min-width: 85px; max-width: 95px;}
-#network { min-width: 138px; }
-#cpu, #ram, #hdd { min-width: 45px; max-width: 90px; }
-#ping { max-width: 115px; }
+body {
+    background: #212e36 url('../img/dark.png') repeat;
+    color: #dcdcdc;
+    font-size: 15px;
+    padding-top: 70px;
+    padding-bottom: 30px;
+}
+
+.navbar {
+    min-height: 40px;
+    background-color: #1B1B1B;
+}
+
+.navbar-brand {
+    color: #FFF !important;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.dropdown .dropdown-toggle {
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.dropdown-menu > li > a {
+    color: #FFF !important;
+    background-color: #222222 !important;
+}
+
+.dropdown-menu > li > a:hover {
+    color: #FFF !important;
+    background: #000 !important;
+}
+
+.dropdown-menu {
+    background: #222 !important;
+    background-color: #222222 !important;
+}
+
+.navbar-inverse .navbar-inner {
+    background-color: #1B1B1B;
+    background-image: linear-gradient(to bottom, #212e36, #212e36);
+    background-repeat: repeat-x;
+    border-color: #252525;
+}
+
+.content {
+    background: #212e36;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #212e36;
+    box-shadow: 0 0px 0px rgba(0, 0, 0, 0);
+    margin-bottom: 20px;
+}
+
+.table {
+    background-color: #212e36 !important;
+    margin-bottom: 0;
+    border-collapse: collapse;
+    border-radius: 3px;
+    width: 100%;
+}
+
+.table th, .table td {
+    background-color: #212e36 !important;
+    color: #dcdcdc !important;
+    text-align: center;
+    padding: 8px;
+}
+
+.table-striped tbody tr:nth-child(even) {
+    background-color: #212e36;
+}
+
+.table-striped tbody tr:nth-child(odd) {
+    background-color: #212e36;
+}
+
+.progress {
+    margin-bottom: 0;
+    background: #363b40;
+}
+
+.progress-bar {
+    overflow: visible;
+}
+
+.table-hover tbody tr:hover td {
+    background: #414141;
+}
+
+tr.even.expandRow:hover {
+    background: #212e36 !important;
+}
+
+tr.odd.expandRow:hover {
+    background: #212e36 !important;
+}
+
+.expandRow td {
+    padding: 0 !important;
+    border-top: 0 !important;
+}
+
+#month_traffic {
+    width: 130px;
+}
+
+#network {
+    width: 138px;
+}
+
+#cpu, #ram, #hdd {
+    width: 90px;
+}
+
+#ping {
+    width: 115px;
+}
 
 @media only screen and (max-width: 1200px) {
-        #type                           { display:none; visibility:hidden; }
-        #location, tr td:nth-child(5)   { display:none; visibility:hidden; }
-        #uptime, tr td:nth-child(6)     { display:none; visibility:hidden; }
-        #ping, tr td:nth-child(13)      { display:none; visibility:hidden; }
+    #type, #location, #uptime, #ping {
+        display: none;
+        visibility: hidden;
+    }
 }
+
 @media only screen and (max-width: 720px) {
-        body                            { font-size: 10px; }
-        .content                        { padding: 0; }
-        #type                           { display:none; visibility:hidden; }
-        #location, tr td:nth-child(5)   { display:none; visibility:hidden; }
-        #uptime, tr td:nth-child(6)     { display:none; visibility:hidden; }
-        #ping, tr td:nth-child(13)      { display:none; visibility:hidden; }
+    body {
+        font-size: 10px;
+    }
+    .content {
+        padding: 0;
+    }
+    #cpu, #ram, #hdd {
+        width: 50px;
+    }
+    #month_traffic, #type, #location, #uptime, #ping {
+        display: none;
+        visibility: hidden;
+    }
 }
+
 @media only screen and (max-width: 620px) {
-        body                            { font-size: 10px; }
-        .content                        { padding: 0; }
-        #month_traffic                  { display:none; visibility:hidden; }
-        #type                           { display:none; visibility:hidden; }
-        #location, tr td:nth-child(5)   { display:none; visibility:hidden; }
-        #uptime, tr td:nth-child(6)     { display:none; visibility:hidden; }
-        #traffic, tr td:nth-child(9)    { display:none; visibility:hidden; }
-        #ping, tr td:nth-child(13)      { display:none; visibility:hidden; }
+    body {
+        font-size: 10px;
+    }
+    .content {
+        padding: 0;
+    }
+    #cpu, #ram, #hdd {
+        width: 50px;
+    }
+    #month_traffic, #type, #location, #uptime, #traffic, #ping {
+        display: none;
+        visibility: hidden;
+    }
+}
+
+.navbar-nav .nav-link {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.navbar-nav .dropdown-toggle::after {
+    vertical-align: 0.15em;
 }

@@ -19,163 +19,272 @@ function bytesToSize(bytes, precision, si = false) {
 }
 
 function uptime() {
-    $.getJSON("json/stats.json", function(result) {
-        $("#loading-notice").remove();
-        if (result.reload) setTimeout(location.reload, 1000);
-
-        result.servers.forEach((server, i) => {
-            let TableRow = $("#servers tr#r" + i);
-            let MableRow = $("#monitors tr#r" + i);
-            let ExpandRow = $("#servers #rt" + i);
-            let hack = i % 2 ? "odd" : "even";
-
-            if (!TableRow.length) {
-                $("#servers").append(
-                    `<tr id="r${i}" data-toggle="collapse" data-target="#rt${i}" class="accordion-toggle ${hack}">
-                        <td id="online_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="month_traffic"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="name">加载中</td>
-                        <td id="type">加载中</td>
-                        <td id="location">加载中</td>
-                        <td id="uptime">加载中</td>
-                        <td id="load">加载中</td>
-                        <td id="network">加载中</td>
-                        <td id="traffic">加载中</td>
-                        <td id="cpu"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="memory"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="hdd"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="ping"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                    </tr>
-                    <tr class="expandRow ${hack}"><td colspan="16"><div class="accordian-body collapse" id="rt${i}">
-                        <div id="expand_mem">加载中</div>
-                        <div id="expand_hdd">加载中</div>
-                        <div id="expand_tupd">加载中</div>
-                        <div id="expand_ping">加载中</div>
-                    </div></td></tr>`
-                );
-                TableRow = $("#servers tr#r" + i);
-                ExpandRow = $("#servers #rt" + i);
-                server_status[i] = true;
+    fetch("json/stats.json")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            return response.json();
+        })
+        .then(result => {
+            document.getElementById("loading-notice")?.remove();
+            if (result.reload) setTimeout(location.reload, 1000);
 
-            if (!MableRow.length) {
-                $("#monitors").append(
-                    `<tr id="r${i}" data-target="#rt${i}" class="accordion-toggle ${hack}">
-                        <td id="monitor_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                        <td id="monitor_node">加载中</td>
-                        <td id="monitor_location">加载中</td>
-                        <td id="monitor_text">加载中</td>
-                    </tr>`
-                );
-                MableRow = $("#monitors tr#r" + i);
-            }
+            result.servers.forEach((server, i) => {
+                let TableRow = document.querySelector(`#servers tr#r${i}`);
+                let MableRow = document.querySelector(`#monitors tr#r${i}`);
+                let ExpandRow = document.querySelector(`#servers #rt${i}`);
+                let hack = i % 2 ? "odd" : "even";
 
-            if (error) {
-                TableRow.attr("data-target", "#rt" + i);
-                MableRow.attr("data-target", "#rt" + i);
-                server_status[i] = true;
-            }
-
-            const statusClass = server.online4 || server.online6 ? "progress-bar progress-bar-success" : "progress-bar progress-bar-danger";
-            const statusText = server.online4 && server.online6 ? "双栈" : server.online4 ? "IPv4" : server.online6 ? "IPv6" : "关闭";
-
-            TableRow.find("#online_status .progress-bar").attr("class", statusClass).html(`<small>${statusText}</small>`);
-            MableRow.find("#monitor_status .progress-bar").attr("class", statusClass).html(`<small>${statusText}</small>`);
-
-            TableRow.find("#name").html(server.name);
-            MableRow.find("#monitor_node").html(server.name);
-            TableRow.find("#type").html(server.type);
-            TableRow.find("#location").html(server.location);
-            MableRow.find("#monitor_location").html(server.location);
-
-            if (!server.online4 && !server.online6) {
-                if (server_status[i]) {
-                    TableRow.find("#uptime").html("–");
-                    TableRow.find("#load").html("–");
-                    TableRow.find("#network").html("–");
-                    TableRow.find("#traffic").html("–");
-                    TableRow.find("#month_traffic .progress-bar").attr("class", "progress-bar progress-bar-warning").html("<small>关闭</small>");
-                    TableRow.find("#cpu .progress-bar").attr("class", "progress-bar progress-bar-danger").css("width", "100%").html("<small>关闭</small>");
-                    TableRow.find("#memory .progress-bar").attr("class", "progress-bar progress-bar-danger").css("width", "100%").html("<small>关闭</small>");
-                    TableRow.find("#hdd .progress-bar").attr("class", "progress-bar progress-bar-danger").css("width", "100%").html("<small>关闭</small>");
-                    TableRow.find("#ping .progress-bar").attr("class", "progress-bar progress-bar-danger").css("width", "100%").html("<small>关闭</small>");
-                    MableRow.find("#monitor_text").html("-");
-                    if (ExpandRow.hasClass("in")) ExpandRow.collapse("hide");
-                    TableRow.attr("data-target", "");
-                    MableRow.attr("data-target", "");
-                    server_status[i] = false;
-                }
-            } else {
-                if (!server_status[i]) {
-                    TableRow.attr("data-target", "#rt" + i);
-                    MableRow.attr("data-target", "#rt" + i);
+                if (!TableRow) {
+                    document.getElementById("servers").insertAdjacentHTML(
+                        "beforeend",
+                        `<tr id="r${i}" data-bs-toggle="collapse" data-bs-target="#rt${i}" class="accordion-toggle ${hack}">
+                            <td id="online_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="month_traffic"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="name">加载中</td>
+                            <td id="type">加载中</td>
+                            <td id="location">加载中</td>
+                            <td id="uptime">加载中</td>
+                            <td id="load">加载中</td>
+                            <td id="network">加载中</td>
+                            <td id="traffic">加载中</td>
+                            <td id="cpu"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="memory"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="hdd"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="ping"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                        </tr>
+                        <tr class="expandRow ${hack}"><td colspan="16"><div class="accordian-body collapse" id="rt${i}">
+                            <div id="expand_mem">加载中</div>
+                            <div id="expand_hdd">加载中</div>
+                            <div id="expand_tupd">加载中</div>
+                            <div id="expand_ping">加载中</div>
+                        </div></td></tr>`
+                    );
+                    TableRow = document.querySelector(`#servers tr#r${i}`);
+                    ExpandRow = document.querySelector(`#servers #rt${i}`);
                     server_status[i] = true;
                 }
 
-                const trafficdiff_in = server.network_in - server.last_network_in;
-                const trafficdiff_out = server.network_out - server.last_network_out;
-                const monthtraffic = `${bytesToSize(trafficdiff_in, 1, true)} | ${bytesToSize(trafficdiff_out, 1, true)}`;
-                TableRow.find("#month_traffic .progress-bar").attr("class", "progress-bar progress-bar-success").html(`<small>${monthtraffic}</small>`);
+                if (!MableRow) {
+                    document.getElementById("monitors").insertAdjacentHTML(
+                        "beforeend",
+                        `<tr id="r${i}" data-bs-target="#rt${i}" class="accordion-toggle ${hack}">
+                            <td id="monitor_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="monitor_node">加载中</td>
+                            <td id="monitor_location">加载中</td>
+                            <td id="monitor_text">加载中</td>
+                        </tr>`
+                    );
+                    MableRow = document.querySelector(`#monitors tr#r${i}`);
+                }
 
-                TableRow.find("#uptime").html(server.uptime);
-                TableRow.find("#load").html(server.load_1 == -1 ? "–" : server.load_1.toFixed(2));
+                if (error) {
+                    TableRow.setAttribute("data-bs-target", `#rt${i}`);
+                    MableRow.setAttribute("data-bs-target", `#rt${i}`);
+                    server_status[i] = true;
+                }
 
-                const netstr = `${bytesToSize(server.network_rx, 1, true)} | ${bytesToSize(server.network_tx, 1, true)}`;
-                TableRow.find("#network").html(netstr);
+                const statusClass = server.online4 || server.online6 ? "progress-bar progress-bar-success" : "progress-bar progress-bar-danger";
+                const statusText = server.online4 && server.online6 ? "双栈" : server.online4 ? "IPv4" : server.online6 ? "IPv6" : "关闭";
 
-                const trafficstr = `${bytesToSize(server.network_in, 1, true)} | ${bytesToSize(server.network_out, 1, true)}`;
-                TableRow.find("#traffic").html(trafficstr);
+                if (TableRow) {
+                    const onlineStatusBar = TableRow.querySelector("#online_status .progress-bar");
+                    if (onlineStatusBar) {
+                        onlineStatusBar.setAttribute("class", statusClass);
+                        onlineStatusBar.innerHTML = `<small>${statusText}</small>`;
+                    }
+                }
 
-                const cpuClass = server.cpu >= 90 ? "progress-bar progress-bar-danger" : server.cpu >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
-                TableRow.find("#cpu .progress-bar").attr("class", cpuClass).css("width", `${server.cpu}%`).html(`${server.cpu}%`);
+                if (MableRow) {
+                    const monitorStatusBar = MableRow.querySelector("#monitor_status .progress-bar");
+                    if (monitorStatusBar) {
+                        monitorStatusBar.setAttribute("class", statusClass);
+                        monitorStatusBar.innerHTML = `<small>${statusText}</small>`;
+                    }
+                }
 
-                const Mem = ((server.memory_used / server.memory_total) * 100).toFixed(0);
-                const memClass = Mem >= 90 ? "progress-bar progress-bar-danger" : Mem >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
-                TableRow.find("#memory .progress-bar").attr("class", memClass).css("width", `${Mem}%`).html(`${Mem}%`);
-                ExpandRow.find("#expand_mem").html(`内存|虚存: ${bytesToSize(server.memory_used * 1024, 1)} / ${bytesToSize(server.memory_total * 1024, 1)} | ${bytesToSize(server.swap_used * 1024, 0)} / ${bytesToSize(server.swap_total * 1024, 0)}`);
+                if (TableRow) {
+                    TableRow.querySelector("#name").innerHTML = server.name;
+                    TableRow.querySelector("#type").innerHTML = server.type;
+                    TableRow.querySelector("#location").innerHTML = server.location;
+                }
 
-                const HDD = ((server.hdd_used / server.hdd_total) * 100).toFixed(0);
-                const hddClass = HDD >= 90 ? "progress-bar progress-bar-danger" : HDD >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
-                TableRow.find("#hdd .progress-bar").attr("class", hddClass).css("width", `${HDD}%`).html(`${HDD}%`);
-                const io = `${bytesToSize(server.io_read, 0, true)} / ${bytesToSize(server.io_write, 0, true)}`;
-                ExpandRow.find("#expand_hdd").html(`硬盘|读写: ${bytesToSize(server.hdd_used * 1024 * 1024, 2)} / ${bytesToSize(server.hdd_total * 1024 * 1024, 2)} | ${io}`);
+                if (MableRow) {
+                    MableRow.querySelector("#monitor_node").innerHTML = server.name;
+                    MableRow.querySelector("#monitor_location").innerHTML = server.location;
+                }
 
-                ExpandRow.find("#expand_tupd").html(`TCP/UDP/进/线: ${server.tcp_count} / ${server.udp_count} / ${server.process_count} / ${server.thread_count}`);
+                if (!server.online4 && !server.online6) {
+                    if (server_status[i]) {
+                        if (TableRow) {
+                            TableRow.querySelector("#uptime").innerHTML = "–";
+                            TableRow.querySelector("#load").innerHTML = "–";
+                            TableRow.querySelector("#network").innerHTML = "–";
+                            TableRow.querySelector("#traffic").innerHTML = "–";
+                            const monthTrafficBar = TableRow.querySelector("#month_traffic .progress-bar");
+                            if (monthTrafficBar) {
+                                monthTrafficBar.setAttribute("class", "progress-bar progress-bar-warning");
+                                monthTrafficBar.innerHTML = "<small>关闭</small>";
+                            }
+                            const cpuBar = TableRow.querySelector("#cpu .progress-bar");
+                            if (cpuBar) {
+                                cpuBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                cpuBar.style.width = "100%";
+                                cpuBar.innerHTML = "<small>关闭</small>";
+                            }
+                            const memoryBar = TableRow.querySelector("#memory .progress-bar");
+                            if (memoryBar) {
+                                memoryBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                memoryBar.style.width = "100%";
+                                memoryBar.innerHTML = "<small>关闭</small>";
+                            }
+                            const hddBar = TableRow.querySelector("#hdd .progress-bar");
+                            if (hddBar) {
+                                hddBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                hddBar.style.width = "100%";
+                                hddBar.innerHTML = "<small>关闭</small>";
+                            }
+                            const pingBar = TableRow.querySelector("#ping .progress-bar");
+                            if (pingBar) {
+                                pingBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                pingBar.style.width = "100%";
+                                pingBar.innerHTML = "<small>关闭</small>";
+                            }
+                        }
+                        if (MableRow) {
+                            MableRow.querySelector("#monitor_text").innerHTML = "-";
+                        }
+                        if (ExpandRow && ExpandRow.classList.contains("show")) ExpandRow.classList.remove("show");
+                        if (TableRow) TableRow.setAttribute("data-bs-target", "");
+                        if (MableRow) MableRow.setAttribute("data-bs-target", "");
+                        server_status[i] = false;
+                    }
+                } else {
+                    if (!server_status[i]) {
+                        if (TableRow) TableRow.setAttribute("data-bs-target", `#rt${i}`);
+                        if (MableRow) MableRow.setAttribute("data-bs-target", `#rt${i}`);
+                        server_status[i] = true;
+                    }
 
-                const PING_10010 = server.ping_10010.toFixed(0);
-                const PING_189 = server.ping_189.toFixed(0);
-                const PING_10086 = server.ping_10086.toFixed(0);
-                const pingClass = PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20 ? "progress-bar progress-bar-danger" : PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
-                TableRow.find("#ping .progress-bar").attr("class", pingClass).html(`${PING_10010}%💻${PING_189}%💻${PING_10086}%`);
-                ExpandRow.find("#expand_ping").html(`CU/CT/CM: ${server.time_10010}ms (${PING_10010}%) / ${server.time_189}ms (${PING_189}%) / ${server.time_10086}ms (${PING_10086}%)`);
+                    const trafficdiff_in = server.network_in - server.last_network_in;
+                    const trafficdiff_out = server.network_out - server.last_network_out;
+                    const monthtraffic = `${bytesToSize(trafficdiff_in, 1, true)} | ${bytesToSize(trafficdiff_out, 1, true)}`;
+                    if (TableRow) {
+                        const monthTrafficBar = TableRow.querySelector("#month_traffic .progress-bar");
+                        if (monthTrafficBar) {
+                            monthTrafficBar.setAttribute("class", "progress-bar progress-bar-success");
+                            monthTrafficBar.innerHTML = `<small>${monthtraffic}</small>`;
+                        }
+                    }
 
-                MableRow.find("#monitor_text").html(server.custom);
-            }
-        });
+                    if (TableRow) TableRow.querySelector("#uptime").innerHTML = server.uptime;
+                    if (TableRow) TableRow.querySelector("#load").innerHTML = server.load_1 == -1 ? "–" : server.load_1.toFixed(2);
 
-        d = new Date(result.updated * 1000);
-        error = 0;
-    }).fail(function() {
-        if (!error) {
-            $("#servers > tr.accordion-toggle").each(function(i) {
-                const TableRow = $("#servers tr#r" + i);
-                const MableRow = $("#monitors tr#r" + i);
-                const ExpandRow = $("#servers #rt" + i);
-                TableRow.find(".progress-bar").attr("class", "progress-bar progress-bar-error").html("<small>错误</small>");
-                MableRow.find(".progress-bar").attr("class", "progress-bar progress-bar-error").html("<small>错误</small>");
-                if (ExpandRow.hasClass("in")) ExpandRow.collapse("hide");
-                TableRow.attr("data-target", "");
-                MableRow.attr("data-target", "");
-                server_status[i] = false;
+                    const netstr = `${bytesToSize(server.network_rx, 1, true)} | ${bytesToSize(server.network_tx, 1, true)}`;
+                    if (TableRow) TableRow.querySelector("#network").innerHTML = netstr;
+
+                    const trafficstr = `${bytesToSize(server.network_in, 1, true)} | ${bytesToSize(server.network_out, 1, true)}`;
+                    if (TableRow) TableRow.querySelector("#traffic").innerHTML = trafficstr;
+
+                    const cpuClass = server.cpu >= 90 ? "progress-bar progress-bar-danger" : server.cpu >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    if (TableRow) {
+                        const cpuBar = TableRow.querySelector("#cpu .progress-bar");
+                        if (cpuBar) {
+                            cpuBar.setAttribute("class", cpuClass);
+                            cpuBar.style.width = `${server.cpu}%`;
+                            cpuBar.innerHTML = `${server.cpu}%`;
+                        }
+                    }
+
+                    const Mem = ((server.memory_used / server.memory_total) * 100).toFixed(0);
+                    const memClass = Mem >= 90 ? "progress-bar progress-bar-danger" : Mem >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    if (TableRow) {
+                        const memoryBar = TableRow.querySelector("#memory .progress-bar");
+                        if (memoryBar) {
+                            memoryBar.setAttribute("class", memClass);
+                            memoryBar.style.width = `${Mem}%`;
+                            memoryBar.innerHTML = `${Mem}%`;
+                        }
+                    }
+                    if (ExpandRow) ExpandRow.querySelector("#expand_mem").innerHTML = `内存|虚存: ${bytesToSize(server.memory_used * 1024, 1)} / ${bytesToSize(server.memory_total * 1024, 1)} | ${bytesToSize(server.swap_used * 1024, 0)} / ${bytesToSize(server.swap_total * 1024, 0)}`;
+
+                    const HDD = ((server.hdd_used / server.hdd_total) * 100).toFixed(0);
+                    const hddClass = HDD >= 90 ? "progress-bar progress-bar-danger" : HDD >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    if (TableRow) {
+                        const hddBar = TableRow.querySelector("#hdd .progress-bar");
+                        if (hddBar) {
+                            hddBar.setAttribute("class", hddClass);
+                            hddBar.style.width = `${HDD}%`;
+                            hddBar.innerHTML = `${HDD}%`;
+                        }
+                    }
+                    const io = `${bytesToSize(server.io_read, 0, true)} / ${bytesToSize(server.io_write, 0, true)}`;
+                    if (ExpandRow) ExpandRow.querySelector("#expand_hdd").innerHTML = `硬盘|读写: ${bytesToSize(server.hdd_used * 1024 * 1024, 2)} / ${bytesToSize(server.hdd_total * 1024 * 1024, 2)} | ${io}`;
+
+                    if (ExpandRow) ExpandRow.querySelector("#expand_tupd").innerHTML = `TCP/UDP/进/线: ${server.tcp_count} / ${server.udp_count} / ${server.process_count} / ${server.thread_count}`;
+
+                    const PING_10010 = server.ping_10010.toFixed(0);
+                    const PING_189 = server.ping_189.toFixed(0);
+                    const PING_10086 = server.ping_10086.toFixed(0);
+                    const pingClass = PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20 ? "progress-bar progress-bar-danger" : PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    if (TableRow) {
+                        const pingBar = TableRow.querySelector("#ping .progress-bar");
+                        if (pingBar) {
+                            pingBar.setAttribute("class", pingClass);
+                            pingBar.innerHTML = `${PING_10010}%💻${PING_189}%💻${PING_10086}%`;
+                        }
+                    }
+                    if (ExpandRow) ExpandRow.querySelector("#expand_ping").innerHTML = `CU/CT/CM: ${server.time_10010}ms (${PING_10010}%) / ${server.time_189}ms (${PING_189}%) / ${server.time_10086}ms (${PING_10086}%)`;
+
+                    if (MableRow) MableRow.querySelector("#monitor_text").innerHTML = server.custom;
+                }
             });
-        }
-        error = 1;
-        $("#updated").html("更新错误.");
-    });
+
+            d = new Date(result.updated * 1000);
+            error = 0;
+        })
+        .catch(error => {
+            console.error("Fetch error: ", error);
+            if (!error) {
+                document.querySelectorAll("#servers > tr.accordion-toggle").forEach((TableRow, i) => {
+                    const MableRow = document.querySelector(`#monitors tr#r${i}`);
+                    const ExpandRow = document.querySelector(`#servers #rt${i}`);
+
+                    if (TableRow && MableRow) {
+                        TableRow.querySelectorAll(".progress-bar").forEach(bar => {
+                            if (bar) {
+                                bar.setAttribute("class", "progress-bar progress-bar-error");
+                                bar.innerHTML = "<small>错误</small>";
+                            }
+                        });
+
+                        MableRow.querySelectorAll(".progress-bar").forEach(bar => {
+                            if (bar) {
+                                bar.setAttribute("class", "progress-bar progress-bar-error");
+                                bar.innerHTML = "<small>错误</small>";
+                            }
+                        });
+
+                        if (ExpandRow && ExpandRow.classList.contains("show")) {
+                            ExpandRow.classList.remove("show");
+                        }
+
+                        TableRow.setAttribute("data-bs-target", "");
+                        MableRow.setAttribute("data-bs-target", "");
+                        server_status[i] = false;
+                    } else {
+                        console.error(`TableRow or MableRow is undefined for index ${i}`);
+                    }
+                });
+            }
+            error = 1;
+            document.getElementById("updated").innerHTML = "更新错误.";
+        });
 }
 
 function updateTime() {
-    if (!error) $("#updated").html("最后更新: " + timeSince(d));
+    if (!error) document.getElementById("updated").innerHTML = "最后更新: " + timeSince(d);
 }
 
 uptime();
@@ -223,4 +332,20 @@ window.onload = function() {
         setActiveStyleSheet(mediaQueryListDark.matches ? 'dark' : 'light');
         mediaQueryListDark.addEventListener("change", handleChange);
     }
+
+    // 处理标签页切换
+    const tabs = document.querySelectorAll('.nav-link');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function(event) {
+            if (this.id === 'navbarDropdown') {
+                return; // 阻止“风格”标签的默认行为
+            }
+            event.preventDefault();
+            const target = this.getAttribute('href');
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+            document.querySelector(target).classList.add('show', 'active');
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
 }

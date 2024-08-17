@@ -4,41 +4,35 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="云监控,ServerStatus中文版,ServerStatus,ServerStatus cppla">
-    <meta name="author" content="ServerStatus">
+    <meta name="author" content="ServerStatus Theme by AI">
     <title>云监控</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="css/light.css" title="light">
     <link rel="stylesheet" href="css/dark.css" title="dark">
-    <style>
-        body {
-            padding-top: 70px;
-            padding-bottom: 30px;
-        }
-    </style>
 </head>
 <body>
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" role="navigation">
     <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">云监控</a>
-        </div>
-        <div class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                <li><a href="#server" data-toggle="tab">首页</a></li>
-                <li><a href="#monitor" data-toggle="tab">服务</a></li>
-                <li>
-                    <a href="#" data-toggle="dropdown">风格 <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#" onclick="setActiveStyleSheet('dark', true)">黑夜</a></li>
-                        <li><a href="#" onclick="setActiveStyleSheet('light', true)">白天</a></li>
-                        <li><a href="/index3.html">简洁</a></li>
+        <a class="navbar-brand" href="#">云监控</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#server" data-bs-toggle="tab">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#monitor" data-bs-toggle="tab">服务</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        风格
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="#" onclick="setActiveStyleSheet('dark', true)">黑夜</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="setActiveStyleSheet('light', true)">白天</a></li>
+                        <li><a class="dropdown-item" href="/index3.html">简洁</a></li>
                     </ul>
                 </li>
             </ul>
@@ -58,9 +52,9 @@
     </div>
 
     <div class="tab-content">
-        <div class="tab-pane fade in active" id="server">
+        <div class="tab-pane fade show active" id="server">
             <!--主机-->
-            <table class="table table-striped table-condensed table-hover">
+            <table class="table table-striped table-hover">
                 <thead>
                 <tr>
                     <th id="online_status" style="text-align: center;">🔗协议</th>
@@ -85,7 +79,7 @@
         </div>
         <div class="tab-pane fade" id="monitor">
             <!--服务-->
-            <table class="table table-striped table-condensed table-hover">
+            <table class="table table-striped table-hover">
                 <thead>
                 <tr>
                     <th id="monitor_status" style="text-align: center;">🔗协议</th>
@@ -111,8 +105,7 @@
     </p>
 </footer>
 
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
 <script src="js/serverstatus.js"></script>
 </body>
 </html>
