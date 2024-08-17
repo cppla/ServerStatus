@@ -40,8 +40,8 @@ function uptime() {
                     document.getElementById("servers").insertAdjacentHTML(
                         "beforeend",
                         `<tr id="r${i}" data-bs-toggle="collapse" data-bs-target="#rt${i}" class="accordion-toggle ${hack}">
-                            <td id="online_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                            <td id="month_traffic"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="online_status"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
+                            <td id="month_traffic"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
                             <td id="name">加载中</td>
                             <td id="type">加载中</td>
                             <td id="location">加载中</td>
@@ -49,10 +49,10 @@ function uptime() {
                             <td id="load">加载中</td>
                             <td id="network">加载中</td>
                             <td id="traffic">加载中</td>
-                            <td id="cpu"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                            <td id="memory"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                            <td id="hdd"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
-                            <td id="ping"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="cpu"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
+                            <td id="memory"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
+                            <td id="hdd"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
+                            <td id="ping"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
                         </tr>
                         <tr class="expandRow ${hack}"><td colspan="16"><div class="accordian-body collapse" id="rt${i}">
                             <div id="expand_mem">加载中</div>
@@ -70,7 +70,7 @@ function uptime() {
                     document.getElementById("monitors").insertAdjacentHTML(
                         "beforeend",
                         `<tr id="r${i}" data-bs-target="#rt${i}" class="accordion-toggle ${hack}">
-                            <td id="monitor_status"><div class="progress"><div style="width: 100%;" class="progress-bar progress-bar-warning"><small>加载中</small></div></div></td>
+                            <td id="monitor_status"><div class="progress"><div style="width: 100%;" class="progress-bar bg-warning"><small>加载中</small></div></div></td>
                             <td id="monitor_node">加载中</td>
                             <td id="monitor_location">加载中</td>
                             <td id="monitor_text">加载中</td>
@@ -85,7 +85,7 @@ function uptime() {
                     server_status[i] = true;
                 }
 
-                const statusClass = server.online4 || server.online6 ? "progress-bar progress-bar-success" : "progress-bar progress-bar-danger";
+                const statusClass = server.online4 || server.online6 ? "progress-bar bg-success" : "progress-bar bg-danger";
                 const statusText = server.online4 && server.online6 ? "双栈" : server.online4 ? "IPv4" : server.online6 ? "IPv6" : "关闭";
 
                 if (TableRow) {
@@ -124,30 +124,30 @@ function uptime() {
                             TableRow.querySelector("#traffic").innerHTML = "–";
                             const monthTrafficBar = TableRow.querySelector("#month_traffic .progress-bar");
                             if (monthTrafficBar) {
-                                monthTrafficBar.setAttribute("class", "progress-bar progress-bar-warning");
+                                monthTrafficBar.setAttribute("class", "progress-bar bg-warning");
                                 monthTrafficBar.innerHTML = "<small>关闭</small>";
                             }
                             const cpuBar = TableRow.querySelector("#cpu .progress-bar");
                             if (cpuBar) {
-                                cpuBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                cpuBar.setAttribute("class", "progress-bar bg-danger");
                                 cpuBar.style.width = "100%";
                                 cpuBar.innerHTML = "<small>关闭</small>";
                             }
                             const memoryBar = TableRow.querySelector("#memory .progress-bar");
                             if (memoryBar) {
-                                memoryBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                memoryBar.setAttribute("class", "progress-bar bg-danger");
                                 memoryBar.style.width = "100%";
                                 memoryBar.innerHTML = "<small>关闭</small>";
                             }
                             const hddBar = TableRow.querySelector("#hdd .progress-bar");
                             if (hddBar) {
-                                hddBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                hddBar.setAttribute("class", "progress-bar bg-danger");
                                 hddBar.style.width = "100%";
                                 hddBar.innerHTML = "<small>关闭</small>";
                             }
                             const pingBar = TableRow.querySelector("#ping .progress-bar");
                             if (pingBar) {
-                                pingBar.setAttribute("class", "progress-bar progress-bar-danger");
+                                pingBar.setAttribute("class", "progress-bar bg-danger");
                                 pingBar.style.width = "100%";
                                 pingBar.innerHTML = "<small>关闭</small>";
                             }
@@ -173,7 +173,7 @@ function uptime() {
                     if (TableRow) {
                         const monthTrafficBar = TableRow.querySelector("#month_traffic .progress-bar");
                         if (monthTrafficBar) {
-                            monthTrafficBar.setAttribute("class", "progress-bar progress-bar-success");
+                            monthTrafficBar.setAttribute("class", "progress-bar bg-success");
                             monthTrafficBar.innerHTML = `<small>${monthtraffic}</small>`;
                         }
                     }
@@ -187,7 +187,7 @@ function uptime() {
                     const trafficstr = `${bytesToSize(server.network_in, 1, true)} | ${bytesToSize(server.network_out, 1, true)}`;
                     if (TableRow) TableRow.querySelector("#traffic").innerHTML = trafficstr;
 
-                    const cpuClass = server.cpu >= 90 ? "progress-bar progress-bar-danger" : server.cpu >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    const cpuClass = server.cpu >= 90 ? "progress-bar bg-danger" : server.cpu >= 80 ? "progress-bar bg-warning" : "progress-bar bg-success";
                     if (TableRow) {
                         const cpuBar = TableRow.querySelector("#cpu .progress-bar");
                         if (cpuBar) {
@@ -198,7 +198,7 @@ function uptime() {
                     }
 
                     const Mem = ((server.memory_used / server.memory_total) * 100).toFixed(0);
-                    const memClass = Mem >= 90 ? "progress-bar progress-bar-danger" : Mem >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    const memClass = Mem >= 90 ? "progress-bar bg-danger" : Mem >= 80 ? "progress-bar bg-warning" : "progress-bar bg-success";
                     if (TableRow) {
                         const memoryBar = TableRow.querySelector("#memory .progress-bar");
                         if (memoryBar) {
@@ -210,7 +210,7 @@ function uptime() {
                     if (ExpandRow) ExpandRow.querySelector("#expand_mem").innerHTML = `内存|虚存: ${bytesToSize(server.memory_used * 1024, 1)} / ${bytesToSize(server.memory_total * 1024, 1)} | ${bytesToSize(server.swap_used * 1024, 0)} / ${bytesToSize(server.swap_total * 1024, 0)}`;
 
                     const HDD = ((server.hdd_used / server.hdd_total) * 100).toFixed(0);
-                    const hddClass = HDD >= 90 ? "progress-bar progress-bar-danger" : HDD >= 80 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    const hddClass = HDD >= 90 ? "progress-bar bg-danger" : HDD >= 80 ? "progress-bar bg-warning" : "progress-bar bg-success";
                     if (TableRow) {
                         const hddBar = TableRow.querySelector("#hdd .progress-bar");
                         if (hddBar) {
@@ -227,7 +227,7 @@ function uptime() {
                     const PING_10010 = server.ping_10010.toFixed(0);
                     const PING_189 = server.ping_189.toFixed(0);
                     const PING_10086 = server.ping_10086.toFixed(0);
-                    const pingClass = PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20 ? "progress-bar progress-bar-danger" : PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10 ? "progress-bar progress-bar-warning" : "progress-bar progress-bar-success";
+                    const pingClass = PING_10010 >= 20 || PING_189 >= 20 || PING_10086 >= 20 ? "progress-bar bg-danger" : PING_10010 >= 10 || PING_189 >= 10 || PING_10086 >= 10 ? "progress-bar bg-warning" : "progress-bar bg-success";
                     if (TableRow) {
                         const pingBar = TableRow.querySelector("#ping .progress-bar");
                         if (pingBar) {
@@ -254,14 +254,14 @@ function uptime() {
                     if (TableRow && MableRow) {
                         TableRow.querySelectorAll(".progress-bar").forEach(bar => {
                             if (bar) {
-                                bar.setAttribute("class", "progress-bar progress-bar-error");
+                                bar.setAttribute("class", "progress-bar bg-danger");
                                 bar.innerHTML = "<small>错误</small>";
                             }
                         });
 
                         MableRow.querySelectorAll(".progress-bar").forEach(bar => {
                             if (bar) {
-                                bar.setAttribute("class", "progress-bar progress-bar-error");
+                                bar.setAttribute("class", "progress-bar bg-danger");
                                 bar.innerHTML = "<small>错误</small>";
                             }
                         });
