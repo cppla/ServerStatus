@@ -290,17 +290,18 @@ function updateTime() {
 uptime();
 updateTime();
 // 降低改值，可以减少cpu占用
-setInterval(uptime, 1000);
-setInterval(updateTime, 1000);
+setInterval(uptime, 2000);
+setInterval(updateTime, 2000);
 
 // styleswitcher.js
-function setActiveStyleSheet(title, cookie = false) {
-    Array.from(document.getElementsByTagName("link")).forEach(a => {
-        if (a.getAttribute("rel").includes("style") && a.getAttribute("title")) {
-            a.disabled = a.getAttribute("title") !== title;
+function setActiveStyleSheet(title) {
+    var i, a, main;
+    for (i = 0; (a = document.getElementsByTagName("link")[i]); i++) {
+        if (a.getAttribute("rel").indexOf("stylesheet") != -1 && a.getAttribute("title")) {
+            a.disabled = true;
+            if (a.getAttribute("title") == title) a.disabled = false;
         }
-    });
-    if (cookie) createCookie("style", title, 365);
+    }
 }
 
 function getActiveStyleSheet() {
