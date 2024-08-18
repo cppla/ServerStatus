@@ -289,8 +289,9 @@ function updateTime() {
 
 uptime();
 updateTime();
-setInterval(uptime, 2000);
-setInterval(updateTime, 2000);
+// 降低改值，可以减少cpu占用
+setInterval(uptime, 1000);
+setInterval(updateTime, 1000);
 
 // styleswitcher.js
 function setActiveStyleSheet(title, cookie = false) {
