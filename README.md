@@ -69,12 +69,13 @@ cd ServerStatus/server && make
 ```diff
 ! watchdog rule 可以为任何已知字段的表达式。注意Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复       
 ! watchdog interval 最小通知间隔
-! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调 
+! watchdog callback 可自定义为Post方法的URL，告警内容将拼接其后并发起回调
+! Server酱注册：https://sct.ftqq.com/r/13682
 
-! watchdog callback Telegram: https://api.telegram.org/bot你自己的密钥/sendMessage?parse_mode=HTML&disable_web_page_preview=true&chat_id=你自己的标识&text=
-! watchdog callback Server酱: https://sctapi.ftqq.com/你自己的密钥.send?title=ServerStatus&desp=
-! watchdog callback PushDeer: https://api2.pushdeer.com/message/push?pushkey=你自己的密钥&text=
-! watchdog callback BasicAuth: https://用户名:密码@你自己的域名/api/push?message=
+! Telegram: https://api.telegram.org/bot你自己的密钥/sendMessage?parse_mode=HTML&disable_web_page_preview=true&chat_id=你自己的标识&text=
+! Server酱: https://sctapi.ftqq.com/你自己的密钥.send?title=ServerStatus&desp=
+! PushDeer: https://api2.pushdeer.com/message/push?pushkey=你自己的密钥&text=
+! HttpBasicAuth: https://用户名:密码@你自己的域名/api/push?message=
 ```
 
 ```
