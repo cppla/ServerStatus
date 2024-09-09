@@ -46,12 +46,6 @@
 			"type": "https"
 		},
 		{
-			"name": "aliyun",
-			"host": "https://www.aliyun.com",
-			"interval": 300,
-			"type": "https"
-		},
-		{
 			"name": "114",
 			"host": "114.114.114.114:53",
 			"interval": 300,
@@ -84,8 +78,14 @@
 			"callback": "https://yourSMSurl"
 		},
 		{
-			"name": "month traffic warning",
+			"name": "month 999GB traffic warning",
 			"rule": "(network_out-last_network_out)/1024/1024/1024>999",
+			"interval": 3600,
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "aliyun china free 18GB traffic warning",
+			"rule": "(network_out-last_network_out)/1024/1024/1024>18&(username='aliyun1'|username='aliyun2')",
 			"interval": 3600,
 			"callback": "https://yourSMSurl"
 		},
