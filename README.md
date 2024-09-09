@@ -133,6 +133,12 @@ cd ServerStatus/server && make
 			"callback": "https://yourSMSurl"
 		},
 		{
+			"name": "乌兰察布服务器流量18GB告警",
+			"rule": "(network_out-last_network_out)/1024/1024/1024>18&(username='wlcb1'|username='wlcb2'|username='wlcb3'|username='wlcb4')",
+			"interval": 3600,
+			"callback": "https://yourSMSurl"
+		},
+		{
 			"name": "你可以组合任何已知字段的表达式",
 			"rule": "(hdd_used/hdd_total)*100>95",
 			"interval": 1800,
