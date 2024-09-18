@@ -93,10 +93,16 @@ cd ServerStatus/server && make
 	],
 	"monitors": [
 		{
-			"name": "监测网站以及MySQL、Redis，默认为七天在线率",
+			"name": "监测网站，默认为一天在线率",
 			"host": "https://www.baidu.com",
-			"interval": 60,
+			"interval": 300,
 			"type": "https"
+		},
+		{
+			"name": "监测tcp服务端口",
+			"host": "114.114.114.114:53",
+			"interval": 300,
+			"type": "tcp"
 		}
 	],
 	"watchdog":
@@ -108,8 +114,8 @@ cd ServerStatus/server && make
 			"callback": "https://yourSMSurl"
 		},
 		{
-                        "name": "服务器内存使用率过高监控",
-                        "rule": "(memory_used/memory_total)*100>90",
+                        "name": "服务器内存使用率过高监控，排除小于1G的机器",
+                        "rule": "(memory_used/memory_total)*100>90&memory_total>1048576",
                         "interval": 600,
                         "callback": "https://yourSMSurl"
                 },
@@ -120,8 +126,8 @@ cd ServerStatus/server && make
                         "callback": "https://yourSMSurl"
                 },
 		{
-                        "name": "DDOS和CC攻击监控",
-                        "rule": "tcp_count>600",
+                        "name": "DDOS和CC攻击监控，限制甲骨文机器",
+                        "rule": "tcp_count>600&type='Oracle'",
                         "interval": 300,
                         "callback": "https://yourSMSurl"
                 },
@@ -135,6 +141,12 @@ cd ServerStatus/server && make
 			"name": "阿里云服务器流量18GB告警,限制username为乌兰察布",
 			"rule": "(network_out-last_network_out)/1024/1024/1024>18&(username='wlcb1'|username='wlcb2'|username='wlcb3'|username='wlcb4')",
 			"interval": 3600,
+			"callback": "https://yourSMSurl"
+		},
+		{
+			"name": "重要线路丢包率过高检查",
+			"rule": "(ping_10010>5|ping_189>5|ping_10086>5)&(host='sgp'|host='qqhk'|host='hk-21-x'|host='hk-31-x')",
+			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
 		{
