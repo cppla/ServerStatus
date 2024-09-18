@@ -145,7 +145,7 @@ cd ServerStatus/server && make
 		},
 		{
 			"name": "重要线路丢包率过高检查",
-			"rule": "(ping_10010>5|ping_189>5|ping_10086>5)&(host='sgp'|host='qqhk'|host='hk-21-x'|host='hk-31-x')",
+			"rule": "(ping_10010>10|ping_189>10|ping_10086>10)&(host='sgp'|host='qqhk'|host='hk-21-x'|host='hk-31-x')",
 			"interval": 600,
 			"callback": "https://yourSMSurl"
 		},
