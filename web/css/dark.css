@@ -108,7 +108,7 @@ tr.odd.expandRow:hover {
 }
 
 #traffic, #network {
-    width: 165px;
+    width: 170px;
 }
 
 #cpu, #ram, #hdd {
@@ -129,7 +129,7 @@ tr.odd.expandRow:hover {
         padding: 0;
     }
     #traffic, #network {
-        width: 115px;
+        width: 120px;
     }
     #type, #location, #uptime, #ping {
         display: none;
@@ -146,7 +146,7 @@ tr.odd.expandRow:hover {
         padding: 0;
     }
     #traffic, #network {
-        width: 115px;
+        width: 120px;
     }
     #month_traffic, #type, #location, #uptime, #ping {
         display: none;
@@ -163,7 +163,7 @@ tr.odd.expandRow:hover {
         padding: 0;
     }
     #network {
-        width: 115px;
+        width: 120px;
     }
     #month_traffic, #type, #location, #uptime, #traffic, #ping {
         display: none;
