@@ -34,12 +34,25 @@ docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json
 `Docker-compose(推荐)`: docker-compose up -d
 ```
 
+- Arch Linux: [serverstatus-git](https://aur.archlinux.org/packages/serverstatus-git)
+
+```bash
+yay -Syu serverstatus-server
+``` 
+
 【客户端】：
 ```bash
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER={$SERVER} USER={$USER} PASSWORD={$PASSWORD} >/dev/null 2>&1 &
 
 eg:
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
+```
+
+- Arch Linux: [serverstatus-git](https://aur.archlinux.org/packages/serverstatus-git)
+
+```bash
+yay -Syu serverstatus-clients-linux
+yay -Syu serverstatus-clients-psutil
 ```
 
 # 主题：            
