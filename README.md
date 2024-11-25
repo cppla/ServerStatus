@@ -95,13 +95,13 @@ cd ServerStatus/server && make
 		{
 			"name": "监测网站，默认为一天在线率",
 			"host": "https://www.baidu.com",
-			"interval": 300,
+			"interval": 1200,
 			"type": "https"
 		},
 		{
 			"name": "监测tcp服务端口",
-			"host": "114.114.114.114:53",
-			"interval": 300,
+			"host": "223.5.5.5:53",
+			"interval": 1200,
 			"type": "tcp"
 		}
 	],
