@@ -100,7 +100,7 @@ cd ServerStatus/server && make
 		},
 		{
 			"name": "监测tcp服务端口",
-			"host": "223.5.5.5:53",
+			"host": "1.1.1.1:80",
 			"interval": 1200,
 			"type": "tcp"
 		}

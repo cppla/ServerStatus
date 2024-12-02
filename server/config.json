@@ -46,8 +46,8 @@
 			"type": "https"
 		},
 		{
-			"name": "alidns",
-			"host": "223.5.5.5:53",
+			"name": "1111",
+			"host": "1.1.1.1:80",
 			"interval": 1200,
 			"type": "tcp"
 		}
