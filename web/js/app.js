@@ -60,7 +60,9 @@ function render(){
   renderServers();
   renderServersCards();
   renderMonitors();
+  renderMonitorsCards();
   renderSSL();
+  renderSSLCards();
   updateTime();
 }
 function renderServers(){
@@ -152,6 +154,25 @@ function renderMonitors(){
   tbody.innerHTML = html || `<tr><td colspan="4" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
 }
 
+// 服务卡片 (移动端)
+function renderMonitorsCards(){
+  const wrap = document.getElementById('monitorsCards');
+  if(!wrap) return; if(window.innerWidth>700){ wrap.innerHTML=''; return; }
+  let html='';
+  S.servers.forEach(s=>{
+    const online = (s.online4||s.online6)?'在线':'离线';
+    const pill = `<span class="status-pill ${online==='在线'?'on':'off'}">${online}</span>`;
+    html += `<div class="card">
+      <div class="card-header"><div class="card-title">${s.name||'-'} <span class="tag">${s.location||'-'}</span></div>${pill}</div>
+      <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+        <div><span class="key">监测内容</span><span>${s.custom||'-'}</span></div>
+        <div><span class="key">协议</span><span>${online}</span></div>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
+}
+
 function renderSSL(){
   const tbody = els.sslBody();
   let html='';
@@ -169,6 +190,28 @@ function renderSSL(){
     </tr>`;
   });
   tbody.innerHTML = html || `<tr><td colspan="6" class="muted" style="text-align:center;padding:1rem;">无证书数据</td></tr>`;
+}
+
+// 证书卡片 (移动端)
+function renderSSLCards(){
+  const wrap = document.getElementById('sslCards');
+  if(!wrap) return; if(window.innerWidth>700){ wrap.innerHTML=''; return; }
+  let html='';
+  S.ssl.forEach(c=>{
+    const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
+    const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
+    const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
+    html += `<div class="card">
+      <div class="card-header"><div class="card-title">${c.name||'-'}</div><span class="status-pill ${cls==='err'?'off':'on'}">${status}</span></div>
+      <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+        <div><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
+        <div><span class="key">端口</span><span>${c.port||443}</span></div>
+        <div><span class="key">剩余(天)</span><span>${c.expire_days??'-'}</span></div>
+        <div><span class="key">到期</span><span>${dt.split(' ')[0]||dt}</span></div>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无证书数据</div>';
 }
 
 function updateTime(){
@@ -309,7 +352,12 @@ function drawLatencyChart(key){
 // 在每次 render 后若弹窗打开则重绘最新图
 const _oldRender = render;
 render = function(){ _oldRender(); if(S._openDetailKey){ drawLatencyChart(S._openDetailKey); } };
-window.addEventListener('resize', ()=>{ if(S._openDetailKey){ drawLatencyChart(S._openDetailKey); drawLoadChart(S._openDetailKey); } });
+window.addEventListener('resize', ()=>{ 
+  if(S._openDetailKey){ drawLatencyChart(S._openDetailKey); drawLoadChart(S._openDetailKey); }
+  renderServersCards();
+  renderMonitorsCards();
+  renderSSLCards();
+});
 
 // 绘制小型折线 (sparklines)
 function drawSparks(){

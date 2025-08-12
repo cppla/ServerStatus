@@ -103,6 +103,11 @@ table.data thead th:last-child, table.data tbody td:last-child { text-align:cent
 	.spark{width:52px}
 	#panel-servers .table-wrap{display:none;}
 	#serversCards{display:grid!important;grid-template-columns:1fr;gap:.75rem;margin-top:.5rem;}
+	/* 服务与证书移动端卡片 */
+	#panel-monitors .table-wrap, #panel-ssl .table-wrap{display:none;}
+	#monitorsCards,#sslCards{display:grid!important;grid-template-columns:1fr;gap:.75rem;margin-top:.5rem;}
+	.modal-box{max-width:100%;border-radius:14px;padding:1rem .95rem;}
+	.modal-content{max-height:65vh;overflow:auto;}
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}

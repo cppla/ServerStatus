@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="简洁现代 ServerStatus" />
+    <meta name="description" content="云监控,ServerStatus中文版,ServerStatus,ServerStatus cppla" />
     <title>云监控</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="alternate icon" href="favicon.ico" />
@@ -76,6 +76,8 @@
                     <tbody id="monitorsBody"></tbody>
                 </table>
             </div>
+            <!-- 移动端卡片布局 (服务) -->
+            <div id="monitorsCards" class="cards" style="display:none;"></div>
         </section>
 
         <section id="panel-ssl" class="panel" aria-labelledby="证书">
@@ -94,6 +96,8 @@
                     <tbody id="sslBody"></tbody>
                 </table>
             </div>
+            <!-- 移动端卡片布局 (证书) -->
+            <div id="sslCards" class="cards" style="display:none;"></div>
         </section>
     </main>
 
@@ -107,7 +111,7 @@
     </div>
 
     <footer class="footer">
-        <a href="https://github.com/cppla/ServerStatus" target="_blank" rel="noopener">ServerStatus</a>
+        <a href="https://github.com/cppla/ServerStatus" target="_blank" rel="noopener">ServerStatus中文版</a>
         <span class="sep">·</span>
         <span id="buildInfo" class="muted"></span>
     </footer>
