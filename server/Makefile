@@ -1,38 +1,17 @@
 OUT = sergate
 
-# Build mode: make (默认 release) 或 make BUILD=debug
-BUILD ?= release
+#CC = clang
+CC = gcc
+CFLAGS = -Wall -O2
 
-# 自动检测 ccache
-CCACHE_BIN:=$(shell which ccache 2>/dev/null)
-ifeq ($(CCACHE_BIN),)
-	CC := gcc
-	CXX := g++
-else
-	CC := ccache gcc
-	CXX := ccache g++
-endif
-
-COMMON_WARN=-Wall
-COMMON_INC=-Iinclude
-COMMON_PIPE=-pipe
-
-ifeq ($(BUILD),debug)
-	CFLAGS   = $(COMMON_WARN) -O0 -g $(COMMON_PIPE)
-	CXXFLAGS = $(COMMON_WARN) -O0 -g -std=c++11 $(COMMON_PIPE)
-else
-	CFLAGS   = $(COMMON_WARN) -O2 $(COMMON_PIPE)
-	CXXFLAGS = $(COMMON_WARN) -O2 -std=c++11 $(COMMON_PIPE)
-endif
+#CXX = clang++
+CXX = g++
+CXXFLAGS = -Wall -O2 -std=c++11
 
 ODIR = obj
 SDIR = src
-LIBS = -pthread -lm -lcurl
-INC = $(COMMON_INC) -Isrc
-
-# 预编译头（主要加速包含 exprtk.hpp 的 C++ 编译）
-PCH_HDR = $(SDIR)/pch.hpp
-PCH = $(ODIR)/pch.hpp.gch
+LIBS = -pthread -lm
+INC = -Iinclude
 
 C_SRCS := $(wildcard $(SDIR)/*.c)
 CXX_SRCS := $(wildcard $(SDIR)/*.cpp)
@@ -40,33 +19,16 @@ C_OBJS := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o,$(C_SRCS))
 CXX_OBJS := $(patsubst $(SDIR)/%.cpp,$(ODIR)/%.o,$(CXX_SRCS))
 OBJS := $(C_OBJS) $(CXX_OBJS)
 
+$(ODIR)/%.o: $(SDIR)/%.c
+	$(CC) -c $(INC) $(CFLAGS) $< -o $@
 
-all: $(OUT)
-
-$(ODIR):
-	mkdir -p $(ODIR)
-
-$(PCH): $(PCH_HDR) | $(ODIR)
-	$(CXX) $(INC) $(CXXFLAGS) -MMD -MP -x c++-header $< -o $@
-
-$(ODIR)/%.o: $(SDIR)/%.cpp $(PCH) | $(ODIR)
-	$(CXX) -c $(INC) $(CXXFLAGS) -MMD -MP -include src/pch.hpp $< -o $@
-
-$(ODIR)/%.o: $(SDIR)/%.c | $(ODIR)
-	$(CC) -c $(INC) $(CFLAGS) -MMD -MP $< -o $@
+$(ODIR)/%.o: $(SDIR)/%.cpp
+	$(CXX) -c $(INC) $(CXXFLAGS) $< -o $@
 
 $(OUT): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $(OUT) $(LIBS)
+	$(CXX) $(LIBS) $^ -o $(OUT) -lcurl
 
-.PHONY: clean all
+.PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o $(ODIR)/*.d $(OUT) $(PCH)
-
-.PHONY: debug release
-debug:
-	$(MAKE) BUILD=debug
-release:
-	$(MAKE) BUILD=release
-
--include $(ODIR)/*.d
+	rm -f $(ODIR)/*.o $(OUT)
