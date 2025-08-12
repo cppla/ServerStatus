@@ -9,6 +9,184 @@
 #include "main.h"
 #include "exprtk.hpp"
 #include "curl/curl.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+
+// 全局运行标志（需在 SSLCheckThread 定义前初始化）
+static volatile int gs_Running = 1;
+static volatile int gs_ReloadConfig = 0;
+
+static int64_t ParseOpenSSLEnddate(const char *line)
+{
+	// line format: notAfter=Aug 12 23:59:59 2025 GMT
+	const char *p = strstr(line, "notAfter=");
+	if(!p) return 0;
+	p += 9;
+	struct tm tmv; memset(&tmv,0,sizeof(tmv));
+	char month[4]={0};
+	int day, hour, min, sec, year;
+	if(sscanf(p, "%3s %d %d:%d:%d %d GMT", month, &day, &hour, &min, &sec, &year)!=6) return 0;
+	const char *months="JanFebMarAprMayJunJulAugSepOctNovDec";
+	const char *mpos = strstr(months, month);
+	if(!mpos) return 0;
+	int mon = (int)((mpos - months)/3);
+	tmv.tm_year = year - 1900;
+	tmv.tm_mon = mon;
+	tmv.tm_mday = day;
+	tmv.tm_hour = hour; tmv.tm_min = min; tmv.tm_sec = sec;
+	time_t t = timegm(&tmv);
+	return (int64_t)t;
+}
+
+struct SSLCheckThreadData { CMain *pMain; };
+static void SSLCheckThread(void *pUser)
+{
+	SSLCheckThreadData *pData = (SSLCheckThreadData*)pUser;
+	while(gs_Running){
+		for(int i=0;i<NET_MAX_CLIENTS;i++){
+			if(!pData->pMain->SSLCert(i) || !strcmp(pData->pMain->SSLCert(i)->m_aName, "NULL")) break;
+			CMain::CSSLCerts *cert = pData->pMain->SSLCert(i);
+			time_t nowt = time(0);
+			if(cert->m_aLastCheck !=0 && (nowt - cert->m_aLastCheck) < cert->m_aInterval) continue;
+			cert->m_aLastCheck = nowt;
+			char cmd[1024];
+			// 说明: 通过 s_client 获取证书，再用 x509 解析到期时间；统一屏蔽 stderr 以防握手失败/非 TLS 端口时刷屏。
+			// 若配置中写成 https://domain/path 则需要清洗。
+			char cleanHost[256];
+			str_copy(cleanHost, cert->m_aDomain, sizeof(cleanHost));
+			// 去协议
+			if(!strncasecmp(cleanHost, "https://", 8)) memmove(cleanHost, cleanHost+8, strlen(cleanHost+8)+1);
+			else if(!strncasecmp(cleanHost, "http://", 7)) memmove(cleanHost, cleanHost+7, strlen(cleanHost+7)+1);
+			// 去路径
+			char *slash = strchr(cleanHost, '/'); if(slash) *slash='\0';
+			// 若含 :port 再截取主机部分（端口由配置提供）
+			char *colon = strchr(cleanHost, ':'); if(colon) *colon='\0';
+			int n = snprintf(cmd,sizeof(cmd),"echo | openssl s_client -servername %s -connect %s:%d </dev/null 2>/dev/null | openssl x509 -noout -enddate -text 2>/dev/null", cleanHost, cleanHost, cert->m_aPort);
+			if(n <= 0 || n >= (int)sizeof(cmd)) continue; // 避免截断执行
+			FILE *fp = popen(cmd, "r");
+			if(!fp) continue;
+			char line[1024]={0};
+			int foundEnddate=0;
+			int mismatch = 1; // 默认视为不匹配，发现任一匹配域名再置0
+			int haveNames = 0;
+			// 将目标域名转为小写
+			char target[256]; str_copy(target, cleanHost, sizeof(target));
+			for(char *p=target; *p; ++p) *p=tolower(*p);
+			while(fgets(line,sizeof(line),fp)){
+				if(!foundEnddate){
+					int64_t expire = ParseOpenSSLEnddate(line);
+					if(expire>0){ cert->m_aExpireTS = expire; foundEnddate=1; }
+				}
+				// 解析 subjectAltName
+				// 解析 Subject 中的 CN（备用）
+				char *subj = strstr(line, "Subject:");
+				if(subj){
+					char *cn = strstr(subj, " CN=");
+					if(cn){
+						cn += 4; // 跳过 ' CN='
+						char name[256]={0}; int ni=0;
+						while(*cn && *cn!='/' && *cn!=',' && *cn!='\n' && ni<(int)sizeof(name)-1){ name[ni++]=*cn++; }
+						name[ni]='\0';
+						while(ni>0 && (name[ni-1]==' '||name[ni-1]=='\r'||name[ni-1]=='\t')){ name[--ni]='\0'; }
+						for(char *q=name; *q; ++q) *q=tolower(*q);
+						if(ni>0){
+							haveNames=1;
+							int match=0;
+							if(name[0]=='*' && name[1]=='.'){
+								const char *sub = strchr(target,'.');
+								if(sub && !strcmp(sub+1, name+2)) match=1;
+							}else if(!strcmp(name,target)) match=1;
+							if(match){ mismatch=0; }
+						}
+					}
+				}
+				if(strstr(line, "DNS:")){
+					char *p = line;
+					while((p = strstr(p, "DNS:"))){
+						p += 4; while(*p==' '){p++;}
+						char name[256]={0}; int ni=0;
+						while(*p && *p!=',' && *p!='\n' && ni<(int)sizeof(name)-1){ name[ni++]=*p++; }
+						name[ni]='\0';
+						// 去空白
+						while(ni>0 && (name[ni-1]==' '||name[ni-1]=='\r'||name[ni-1]=='\t')){ name[--ni]='\0'; }
+						for(char *q=name; *q; ++q) *q=tolower(*q);
+						haveNames=1;
+						// 通配符匹配 *.example.com
+						int match=0;
+						if(name[0]=='*' && name[1]=='.'){
+							const char *sub = strchr(target,'.');
+							if(sub && !strcmp(sub+1, name+2)) match=1;
+						}else if(!strcmp(name,target)) match=1;
+						if(match){ mismatch=0; goto names_done; }
+					}
+				}
+			}
+names_done:
+			pclose(fp);
+			if(haveNames){ cert->m_aHostnameMismatch = mismatch ? 1 : 0; }
+			else { /* 未能提取任何域名，保留原状态，不触发误报 */ }
+			// 告警: 仅在不匹配且 24h 冷却
+			if(cert->m_aHostnameMismatch==1){
+				if(cert->m_aLastAlarmMismatch==0 || nowt - cert->m_aLastAlarmMismatch > 24*3600){
+					if(strlen(cert->m_aCallback)>0){
+						CURL *curl = curl_easy_init();
+						if(curl){
+							char msg[1024];
+							snprintf(msg,sizeof(msg),"【SSL证书域名不匹配】%s(%s) 证书域名与配置不一致", cert->m_aName, cert->m_aDomain);
+							char *enc = curl_easy_escape(curl,msg,0);
+							char url[1500]; snprintf(url,sizeof(url),"%s%s", cert->m_aCallback, enc?enc:"");
+							curl_easy_setopt(curl, CURLOPT_POST, 1L);
+							curl_easy_setopt(curl, CURLOPT_URL, url);
+							curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "signature=ServerStatusSSL");
+							curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+							curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+							curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
+							curl_easy_setopt(curl, CURLOPT_TIMEOUT, 6L);
+							curl_easy_perform(curl);
+							if(enc) curl_free(enc);
+							curl_easy_cleanup(curl);
+						}
+					}
+					cert->m_aLastAlarmMismatch = nowt;
+				}
+			}
+			// alarm logic
+			if(cert->m_aExpireTS>0){
+				int days = (int)((cert->m_aExpireTS - nowt)/86400);
+				int64_t *lastAlarm = NULL; int need=0; int target=0;
+				if(days <=7 && days >3){ lastAlarm=&cert->m_aLastAlarm7; target=7; }
+				else if(days <=3 && days >1){ lastAlarm=&cert->m_aLastAlarm3; target=3; }
+				else if(days <=1){ lastAlarm=&cert->m_aLastAlarm1; target=1; }
+				if(lastAlarm && (*lastAlarm==0 || nowt - *lastAlarm > 20*3600)) need=1; // avoid spam, 20h
+				if(need && strlen(cert->m_aCallback)>0){
+					CURL *curl = curl_easy_init();
+					if(curl){
+						char msg[1024];
+						char timebuf[32];
+						time_t expt = (time_t)cert->m_aExpireTS;
+						strftime(timebuf,sizeof(timebuf),"%Y-%m-%d %H:%M:%S", gmtime(&expt));
+						snprintf(msg,sizeof(msg),"【SSL证书提醒】%s(%s) 将在 %d 天后(%s UTC) 到期", cert->m_aName, cert->m_aDomain, target, timebuf);
+						char *enc = curl_easy_escape(curl,msg,0);
+						char url[1500]; snprintf(url,sizeof(url),"%s%s", cert->m_aCallback, enc?enc:"");
+						curl_easy_setopt(curl, CURLOPT_POST, 1L);
+						curl_easy_setopt(curl, CURLOPT_URL, url);
+						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "signature=ServerStatusSSL");
+						curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+						curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+						curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
+						curl_easy_setopt(curl, CURLOPT_TIMEOUT, 6L);
+						curl_easy_perform(curl);
+						if(enc) curl_free(enc);
+						curl_easy_cleanup(curl);
+					}
+					*lastAlarm = nowt;
+				}
+			}
+		}
+		thread_sleep(5000);
+	}
+}
 
 #if defined(CONF_FAMILY_UNIX)
 	#include <signal.h>
@@ -17,9 +195,6 @@
 #ifndef PRId64
 	#define PRId64 "I64d"
 #endif
-
-static volatile int gs_Running = 1;
-static volatile int gs_ReloadConfig = 0;
 
 static void ExitFunc(int Signal)
 {
@@ -297,12 +472,16 @@ void CMain::WatchdogMessage(int ClientNetID, double load_1, double load_5, doubl
         typedef exprtk::expression<double>   expression_t;
         typedef exprtk::parser<double>       parser_t;
         const std::string expression_string = Watchdog(ID)->m_aRule;
-        int ClientID = ClientNetToClient(ClientNetID);
-        std::string username = Client(ClientID)->m_aUsername;
-        std::string name = Client(ClientID)->m_aName;
-        std::string type = Client(ClientID)->m_aType;
-        std::string host = Client(ClientID)->m_aHost;
-        std::string location = Client(ClientID)->m_aLocation;
+		int ClientID = ClientNetToClient(ClientNetID);
+		if(ClientID < 0 || ClientID >= NET_MAX_CLIENTS) {
+			ID++;
+			continue; // 无效客户端，跳过当前 watchdog 规则
+		}
+		std::string username = Client(ClientID)->m_aUsername;
+		std::string name = Client(ClientID)->m_aName;
+		std::string type = Client(ClientID)->m_aType;
+		std::string host = Client(ClientID)->m_aHost;
+		std::string location = Client(ClientID)->m_aLocation;
 
         symbol_table_t symbol_table;
         symbol_table.add_stringvar("username", username);
@@ -473,13 +652,23 @@ void CMain::JSONUpdateThread(void *pUser)
 				pBuf += strlen(pBuf);
 			}
 		}
-		if(!m_pJSONUpdateThreadData->m_ReloadRequired)
-			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"updated\": \"%lld\"\n}", (long long)time(/*ago*/0));
-		else
+		// append ssl certs data
+		str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"sslcerts\": [\n");
+		pBuf += strlen(pBuf);
+		for(int si = 0; si < NET_MAX_CLIENTS; si++)
 		{
-			str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"updated\": \"%lld\",\n\"reload\": true\n}", (long long)time(/*ago*/0));
-			m_pJSONUpdateThreadData->m_ReloadRequired--;
+			if(!m_pJSONUpdateThreadData->pMain->SSLCert(si) || !strcmp(m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aName, "NULL")) break;
+			int64_t expire_ts = m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aExpireTS;
+			int expire_days = 0;
+			if(expire_ts>0){
+				int64_t nowts = (long long)time(/*ago*/0);
+				expire_days = (int)((expire_ts - nowts)/86400);
+			}
+			str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"domain\": \"%s\", \"port\": %d, \"expire_ts\": %lld, \"expire_days\": %d, \"mismatch\": %s },\n", m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aName, m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aDomain, m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aPort, (long long)expire_ts, expire_days, m_pJSONUpdateThreadData->pMain->SSLCert(si)->m_aHostnameMismatch?"true":"false");
+			pBuf += strlen(pBuf);
 		}
+		if(pBuf - aFileBuf >= 2) str_format(pBuf - 2, sizeof(aFileBuf) - (pBuf - aFileBuf), "\n],\n\"updated\": \"%lld\"%s\n}", (long long)time(/*ago*/0), m_pJSONUpdateThreadData->m_ReloadRequired?",\n\"reload\": true":"");
+		if(m_pJSONUpdateThreadData->m_ReloadRequired) m_pJSONUpdateThreadData->m_ReloadRequired--;
 		pBuf += strlen(pBuf);
 
 		char aJSONFileTmp[1024];
@@ -706,8 +895,11 @@ int CMain::ReadConfig()
             ID++;
         }
         str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
-    } else
-        str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
+	} 
+	else
+	{
+		str_copy(Watchdog(ID)->m_aName, "NULL", sizeof(Watchdog(ID)->m_aName));
+	}
 
     // monitor
     // support by: https://cpp.la
@@ -728,8 +920,36 @@ int CMain::ReadConfig()
             ID++;
         }
         str_copy(Monitors(ID)->m_aName, "NULL", sizeof(Monitors(ID)->m_aName));
-    } else
-        str_copy(Monitors(ID)->m_aName, "NULL", sizeof(Monitors(ID)->m_aName));
+	} 
+	else
+	{
+		str_copy(Monitors(ID)->m_aName, "NULL", sizeof(Monitors(ID)->m_aName));
+	}
+
+	// sslcerts
+	ID = 0;
+	const json_value &sStart = (*pJsonData)["sslcerts"];
+	if(sStart.type == json_array)
+	{
+		for(unsigned i = 0; i < sStart.u.array.length; i++)
+		{
+			if(ID < 0 || ID >= NET_MAX_CLIENTS)
+				continue;
+			str_copy(SSLCert(ID)->m_aName, sStart[i]["name"].u.string.ptr, sizeof(SSLCert(ID)->m_aName));
+			str_copy(SSLCert(ID)->m_aDomain, sStart[i]["domain"].u.string.ptr, sizeof(SSLCert(ID)->m_aDomain));
+			SSLCert(ID)->m_aPort = sStart[i]["port"].u.integer;
+			SSLCert(ID)->m_aInterval = sStart[i]["interval"].u.integer;
+			str_copy(SSLCert(ID)->m_aCallback, sStart[i]["callback"].u.string.ptr, sizeof(SSLCert(ID)->m_aCallback));
+			SSLCert(ID)->m_aExpireTS = 0; // reset
+			SSLCert(ID)->m_aLastCheck = 0;
+			SSLCert(ID)->m_aLastAlarm7 = 0;
+			SSLCert(ID)->m_aLastAlarm3 = 0;
+			SSLCert(ID)->m_aLastAlarm1 = 0;
+			ID++;
+		}
+		str_copy(SSLCert(ID)->m_aName, "NULL", sizeof(SSLCert(ID)->m_aName));
+	}else
+		str_copy(SSLCert(ID)->m_aName, "NULL", sizeof(SSLCert(ID)->m_aName));
 
 	// if file exists, read last network traffic record，reset m_LastNetworkIN and m_LastNetworkOUT
 	// support by: https://cpp.la
@@ -805,7 +1025,10 @@ int CMain::Run()
 	m_JSONUpdateThreadData.pClients = m_aClients;
 	m_JSONUpdateThreadData.pConfig = &m_Config;
     m_JSONUpdateThreadData.pWatchDogs = m_aCWatchDogs;
+	m_JSONUpdateThreadData.pMain = this;
 	void *LoadThread = thread_create(JSONUpdateThread, &m_JSONUpdateThreadData);
+	// Start SSL check thread
+	static SSLCheckThreadData sslData; sslData.pMain = this; thread_create(SSLCheckThread, &sslData);
 	//thread_detach(LoadThread);
 
 	while(gs_Running)

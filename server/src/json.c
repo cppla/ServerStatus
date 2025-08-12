@@ -131,13 +131,15 @@ static int new_value
 
             values_size = sizeof (*value->u.object.values) * value->u.object.length;
 
-            if (! ((*(void **) &value->u.object.values) = json_alloc
-                  (state, values_size + ((unsigned long) value->u.object.values), 0)) )
+            void *tmp_alloc = json_alloc(state, values_size + ((unsigned long) value->u.object.values), 0);
+            if (!tmp_alloc)
             {
                return 0;
             }
-
-            value->_reserved.object_mem = (*(char **) &value->u.object.values) + values_size;
+            /* 避免违反严格别名：通过中间变量复制 */
+            memcpy(&value->u.object.values, &tmp_alloc, sizeof(void*));
+            char *obj_mem = (char*)value->u.object.values + values_size;
+            memcpy(&value->_reserved.object_mem, &obj_mem, sizeof(char*));
 
             value->u.object.length = 0;
             break;
@@ -361,16 +363,18 @@ json_value * json_parse_ex (json_settings * settings,
                   case json_object:
 
                      if (state.first_pass)
-                        (*(json_char **) &top->u.object.values) += string_length + 1;
+                     {
+                        json_char *adv = (json_char*)top->u.object.values;
+                        adv += string_length + 1;
+                        memcpy(&top->u.object.values, &adv, sizeof(json_char*));
+                     }
                      else
-                     {  
-                        top->u.object.values [top->u.object.length].name
-                           = (json_char *) top->_reserved.object_mem;
-
-                        top->u.object.values [top->u.object.length].name_length
-                           = string_length;
-
-                        (*(json_char **) &top->_reserved.object_mem) += string_length + 1;
+                     {
+                        top->u.object.values[top->u.object.length].name = (json_char *)top->_reserved.object_mem;
+                        top->u.object.values[top->u.object.length].name_length = string_length;
+                        json_char *adv2 = (json_char*)top->_reserved.object_mem;
+                        adv2 += string_length + 1;
+                        memcpy(&top->_reserved.object_mem, &adv2, sizeof(json_char*));
                      }
 
                      flags |= flag_seek_value | flag_need_colon;

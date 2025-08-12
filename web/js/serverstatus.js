@@ -30,6 +30,46 @@ function uptime() {
             document.getElementById("loading-notice")?.remove();
             if (result.reload) setTimeout(location.reload, 1000);
 
+            // 构建 SSL 证书映射
+            const sslMap = {};
+            if (Array.isArray(result.sslcerts)) {
+                result.sslcerts.forEach(c => {
+                    if (c.domain) {
+                        const d = c.domain.replace(/^https?:\/\//,'').replace(/[:/].*/,'');
+                        sslMap[d] = {...c, domain_clean:d};
+                    }
+                });
+                                // 渲染独立 SSL 面板
+                                const tbody = document.getElementById('sslcerts');
+                                if (tbody) {
+                                        tbody.innerHTML = '';
+                                        result.sslcerts.forEach((raw, idx) => {
+                                            const c = {...raw};
+                                            const clean = (c.domain||'').replace(/^https?:\/\//,'').replace(/[:/].*/,'');
+                                            c.domain_clean = clean;
+                                                const days = c.expire_days;
+                                                let cls = 'text-success';
+                                                let status = '正常';
+                                                // 先判定过期
+                                                if (days <= 0) { cls = 'text-danger fw-bold'; status='已过期'; }
+                                                else if (c.mismatch) { cls = 'text-danger'; status='域名不匹配'; }
+                                                else if (days <= 1) { cls = 'text-danger'; status='紧急(≤1天)'; }
+                                                else if (days <= 3) { cls = 'text-danger'; status='紧急(≤3天)'; }
+                                                else if (days <= 7) { cls = 'text-warning'; status='将到期'; }
+                                                const expireDt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().replace('T',' ').replace(/\.\d+Z/,'') : '-';
+                                                tbody.insertAdjacentHTML('beforeend', `
+                                                    <tr id="ssl_${idx}">
+                                                        <td style="text-align:center;">${c.name||'-'}</td>
+                                                        <td>${clean}</td>
+                                                        <td style="text-align:center;">${c.port||443}</td>
+                                                        <td style="text-align:center;" class="${cls}">${days ?? '-'}</td>
+                                                        <td style="text-align:center;">${expireDt}</td>
+                                                        <td style="text-align:center;" class="${cls}">${status}</td>
+                                                    </tr>`);
+                                        });
+                                }
+            }
+
             result.servers.forEach((server, i) => {
                 let TableRow = document.querySelector(`#servers tr#r${i}`);
                 let MableRow = document.querySelector(`#monitors tr#r${i}`);
@@ -151,6 +191,7 @@ function uptime() {
                                 pingBar.style.width = "100%";
                                 pingBar.innerHTML = "<small>关闭</small>";
                             }
+                            // SSL 列已移除
                         }
                         if (MableRow) {
                             MableRow.querySelector("#monitor_text").innerHTML = "-";
@@ -238,6 +279,15 @@ function uptime() {
                     if (ExpandRow) ExpandRow.querySelector("#expand_ping").innerHTML = `CU/CT/CM: ${server.time_10010}ms (${PING_10010}%) / ${server.time_189}ms (${PING_189}%) / ${server.time_10086}ms (${PING_10086}%)`;
 
                     if (MableRow) MableRow.querySelector("#monitor_text").innerHTML = server.custom;
+
+                    // SSL 匹配: 使用 host 的域名部分匹配 sslMap
+                    const extractDomain = (h) => {
+                        if(!h) return '';
+                        return h.replace(/^https?:\/\//,'').replace(/:.*/,'');
+                    };
+                    const hostDomain = extractDomain(server.host || server.name || '');
+                    // 首页服务器表已取消 SSL 列
+                    // 服务表移除 SSL 列
                 }
             });
 
