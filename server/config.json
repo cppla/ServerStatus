@@ -54,13 +54,6 @@
 	],
 	"sslcerts": [
 		{
-			"name": "cpp.la",
-			"domain": "https://cpp.la",
-			"port": 443,
-			"interval": 600,
-			"callback": "https://yourSMSurl" 
-		},
-		{
 			"name": "my.cloudcpp.com",
 			"domain": "https://my.cloudcpp.com",
 			"port": 443,
@@ -79,14 +72,7 @@
 			"domain": "https://3.0.2.1",
 			"port": 443,
 			"interval": 600,
-			"callback": "https://sctapi.ftqq.com/SCT51005TMjvDPWwgSXjgYODht6BnQmed.send?title=ServerStatus&desp="
-		},
-		{
-			"name": "3.0.2.9",
-			"domain": "https://3.0.2.9",
-			"port": 443,
-			"interval": 600,
-			"callback": "https://sctapi.ftqq.com/SCT51005TMjvDPWwgSXjgYODht6BnQmed.send?title=ServerStatus&desp="
+			"callback": "https://yourSMSurl"
 		}
 	],
 	"watchdog": [
