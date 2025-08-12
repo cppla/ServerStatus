@@ -83,7 +83,8 @@ function renderServers(){
   function bucket(p){ const v = Math.max(0, Math.min(100, p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
   const pingBuckets = `<div class=\"buckets\" title=\"CU/CT/CM\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
     const key = s.name || s.location || 'node';
-    html += `<tr data-idx="${idx}" class="row-server" style="cursor:pointer;">
+  const rowCursor = online? 'pointer':'default';
+  html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
   <td>${statusPill}</td>
       <td>${s.name||'-'}</td>
       <td>${s.type||'-'}</td>
@@ -104,6 +105,7 @@ function renderServers(){
   // 绑定行点击
   tbody.querySelectorAll('tr.row-server').forEach(tr=>{
     tr.addEventListener('click',()=>{
+      if(tr.getAttribute('data-online')!=='1') return; // 离线不弹出
       const i = parseInt(tr.getAttribute('data-idx'));
       openDetail(i);
     });
@@ -131,12 +133,16 @@ function renderServersCards(){
     function bucket(p){ const v=Math.max(0,Math.min(100,p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
     const key = s.name || s.location || 'node';
-    html += `<div class=\"card\" data-idx=\"${idx}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span>${monthIn}/${monthOut}</span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">点击卡片可查看详情</div>\n      </div>\n    </div>`;
+    html += `<div class=\"card${online?'':' offline'}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span>${monthIn}/${monthOut}</span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
   });
   wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
   wrap.querySelectorAll('.card').forEach(card=>{
     const idx = parseInt(card.getAttribute('data-idx'));
-    card.addEventListener('click', e=>{ if(e.target.classList.contains('expand-btn')){ card.classList.toggle('expanded'); e.stopPropagation(); return;} openDetail(idx); });
+    card.addEventListener('click', e=>{ 
+      if(e.target.classList.contains('expand-btn')){ card.classList.toggle('expanded'); e.stopPropagation(); return;}
+      if(card.getAttribute('data-online')!=='1') return; // 离线不弹
+      openDetail(idx); 
+    });
   });
 }
 
@@ -266,36 +272,39 @@ function openDetail(i){
   const memLine = `内存: ${s.memory_total? bytes(s.memory_used*1024)+' / '+bytes(s.memory_total*1024):'- / -'}  | 虚存: ${s.swap_total? bytes(s.swap_used*1024)+' / '+bytes(s.swap_total*1024):'- / -'}`;
   const hddLine = `硬盘: ${s.hdd_total? bytes(s.hdd_used*1024*1024)+' / '+bytes(s.hdd_total*1024*1024):'- / -'}  | 读/写: ${(typeof s.io_read==='number')? bytes(s.io_read):'-'} / ${(typeof s.io_write==='number')? bytes(s.io_write):'-'}`;
   const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
+  // 保留延迟数据用于图表，但不再展示当前延迟文字行
   const latText = offline ? '离线' : `CU/CT/CM: ${num(s.time_10010)}ms (${(s.ping_10010||0).toFixed(0)}%) / ${num(s.time_189)}ms (${(s.ping_189||0).toFixed(0)}%) / ${num(s.time_10086)}ms (${(s.ping_10086||0).toFixed(0)}%)`;
   const key = s.name || s.location || 'node';
 
   let latencyBlock = '';
   if(!offline){
     latencyBlock = `
-    <div class="kv"><span>当前延迟</span><span class="mono">${latText}</span></div>
     <div style="display:flex;flex-direction:column;gap:.4rem;">
       <canvas id="latChart" height="150" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
       <div class="mono" style="font-size:11px;display:flex;gap:1rem;flex-wrap:wrap;">
-        <span style="color:#3b82f6">● CU</span>
-        <span style="color:#10b981">● CT</span>
-        <span style="color:#f59e0b">● CM</span>
-        <span style="opacity:.6"> (最近 ~${S.hist[key]?S.hist[key].cu.length:0} 条)</span>
+        <span style="color:#3b82f6">● 联通</span>
+        <span style="color:#10b981">● 电信</span>
+        <span style="color:#f59e0b">● 移动</span>
+        <span style="opacity:.6"> (~${S.hist[key]?S.hist[key].cu.length:0} 条)</span>
       </div>
     </div>`;
   } else {
-    latencyBlock = `<div class="kv"><span>当前延迟</span><span class="mono">离线，无数据</span></div>`;
+    latencyBlock = `
+    <div style="display:flex;flex-direction:column;gap:.4rem;">
+      <canvas id="latChart" height="150" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
+      <div class="mono" style="font-size:11px;opacity:.6;">离线，无联通/电信/移动延迟数据</div>
+    </div>`;
   }
 
   box.innerHTML = `
     <div class="kv"><span>位置</span><span class="mono">${s.location||'-'}</span></div>
-    <div class="kv"><span>负载 (1/5/15)</span><span class="mono">${offline?' - / - / -':(s.load_1==-1?'–':s.load_1?.toFixed(2))+' / '+(s.load_5?.toFixed?.(2)||'-')+' / '+(s.load_15?.toFixed?.(2)||'-')}</span></div>
     <div style="display:flex;flex-direction:column;gap:.35rem;">
       <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
-      <div class="mono" style="font-size:11px;opacity:.65;">负载历史 (1/5/15) 最近 ~${(S.loadHist[key]?S.loadHist[key].l1.length:0)} 条</div>
-      <div class="mono" style="font-size:10px;display:flex;gap:.75rem;flex-wrap:wrap;opacity:.6;">
-        <span style="color:#8b5cf6">● 1</span>
-        <span style="color:#10b981">● 5</span>
-        <span style="color:#f59e0b">● 15</span>
+      <div class="mono" style="font-size:11px;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;opacity:.8;">
+        <span style="color:#8b5cf6">● load1</span>
+        <span style="color:#10b981">● load5</span>
+        <span style="color:#f59e0b">● load15</span>
+        <span style="opacity:.6">(~${(S.loadHist[key]?S.loadHist[key].l1.length:0)} 条)</span>
       </div>
     </div>
     <div class="kv"><span>内存｜虚存</span><span class="mono">${offline?'- / - | 虚存: - / -':memLine}</span></div>
@@ -373,6 +382,7 @@ function drawSparks(){
     ctx.clearRect(0,0,W,H);
     div.classList.add('spark-ready');
     if(hist.length<2){ ctx.fillStyle='var(--text-dim)'; ctx.font='10px system-ui'; ctx.fillText('-', W/2-3, H/2+3); return; }
+  // 硬盘与 CPU/内存保持一致的折线显示（去掉低波动迷你条特殊样式）
     const max = Math.max(...hist); const min = Math.min(...hist); const range = Math.max(1,max-min);
     const step = W/(hist.length-1);
     // 线颜色

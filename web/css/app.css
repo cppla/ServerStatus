@@ -22,6 +22,14 @@ a:hover{color:var(--accent-glow)}
 table.data{width:100%;border-collapse:separate;border-spacing:0;min-width:960px}
 table.data thead th{position:sticky;top:0;background:var(--bg-alt);font-weight:500;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);padding:.7rem .75rem;border-bottom:1px solid var(--border);white-space:nowrap}
 table.data tbody td{padding:.55rem .75rem;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;white-space:nowrap}
+/* 防止数值变化导致列抖动：为月流量(7)/当前网络(8)/总流量(9)设置固定宽度并使用等宽数字 */
+table.data th,table.data td{font-variant-numeric:tabular-nums}
+table.data thead th:nth-child(7),table.data tbody td:nth-child(7),
+table.data thead th:nth-child(8),table.data tbody td:nth-child(8),
+table.data thead th:nth-child(9),table.data tbody td:nth-child(9){
+	width:170px;min-width:170px;max-width:170px;/* 基于最大示例 1111.12GB|1123.12GB 预留空间 */
+	font-variant-numeric:tabular-nums;letter-spacing:.3px;
+}
 table.data tbody tr:last-child td{border-bottom:none}
 table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .badge{display:inline-block;padding:2px 6px;font-size:11px;border-radius:12px;font-weight:500;line-height:1.2;background:var(--bg);border:1px solid var(--border);color:var(--text-dim)}
@@ -110,6 +118,7 @@ table.data thead th:last-child, table.data tbody td:last-child { text-align:cent
 	.modal-content{max-height:65vh;overflow:auto;}
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
+.cards .card.offline{opacity:.6;}
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
 .cards .card-title{font-weight:600;font-size:.95rem;}
 .cards .tag{font-size:.65rem;padding:.15rem .4rem;border-radius:4px;background:var(--border);letter-spacing:.5px;}
