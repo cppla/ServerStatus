@@ -1,5 +1,5 @@
 # The Dockerfile for build localhost source, not git repo
-FROM debian:buster AS builder
+FROM debian AS builder
 
 LABEL maintainer="cppla <https://cpp.la>"
 
