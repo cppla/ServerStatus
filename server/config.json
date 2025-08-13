@@ -57,21 +57,21 @@
 			"name": "my.cloudcpp.com",
 			"domain": "https://my.cloudcpp.com",
 			"port": 443,
-			"interval": 600,
+			"interval": 3600,
 			"callback": "https://yourSMSurl" 
 		},
 		{
 			"name": "tz.cloudcpp.com",
 			"domain": "https://tz.cloudcpp.com",
 			"port": 443,
-			"interval": 600,
+			"interval": 3600,
 			"callback": "https://yourSMSurl" 
 		},
 		{
 			"name": "3.0.2.1",
 			"domain": "https://3.0.2.1",
 			"port": 443,
-			"interval": 600,
+			"interval": 3600,
 			"callback": "https://yourSMSurl"
 		}
 	],
