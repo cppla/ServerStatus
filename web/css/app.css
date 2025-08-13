@@ -73,7 +73,7 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 
 /* buckets CU/CT/CM (simple version) */
 .buckets{display:flex;align-items:flex-end;gap:6px;min-width:110px}
-.bucket{position:relative;width:26px;height:42px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);border-radius:8px;padding:4px 4px 16px;box-sizing:border-box;display:flex;justify-content:flex-end}
+.bucket{position:relative;width:24px;height:28px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);border-radius:7px;padding:3px 3px 14px;box-sizing:border-box;display:flex;justify-content:flex-end}
 .bucket span{display:block;width:100%;background:var(--accent);border-radius:4px 4px 6px 6px;height:var(--h);align-self:flex-end;transition:height .8s cubic-bezier(.4,0,.2,1),background .3s}
 .bucket[data-lv=warn] span{background:var(--warn)}
 .bucket[data-lv=bad] span{background:var(--danger)}
@@ -119,6 +119,21 @@ table.data thead th:last-child, table.data tbody td:last-child { text-align:cent
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card.offline{opacity:.6;}
+.cards .card.high-load{border-color:rgba(239,68,68,.55);box-shadow:0 0 0 1px rgba(239,68,68,.4),0 4px 16px -4px rgba(239,68,68,.3);}
+table.data tbody tr.high-load{background:rgba(239,68,68,.10);}
+table.data tbody tr.high-load:hover{background:rgba(239,68,68,.18);}
+
+/* 详情进度条 */
+.row-bars{display:flex;gap:.6rem;align-items:stretch}
+.bar-wrap{flex:1;display:flex;flex-direction:column;gap:.25rem;min-width:0}
+.bar-label{display:flex;justify-content:space-between;font-size:11px;opacity:.85;font-family:ui-monospace,monospace;letter-spacing:.5px}
+.bar{position:relative;height:14px;border-radius:8px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);overflow:hidden}
+.bar span{position:absolute;inset:0;--p:0;background:linear-gradient(90deg,var(--accent),var(--accent-glow));width:calc(var(--p)*100%);transition:width .9s cubic-bezier(.4,0,.2,1),background .4s}
+.bar[data-warn] span{background:linear-gradient(90deg,var(--warn),#fbbf24)}
+.bar[data-bad] span{background:linear-gradient(90deg,var(--danger),#f87171)}
+.bar.io span{background:linear-gradient(90deg,#0284c7,#38bdf8)}
+.bar.io[data-warn] span{background:linear-gradient(90deg,var(--warn),#fbbf24)}
+.bar.io[data-bad] span{background:linear-gradient(90deg,var(--danger),#f87171)}
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
 .cards .card-title{font-weight:600;font-size:.95rem;}
 .cards .tag{font-size:.65rem;padding:.15rem .4rem;border-radius:4px;background:var(--border);letter-spacing:.5px;}
