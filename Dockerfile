@@ -1,5 +1,5 @@
 # The Dockerfile for build localhost source, not git repo
-FROM debian AS builder
+FROM debian:bookworm AS builder
 
 LABEL maintainer="cppla <https://cpp.la>"
 
