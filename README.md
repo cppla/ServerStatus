@@ -107,7 +107,7 @@ cd ServerStatus/server && make
 	"sslcerts": [
 		{
 			"name": "demo域名",
-			"domain": "https://demo.example.com/path",
+			"domain": "https://demo.example.com",
 			"port": 443,
 			"interval": 600,
 			"callback": "https://yourSMSurl"
