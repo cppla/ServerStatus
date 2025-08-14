@@ -261,7 +261,7 @@ function bindTheme(){
 bindTabs();
 bindTheme();
 fetchData();
-setInterval(fetchData, 4000);
+setInterval(fetchData, 1000);
 setInterval(updateTime, 60000);
 
 // 详情弹窗逻辑
