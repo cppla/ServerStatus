@@ -91,13 +91,13 @@ function renderServers(){
       <td>${s.type||'-'}</td>
       <td>${s.location||'-'}</td>
       <td>${s.uptime||'-'}</td>
-      <td>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</td>
+  <td>${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</td>
       <td>${monthIn} | ${monthOut}</td>
       <td>${netNow}</td>
       <td>${netTotal}</td>
-      <td>${online?`<div class="spark" data-key="${key}" data-metric="cpu" title="CPU ${s.cpu||0}%"></div>`:'-'}</td>
-      <td>${online?`<div class="spark" data-key="${key}" data-metric="mem" title="内存 ${memPct.toFixed(0)}%"></div>`:'-'}</td>
-      <td>${online?`<div class="spark" data-key="${key}" data-metric="hdd" title="硬盘 ${hddPct.toFixed(0)}%"></div>`:'-'}</td>
+  <td>${online?gaugeHTML('cpu', s.cpu||0):'-'}</td>
+  <td>${online?gaugeHTML('mem', memPct):'-'}</td>
+  <td>${online?gaugeHTML('hdd', hddPct):'-'}</td>
   <td>${pingBuckets}</td>
     </tr>`;
   });
@@ -112,8 +112,22 @@ function renderServers(){
     });
   });
 
-  drawSparks();
+  // 仪表盘无需 drawSparks
 }
+// 生成仪表盘 (圆形 conic-gradient)
+function gaugeHTML(type,val){
+  const pct = Math.max(0,Math.min(100,val));
+  const p = (pct/100).toFixed(3);
+  const warnAttr = pct>=90? 'data-bad' : (pct>=50? 'data-warn' : '');
+    return `<div class="gauge-half" data-type="${type}" ${warnAttr} style="--p:${p}" title="${labelOf(type)} ${pct.toFixed(0)}%">
+      <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <path class="track" d="M10 50 A40 40 0 0 1 90 50" />
+        <path class="arc" d="M10 50 A40 40 0 0 1 90 50" />
+      </svg>
+      <span>${pct.toFixed(0)}%</span>
+    </div>`;
+}
+function labelOf(t){ return t==='cpu'?'CPU': t==='mem'?'内存':'硬盘'; }
 function renderServersCards(){
   const wrap = document.getElementById('serversCards');
   if(!wrap) return;
@@ -239,7 +253,7 @@ function bindTheme(){
   const mql = window.matchMedia('(prefers-color-scheme: light)');
   const saved = localStorage.getItem('theme'); // 'light' | 'dark' | null (auto)
 
-  const apply = (isLight)=>{ document.body.classList.toggle('light', isLight); };
+  const apply = (isLight)=>{ document.body.classList.toggle('light', isLight); document.documentElement.classList.toggle('light', isLight); };
 
   if(!saved){
     // 自动跟随系统
@@ -287,9 +301,9 @@ function openDetail(i){
     <div style="display:flex;flex-direction:column;gap:.4rem;">
       <canvas id="latChart" height="150" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
       <div class="mono" style="font-size:11px;display:flex;gap:1rem;flex-wrap:wrap;">
-        <span style="color:#3b82f6">● 联通</span>
-        <span style="color:#10b981">● 电信</span>
-        <span style="color:#f59e0b">● 移动</span>
+        <span style="color:#3b82f6">● 联通 (<span id="lat-cu">${num(s.time_10010)}ms</span>)</span>
+        <span style="color:#10b981">● 电信 (<span id="lat-ct">${num(s.time_189)}ms</span>)</span>
+        <span style="color:#f59e0b">● 移动 (<span id="lat-cm">${num(s.time_10086)}ms</span>)</span>
         <span style="opacity:.6"> (~${S.hist[key]?S.hist[key].cu.length:0} 条)</span>
       </div>
     </div>`;
@@ -308,7 +322,6 @@ function openDetail(i){
   }
   function ioBar(label,bytesVal,role){ const peak=150*1000*1000; const pct=Math.min(100,(bytesVal/peak)*100); const lvl = bytesVal>100*1000*1000?'bad': bytesVal>50*1000*1000?'warn':''; return barHTML(label,pct, (bytes(bytesVal)+'/s'), role, true).replace('<div class="bar io"', `<div class="bar io" ${lvl?`data-${lvl}`:''}`); }
   box.innerHTML = `
-    <div class="kv"><span>位置</span><span class="mono">${s.location||'-'}</span></div>
     <div class="kv"><span>TCP/UDP/进/线</span><span class="mono" id="detail-proc">${procLine}</span></div>
     <div style="display:flex;flex-direction:column;gap:.35rem;">
       <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
@@ -356,6 +369,10 @@ function drawLatencyChart(key){
   const W = canvas.clientWidth; const H = canvas.height; canvas.width = W; // 适配宽度
   ctx.clearRect(0,0,W,H);
   const padL=40, padR=10, padT=10, padB=18;
+  const isLight = document.body.classList.contains('light');
+  const axisColor = isLight? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)';
+  const gridColor = isLight? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.10)';
+  const textColor = isLight? 'var(--text-dim)' : 'rgba(226,232,240,0.85)';
   const series = [ {arr:data.cu,color:'#3b82f6'}, {arr:data.ct,color:'#10b981'}, {arr:data.cm,color:'#f59e0b'} ];
   const allVals = series.flatMap(s=>s.arr);
   if(!allVals.length){ ctx.fillStyle='var(--text-dim)'; ctx.font='12px system-ui'; ctx.fillText('暂无数据', W/2-30, H/2); return; }
@@ -364,11 +381,11 @@ function drawLatencyChart(key){
   const range = Math.max(1, max-min);
   const n = Math.max(...series.map(s=>s.arr.length));
   const xStep = (W - padL - padR) / Math.max(1,n-1);
-  // 网格与轴
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+  // 网格与轴 (增强暗色对比)
+  ctx.strokeStyle=axisColor; ctx.lineWidth=1.1;
   ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
-  ctx.fillStyle='var(--text-dim)'; ctx.font='10px system-ui';
-  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y = padT + (H-padT-padB)*i/yMarks; const val = (max - range*i/yMarks).toFixed(0)+'ms'; ctx.fillText(val,4,y+3); ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+  ctx.fillStyle=textColor; ctx.font='10px system-ui';
+  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y = padT + (H-padT-padB)*i/yMarks; const val = (max - range*i/yMarks).toFixed(0)+'ms'; ctx.fillText(val,4,y+3); ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
   // 绘制线
   series.forEach(s=>{
     if(s.arr.length<2) return;
@@ -429,10 +446,14 @@ function drawLoadChart(key){
   const padL=38,padR=8,padT=8,padB=16;
   const max=Math.max(...all); const min=Math.min(...all); const range=Math.max(0.5,max-min);
   const n = Math.max(l1.length,l5.length,l15.length); const xStep=(W-padL-padR)/Math.max(1,n-1);
-  // 轴 & 网格
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
-  ctx.fillStyle='var(--text-dim)'; ctx.font='10px system-ui';
-  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y=padT+(H-padT-padB)*i/yMarks; const val=(max - range*i/yMarks).toFixed(2); ctx.fillText(val,4,y+3); ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+  const isLight = document.body.classList.contains('light');
+  const axisColor = isLight? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)';
+  const gridColor = isLight? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.10)';
+  const textColor = isLight? 'var(--text-dim)' : 'rgba(226,232,240,0.85)';
+  // 轴 & 网格 (增强暗色对比)
+  ctx.strokeStyle=axisColor; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
+  ctx.fillStyle=textColor; ctx.font='10px system-ui';
+  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y=padT+(H-padT-padB)*i/yMarks; const val=(max - range*i/yMarks).toFixed(2); ctx.fillText(val,4,y+3); ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
   const series=[{arr:l1,color:'#8b5cf6',fill:true},{arr:l5,color:'#10b981'},{arr:l15,color:'#f59e0b'}];
   // 面积先画 load1
   series.forEach(s=>{
@@ -469,6 +490,10 @@ function updateDetailMetrics(key){
   function updIO(role,val){ const wrap=document.querySelector(`#detailContent .bar-wrap[data-role="${role}"]`); if(!wrap) return; const peak=150*1000*1000; const pct=Math.min(100,(val/peak)*100); const bar=wrap.querySelector('.bar span'); if(bar) bar.style.setProperty('--p',(pct/100).toFixed(3)); const lbl=wrap.querySelector('.bar-label span:last-child'); if(lbl) lbl.textContent= bytes(val)+'/s'; const box=wrap.querySelector('.bar'); if(box){ box.removeAttribute('data-warn'); box.removeAttribute('data-bad'); if(val>100*1000*1000) box.setAttribute('data-bad',''); else if(val>50*1000*1000) box.setAttribute('data-warn',''); } }
   updIO('io-read', ioRead);
   updIO('io-write', ioWrite);
+  // 延迟动态刷新 (若存在)
+  const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
+  const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
+  const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
 }
 function startDetailAutoUpdate(){ stopDetailAutoUpdate(); S._detailTimer = setInterval(()=>{ if(S._openDetailKey) updateDetailMetrics(S._openDetailKey); }, 1000); }
 function stopDetailAutoUpdate(){ if(S._detailTimer){ clearInterval(S._detailTimer); S._detailTimer=null; } }

@@ -2,6 +2,7 @@
 body.light{--bg:#f6f7f9;--bg-alt:#ffffff;--border:#e2e8f0;--text:#1e293b;--text-dim:#64748b;--accent:#2563eb;--accent-glow:#3b82f6;--shadow:0 4px 20px -4px rgba(0,0,0,.08);--logo-start:#2563eb;--logo-end:#1d4ed8;--logo-accent-grad-start:#1d4ed8;--logo-accent-grad-end:#60a5fa}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;padding:0;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+html.light{background:var(--bg)}
 body,button{font-size:14px;line-height:1.35}
 a{color:var(--accent);text-decoration:none}
 a:hover{color:var(--accent-glow)}
@@ -27,8 +28,14 @@ table.data th,table.data td{font-variant-numeric:tabular-nums}
 table.data thead th:nth-child(7),table.data tbody td:nth-child(7),
 table.data thead th:nth-child(8),table.data tbody td:nth-child(8),
 table.data thead th:nth-child(9),table.data tbody td:nth-child(9){
-	width:170px;min-width:170px;max-width:170px;/* 基于最大示例 1111.12GB|1123.12GB 预留空间 */
+	width:132px;min-width:132px;max-width:132px;/* 适配示例 111.1GB|222.2GB */
 	font-variant-numeric:tabular-nums;letter-spacing:.3px;
+}
+/* CPU / 内存 / 硬盘 列：居中 + 固定宽度 与仪表盘一致 */
+table.data thead th:nth-child(10),table.data tbody td:nth-child(10),
+table.data thead th:nth-child(11),table.data tbody td:nth-child(11),
+table.data thead th:nth-child(12),table.data tbody td:nth-child(12){
+	width:70px;min-width:70px;max-width:70px;text-align:center;padding-left:.25rem;padding-right:.25rem;
 }
 table.data tbody tr:last-child td{border-bottom:none}
 table.data tbody tr:hover{background:rgba(255,255,255,.04)}
@@ -63,6 +70,30 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 /* spark lines */
 .spark{width:82px;height:28px;display:flex;align-items:center;justify-content:center}
 .spark canvas{width:100%;height:100%;display:block}
+/* 仪表盘样式 (替换 spark) */
+/* 全圆旧样式（保留以便回退） */
+.gauge{--p:0;--col:var(--accent);width:74px;height:74px;position:relative;display:grid;place-items:center;font-size:11px;font-family:ui-monospace,monospace;font-weight:600;color:var(--text);}
+.gauge:before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--col) calc(var(--p)*1turn),rgba(255,255,255,0.06) 0);mask:radial-gradient(circle at 50% 50%,transparent 58%,#000 59%);-webkit-mask:radial-gradient(circle at 50% 50%,transparent 58%,#000 59%);border:1px solid var(--border);box-shadow:0 2px 6px -2px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05);} 
+.gauge span{position:relative;z-index:1}
+
+/* 半圆仪表盘 */
+.gauge-half{--p:0;width:60px;height:34px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-family:ui-monospace,monospace;font-size:10px;font-weight:600;gap:0;color:var(--text);}
+.gauge-half svg{width:100%;height:28px;overflow:visible;}
+.gauge-half path{fill:none;stroke-linecap:round;}
+/* 基础颜色 (暗色/亮色自动过渡) */
+.gauge-half path.track{stroke:color-mix(in srgb,var(--text-dim) 18%,transparent);stroke-width:6;}
+.gauge-half path.arc{stroke:var(--gauge-base,#3b82f6);stroke-width:8;stroke-dasharray:126;stroke-dashoffset:calc(126*(1 - var(--p)));transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1),stroke .35s;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
+.gauge-half[data-type=mem] path.arc{--gauge-base:#10b981}
+.gauge-half[data-type=hdd] path.arc{--gauge-base:#f59e0b}
+/* 阈值颜色：>=50% 警告黄，>=90% 危险红 */
+.gauge-half[data-warn] path.arc{stroke:var(--warn)}
+.gauge-half[data-bad] path.arc{stroke:var(--danger)}
+/* 指针：以中心(50,50)为原点旋转；半圆角度范围 180deg -> 从 180deg (左) 到 0deg(右) */
+.gauge-half span{line-height:1;position:relative;top:-6px;font-size:12px;}
+/* 亮色模式细化对比度 */
+body.light .gauge-half path.track{stroke:color-mix(in srgb,var(--text-dim) 28%,transparent)}
+body.light .gauge-half path.arc{filter:none}
+body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text-dim))}
 
 /* status pill */
 .pill{display:inline-block;padding:2px 12px;font-size:12px;font-weight:600;border-radius:999px;letter-spacing:.5px;min-width:54px;text-align:center;line-height:1.3;border:0;box-shadow:0 2px 4px -1px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04);transition:var(--trans);color:#fff}
@@ -72,8 +103,8 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .pill.off:hover{filter:brightness(1.1)}
 
 /* buckets CU/CT/CM (simple version) */
-.buckets{display:flex;align-items:flex-end;gap:6px;min-width:110px}
-.bucket{position:relative;width:24px;height:28px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);border-radius:7px;padding:3px 3px 14px;box-sizing:border-box;display:flex;justify-content:flex-end}
+.buckets{display:flex;align-items:flex-end;gap:8px;min-width:140px}
+.bucket{position:relative;width:26px;height:34px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);border-radius:8px;padding:4px 4px 16px;box-sizing:border-box;display:flex;justify-content:flex-end}
 .bucket span{display:block;width:100%;background:var(--accent);border-radius:4px 4px 6px 6px;height:var(--h);align-self:flex-end;transition:height .8s cubic-bezier(.4,0,.2,1),background .3s}
 .bucket[data-lv=warn] span{background:var(--warn)}
 .bucket[data-lv=bad] span{background:var(--danger)}
@@ -82,6 +113,10 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 
 /* 居中联通电信移动列 */
 table.data thead th:last-child, table.data tbody td:last-child { text-align:center; }
+/* 放大第13列宽度以容纳更宽水桶 */
+table.data thead th:nth-child(13),table.data tbody td:nth-child(13){
+	width:170px;min-width:170px;max-width:170px;
+}
 .buckets{justify-content:center}
 
 /* 响应式隐藏非关键列，保持可读性 */
