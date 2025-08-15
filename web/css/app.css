@@ -222,6 +222,16 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 /* 4. 取消“联通|电信|移动”列固定宽度 */
 #serversTable thead th:nth-child(13),#serversTable tbody td:nth-child(13){width:auto!important;min-width:0!important;}
 /* 5. 如需稍微限制仪表盘相关列最小可读宽度，可设定一个较小下限 (可选) -- 暂不设置，完全交由自动布局 */
+
+/* === 新增：为“月流量 / 当前网络 / 总流量”三列设置最小宽度，防止内容被压缩换行或挤压 === */
+/* 目标最小宽度按示例 "111.1GB|111.1GB" 设计（13 个字符左右），取 16ch 留余量 */
+#serversTable thead th:nth-child(2),#serversTable tbody td:nth-child(2),
+#serversTable thead th:nth-child(8),#serversTable tbody td:nth-child(8),
+#serversTable thead th:nth-child(9),#serversTable tbody td:nth-child(9){
+	min-width:22ch !important; /* 保留自动宽度，但不小于此值 */
+	text-align:center;
+	font-variant-numeric:tabular-nums;
+}
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card.offline{opacity:.6;}
 .cards .card.high-load{border-color:rgba(239,68,68,.55);box-shadow:0 0 0 1px rgba(239,68,68,.4),0 4px 16px -4px rgba(239,68,68,.3);}
