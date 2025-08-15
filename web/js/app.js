@@ -9,6 +9,22 @@ const els = {
 };
 
 function bytes(v){ if(v===0) return '0B'; if(!v) return '-'; const k=1000; const u=['B','KB','MB','GB','TB','PB']; const i=Math.floor(Math.log(v)/Math.log(k)); return (v/Math.pow(k,i)).toFixed(i?1:0)+u[i]; }
+// 通用进位：从 KB/MB 起始单位自动进位到 KB/MB/GB/TB，与 bytes() 风格一致 (1000 进位)
+function humanAuto(v,startIdx=0){ if(v==null||isNaN(v)) return '-'; const units=['KB','MB','GB','TB','PB']; let val=v; let i=startIdx; while(val>=1000 && i<units.length-1){ val/=1000; i++; } return (i>startIdx? val.toFixed(1): val.toFixed(0))+units[i]; }
+// 最小单位 MB：
+function humanMinMBFromKB(kb){ if(kb==null||isNaN(kb)) return '-'; // 输入单位: KB
+  let mb = kb/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
+  const out = mb>=100? mb.toFixed(0): mb.toFixed(1); return out+units[i]; }
+function humanMinMBFromMB(mbVal){ if(mbVal==null||isNaN(mbVal)) return '-'; // 输入单位: MB
+  let v=mbVal; const units=['MB','GB','TB','PB']; let i=0; while(v>=1000 && i<units.length-1){ v/=1000;i++; }
+  const out = v>=100? v.toFixed(0): v.toFixed(1); return out+units[i]; }
+function humanMinMBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // 输入单位: B
+  let mb = bytes/1000/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
+  const out = mb>=100? mb.toFixed(0): mb.toFixed(1); return out+units[i]; }
+function humanRateMinMBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; if(bytes<=0) return '0.0MB'; return humanMinMBFromB(bytes); }
+function humanMinKBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // 输入单位: B; 最小单位 KB
+  let kb = bytes/1000; const units=['KB','MB','GB','TB','PB']; let i=0; while(kb>=1000 && i<units.length-1){ kb/=1000; i++; }
+  const out = kb>=100? kb.toFixed(0): kb.toFixed(1); return out+units[i]; }
 function pct(v){ return (v||0).toFixed(0)+'%'; }
 function clsBy(v){ return v>=90?'danger':v>=80?'warn':'ok'; }
 function humanAgo(ts){ if(!ts) return '-'; const s=Math.floor((Date.now()/1000 - ts)); const m=Math.floor(s/60); return m>0? m+' 分钟前':'几秒前'; }
@@ -75,15 +91,15 @@ function renderServers(){
     const cpuCls = clsBy(s.cpu);
     const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0; const memCls = clsBy(memPct);
     const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0; const hddCls = clsBy(hddPct);
-  const monthInBytes = (s.network_in - s.last_network_in) || 0;
+  const monthInBytes = (s.network_in - s.last_network_in) || 0; // 原始: B
   const monthOutBytes = (s.network_out - s.last_network_out) || 0;
-  const monthIn = bytes(monthInBytes);
-  const monthOut = bytes(monthOutBytes);
+  const monthIn = humanMinMBFromB(monthInBytes); // 最小单位 MB
+  const monthOut = humanMinMBFromB(monthOutBytes);
   const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
   const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
   const trafficCls = heavy ? 'caps-traffic duo heavy' : 'caps-traffic duo normal';
-    const netNow = bytes(s.network_rx) + ' | ' + bytes(s.network_tx);
-    const netTotal = bytes(s.network_in)+' | '+bytes(s.network_out);
+    const netNow = humanMinKBFromB(s.network_rx) + ' | ' + humanMinKBFromB(s.network_tx); // 最小单位 KB
+    const netTotal = humanMinMBFromB(s.network_in)+' | '+humanMinMBFromB(s.network_out); // 最小单位 MB
   const p1 = (s.ping_10010||0); const p2 = (s.ping_189||0); const p3 = (s.ping_10086||0);
   function bucket(p){ const v = Math.max(0, Math.min(100, p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
   const pingBuckets = `<div class=\"buckets\" title=\"CU/CT/CM\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
@@ -146,15 +162,15 @@ function renderServersCards(){
     const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
     const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
   // 月流量（移动端）并应用 500GB 阈值配色逻辑
-  const monthInBytes = (s.network_in - s.last_network_in) || 0;
+  const monthInBytes = (s.network_in - s.last_network_in) || 0; // B
   const monthOutBytes = (s.network_out - s.last_network_out) || 0;
-  const monthIn = bytes(monthInBytes);
-  const monthOut = bytes(monthOutBytes);
+  const monthIn = humanMinMBFromB(monthInBytes);
+  const monthOut = humanMinMBFromB(monthOutBytes);
   const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
   const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
   const trafficCls = heavy ? 'caps-traffic duo heavy sm' : 'caps-traffic duo normal sm';
-    const netNow = bytes(s.network_rx)+' | '+bytes(s.network_tx);
-    const netTotal = bytes(s.network_in)+' | '+bytes(s.network_out);
+    const netNow = humanMinKBFromB(s.network_rx)+' | '+humanMinKBFromB(s.network_tx);
+    const netTotal = humanMinMBFromB(s.network_in)+' | '+humanMinMBFromB(s.network_out);
     const p1 = (s.ping_10010||0); const p2=(s.ping_189||0); const p3=(s.ping_10086||0);
     function bucket(p){ const v=Math.max(0,Math.min(100,p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
@@ -328,21 +344,32 @@ function openDetail(i){
 
   // 旧进度条函数 barHTML/ioBar 已弃用
   // 资源行（移除百分比显示，仅显示 已用 / 总量）
-  const memLine = s.memory_total? bytes(s.memory_used)+' / '+bytes(s.memory_total):'-';
-  const swapLine = s.swap_total? bytes(s.swap_used)+' / '+bytes(s.swap_total):'-';
-  const diskLine = s.hdd_total? bytes(s.hdd_used)+' / '+bytes(s.hdd_total):'-';
-  const ioReadLine = ioRead? bytes(ioRead)+'/s':'-';
-  const ioWriteLine = ioWrite? bytes(ioWrite)+'/s':'-';
-  // 阈值着色 ( >80% / >100MB/s )
-  const memColor = memPct>80? ' style="color:var(--danger)"':'';
+  // 资源行（单独拆分 span 便于后续动态刷新）
+  // 单位来源：memory/swap: KB; hdd: MB; io: B (速率) -> 统一最小单位显示为 MB，并向上进位 (MB/GB/TB)
+  const memUsed = s.memory_total!=null? humanMinMBFromKB(s.memory_used||0):'-';
+  const memTotal = s.memory_total!=null? humanMinMBFromKB(s.memory_total):'-';
+  const swapUsed = s.swap_total!=null? humanMinMBFromKB(s.swap_used||0):'-';
+  const swapTotal = s.swap_total!=null? humanMinMBFromKB(s.swap_total):'-';
+  const hddUsed = s.hdd_total!=null? humanMinMBFromMB(s.hdd_used||0):'-';
+  const hddTotal = s.hdd_total!=null? humanMinMBFromMB(s.hdd_total):'-';
+  const ioReadLine = (ioRead!=null)? humanRateMinMBFromB(ioRead):'-';
+  const ioWriteLine = (ioWrite!=null)? humanRateMinMBFromB(ioWrite):'-';
+  const memColor = memPct>80? ' style="color:var(--danger)"':''; // 已用/总量显示为单一块，所以对已用着色
   const swapColor = swapPct>80? ' style="color:var(--danger)"':'';
   const hddColor = hddPct>80? ' style="color:var(--danger)"':'';
+  // IO 阈值：>100MB (原始单位 B) -> >100*1000*1000 B
   const readColor = ioRead>100*1000*1000? ' style="color:var(--danger)"':'';
   const writeColor = ioWrite>100*1000*1000? ' style="color:var(--danger)"':'';
   box.innerHTML = `
     <div class="kv"><span>TCP/UDP/进/线</span><span class="mono" id="detail-proc">${procLine}</span></div>
-  <div class="kv"><span>内存 / 虚存</span><span class="mono"><span${memColor}>${memLine}</span> | <span${swapColor}>${swapLine}</span></span></div>
-  <div class="kv"><span>硬盘 / 读写</span><span class="mono"><span${hddColor}>${diskLine}</span> | 读 <span${readColor}>${ioReadLine}</span> / 写 <span${writeColor}>${ioWriteLine}</span></span></div>
+  <div class="kv"><span>内存 / 虚存</span><span class="mono">
+    <span id="mem-line"${memColor}><span id="mem-used">${memUsed}</span> / <span id="mem-total">${memTotal}</span></span>
+    | <span id="swap-line"${swapColor}><span id="swap-used">${swapUsed}</span> / <span id="swap-total">${swapTotal}</span></span>
+  </span></div>
+  <div class="kv"><span>硬盘 / 读写</span><span class="mono">
+    <span id="disk-line"${hddColor}><span id="hdd-used">${hddUsed}</span> / <span id="hdd-total">${hddTotal}</span></span>
+    | <span id="io-read"${readColor}>${ioReadLine}</span> / <span id="io-write"${writeColor}>${ioWriteLine}</span>
+  </span></div>
     <div style="display:flex;flex-direction:column;gap:.35rem;">
       <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
       <div class="mono" style="font-size:11px;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;opacity:.8;">
@@ -456,7 +483,14 @@ function drawLoadChart(key){
   if(l1.length<2){ ctx.fillStyle='var(--text-dim)'; ctx.font='12px system-ui'; ctx.fillText('暂无负载数据', W/2-42, H/2); return; }
   const all = [...l1,...l5,...l15];
   const padL=38,padR=8,padT=8,padB=16;
-  const max=Math.max(...all); const min=Math.min(...all); const range=Math.max(0.5,max-min);
+  // 修正：纵轴下限不小于 0，且当真实 range <0.5 时向上扩展 max 而不是向下产生负刻度
+  const rawMax = all.length? Math.max(...all):0;
+  const rawMin = all.length? Math.min(...all):0;
+  const min = 0; // 我们只显示 >=0
+  let max = Math.max(rawMax,0);
+  let range = max - min;
+  const MIN_RANGE = 0.5;
+  if(range < MIN_RANGE){ max = MIN_RANGE; range = MIN_RANGE; }
   const n = Math.max(l1.length,l5.length,l15.length); const xStep=(W-padL-padR)/Math.max(1,n-1);
   const isLight = document.body.classList.contains('light');
   const axisColor = isLight? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)';
@@ -465,13 +499,19 @@ function drawLoadChart(key){
   // 轴 & 网格 (增强暗色对比)
   ctx.strokeStyle=axisColor; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
   ctx.fillStyle=textColor; ctx.font='10px system-ui';
-  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y=padT+(H-padT-padB)*i/yMarks; const val=(max - range*i/yMarks).toFixed(2); ctx.fillText(val,4,y+3); ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+  const yMarks=4; for(let i=0;i<=yMarks;i++){
+    const y=padT+(H-padT-padB)*i/yMarks;
+    const val=(max - range*i/yMarks); // top -> bottom
+    const labelVal = (Math.abs(val) < 0.005 ? 0 : val).toFixed(2);
+    ctx.fillText(labelVal,4,y+3);
+    ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  }
   const series=[{arr:l1,color:'#8b5cf6',fill:true},{arr:l5,color:'#10b981'},{arr:l15,color:'#f59e0b'}];
   // 面积先画 load1
   series.forEach(s=>{
     if(s.arr.length<2) return;
     ctx.beginPath(); ctx.lineWidth=1.5; ctx.strokeStyle=s.color;
-    s.arr.forEach((v,i)=>{ const x=padL+xStep*i; const y=padT+(H-padT-padB)*(1-(v-min)/range); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  s.arr.forEach((v,i)=>{ const vClamped = Math.max(0, v); const x=padL+xStep*i; const y=padT+(H-padT-padB)*(1-(vClamped-min)/range); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
     ctx.stroke();
     if(s.fill){
       const lastX = padL + xStep*(s.arr.length-1);
@@ -497,6 +537,30 @@ function updateDetailMetrics(key){
   const cuE1=document.getElementById('lat-cu'); if(cuE1) cuE1.textContent = num(s.time_10010)+'ms';
   const ctE1=document.getElementById('lat-ct'); if(ctE1) ctE1.textContent = num(s.time_189)+'ms';
   const cmE1=document.getElementById('lat-cm'); if(cmE1) cmE1.textContent = num(s.time_10086)+'ms';
+  // 资源动态刷新
+  const memLineEl = document.getElementById('mem-line');
+  if(memLineEl){
+    const pct = s.memory_total? (s.memory_used/s.memory_total*100):0;
+  document.getElementById('mem-used').textContent = s.memory_total!=null? humanMinMBFromKB(s.memory_used||0):'-';
+  document.getElementById('mem-total').textContent = s.memory_total!=null? humanMinMBFromKB(s.memory_total):'-';
+    if(pct>80) memLineEl.style.color='var(--danger)'; else memLineEl.style.color='';
+  }
+  const swapLineEl = document.getElementById('swap-line');
+  if(swapLineEl){
+    const pct = s.swap_total? (s.swap_used/s.swap_total*100):0;
+  document.getElementById('swap-used').textContent = s.swap_total!=null? humanMinMBFromKB(s.swap_used||0):'-';
+  document.getElementById('swap-total').textContent = s.swap_total!=null? humanMinMBFromKB(s.swap_total):'-';
+    if(pct>80) swapLineEl.style.color='var(--danger)'; else swapLineEl.style.color='';
+  }
+  const diskLineEl = document.getElementById('disk-line');
+  if(diskLineEl){
+    const pct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
+  document.getElementById('hdd-used').textContent = s.hdd_total!=null? humanMinMBFromMB(s.hdd_used||0):'-';
+  document.getElementById('hdd-total').textContent = s.hdd_total!=null? humanMinMBFromMB(s.hdd_total):'-';
+    if(pct>80) diskLineEl.style.color='var(--danger)'; else diskLineEl.style.color='';
+  }
+  const ioReadEl = document.getElementById('io-read'); if(ioReadEl){ const v = (typeof s.io_read==='number')? s.io_read:0; ioReadEl.textContent = humanRateMinMBFromB(v); ioReadEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
+  const ioWriteEl = document.getElementById('io-write'); if(ioWriteEl){ const v = (typeof s.io_write==='number')? s.io_write:0; ioWriteEl.textContent = humanRateMinMBFromB(v); ioWriteEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
 }
 function startDetailAutoUpdate(){ stopDetailAutoUpdate(); S._detailTimer = setInterval(()=>{ if(S._openDetailKey) updateDetailMetrics(S._openDetailKey); }, 1000); }
 function stopDetailAutoUpdate(){ if(S._detailTimer){ clearInterval(S._detailTimer); S._detailTimer=null; } }
