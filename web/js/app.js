@@ -8,9 +8,7 @@ const els = {
   sslBody: ()=>document.getElementById('sslBody')
 };
 
-function bytes(v){ if(v===0) return '0B'; if(!v) return '-'; const k=1000; const u=['B','KB','MB','GB','TB','PB']; const i=Math.floor(Math.log(v)/Math.log(k)); return (v/Math.pow(k,i)).toFixed(i?1:0)+u[i]; }
-// 通用进位：从 KB/MB 起始单位自动进位到 KB/MB/GB/TB，与 bytes() 风格一致 (1000 进位)
-function humanAuto(v,startIdx=0){ if(v==null||isNaN(v)) return '-'; const units=['KB','MB','GB','TB','PB']; let val=v; let i=startIdx; while(val>=1000 && i<units.length-1){ val/=1000; i++; } return (i>startIdx? val.toFixed(1): val.toFixed(0))+units[i]; }
+// (清理) 已移除 bytes / humanAuto 等未使用的通用进位函数
 // 最小单位 MB：
 function humanMinMBFromKB(kb){ if(kb==null||isNaN(kb)) return '-'; // 输入单位: KB
   let mb = kb/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
@@ -25,8 +23,7 @@ function humanRateMinMBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; i
 function humanMinKBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // 输入单位: B; 最小单位 KB
   let kb = bytes/1000; const units=['KB','MB','GB','TB','PB']; let i=0; while(kb>=1000 && i<units.length-1){ kb/=1000; i++; }
   const out = kb>=100? kb.toFixed(0): kb.toFixed(1); return out+units[i]; }
-function pct(v){ return (v||0).toFixed(0)+'%'; }
-function clsBy(v){ return v>=90?'danger':v>=80?'warn':'ok'; }
+// (清理) pct / clsBy 已不再使用
 function humanAgo(ts){ if(!ts) return '-'; const s=Math.floor((Date.now()/1000 - ts)); const m=Math.floor(s/60); return m>0? m+' 分钟前':'几秒前'; }
 function num(v){ return (typeof v==='number' && !isNaN(v)) ? v : '-'; }
 
@@ -88,9 +85,8 @@ function renderServers(){
     const online = s.online4||s.online6;
   const proto = online ? (s.online4 && s.online6? '双栈': s.online4? 'IPv4':'IPv6') : '离线';
   const statusPill = online ? `<span class="pill on">${proto}</span>` : `<span class="pill off">${proto}</span>`;
-    const cpuCls = clsBy(s.cpu);
-    const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0; const memCls = clsBy(memPct);
-    const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0; const hddCls = clsBy(hddPct);
+  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
+  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
   const monthInBytes = (s.network_in - s.last_network_in) || 0; // 原始: B
   const monthOutBytes = (s.network_out - s.last_network_out) || 0;
   const monthIn = humanMinMBFromB(monthInBytes); // 最小单位 MB
@@ -133,7 +129,7 @@ function renderServers(){
     });
   });
 
-  // 仪表盘无需 drawSparks
+  // 仪表盘无需历史 spark 小图
 }
 // 生成仪表盘 (圆形 conic-gradient)
 function gaugeHTML(type,val){
@@ -159,8 +155,8 @@ function renderServersCards(){
     const online = s.online4||s.online6;
     const proto = online ? (s.online4 && s.online6? '双栈': s.online4? 'IPv4':'IPv6') : '离线';
     const pill = `<span class="status-pill ${online?'on':'off'}">${proto}</span>`;
-    const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-    const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
+  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
+  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
   // 月流量（移动端）并应用 500GB 阈值配色逻辑
   const monthInBytes = (s.network_in - s.last_network_in) || 0; // B
   const monthOutBytes = (s.network_out - s.last_network_out) || 0;
@@ -444,32 +440,7 @@ window.addEventListener('resize', ()=>{
   renderSSLCards();
 });
 
-// 绘制小型折线 (sparklines)
-function drawSparks(){
-  const els = document.querySelectorAll('.spark');
-  els.forEach(div=>{
-    // 若已有canvas跳过重建
-    let canvas = div.querySelector('canvas');
-    if(!canvas){ canvas = document.createElement('canvas'); div.appendChild(canvas); }
-    const key = div.getAttribute('data-key');
-    const metric = div.getAttribute('data-metric');
-    const hist = (S.metricHist[key] && S.metricHist[key][metric])? S.metricHist[key][metric]:[];
-    const W = 80, H = 26; canvas.width=W; canvas.height=H; const ctx=canvas.getContext('2d');
-    ctx.clearRect(0,0,W,H);
-    div.classList.add('spark-ready');
-    if(hist.length<2){ ctx.fillStyle='var(--text-dim)'; ctx.font='10px system-ui'; ctx.fillText('-', W/2-3, H/2+3); return; }
-  // 硬盘与 CPU/内存保持一致的折线显示（去掉低波动迷你条特殊样式）
-    const max = Math.max(...hist); const min = Math.min(...hist); const range = Math.max(1,max-min);
-    const step = W/(hist.length-1);
-    // 线颜色
-    let color = '#3b82f6'; if(metric==='mem') color='#10b981'; else if(metric==='hdd') color='#f59e0b';
-    ctx.strokeStyle=color; ctx.lineWidth=1.3; ctx.beginPath();
-    hist.forEach((v,i)=>{ const x=i*step; const y=H - ( (v-min)/range )* (H-4) -2; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
-    ctx.stroke();
-    // 当前值点
-    const last = hist[hist.length-1]; const lx = W-1; const ly = H - ((last-min)/range)*(H-4)-2; ctx.fillStyle=color; ctx.beginPath(); ctx.arc(lx,ly,2,0,Math.PI*2); ctx.fill();
-  });
-}
+// (清理) drawSparks 已移除
 
 // 负载折线图 (load1 历史)
 function drawLoadChart(key){
