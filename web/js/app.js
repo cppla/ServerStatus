@@ -75,9 +75,14 @@ function renderServers(){
     const cpuCls = clsBy(s.cpu);
     const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0; const memCls = clsBy(memPct);
     const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0; const hddCls = clsBy(hddPct);
-    const monthIn = bytes(s.network_in - s.last_network_in);
-    const monthOut = bytes(s.network_out - s.last_network_out);
-    const netNow = bytes(s.network_rx)+' | '+bytes(s.network_tx);
+  const monthInBytes = (s.network_in - s.last_network_in) || 0;
+  const monthOutBytes = (s.network_out - s.last_network_out) || 0;
+  const monthIn = bytes(monthInBytes);
+  const monthOut = bytes(monthOutBytes);
+  const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
+  const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
+  const trafficCls = heavy ? 'caps-traffic duo heavy' : 'caps-traffic duo normal';
+    const netNow = bytes(s.network_rx) + ' | ' + bytes(s.network_tx);
     const netTotal = bytes(s.network_in)+' | '+bytes(s.network_out);
   const p1 = (s.ping_10010||0); const p2 = (s.ping_189||0); const p3 = (s.ping_10086||0);
   function bucket(p){ const v = Math.max(0, Math.min(100, p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
@@ -87,12 +92,12 @@ function renderServers(){
     const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
   html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server${highLoad?' high-load':''}" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
   <td>${statusPill}</td>
+  <td><span class="${trafficCls}" title="本月下行 | 上行 (≥500GB 触发红黄)"><span class="half in">${monthIn}</span><span class="half out">${monthOut}</span></span></td>
       <td>${s.name||'-'}</td>
       <td>${s.type||'-'}</td>
       <td>${s.location||'-'}</td>
       <td>${s.uptime||'-'}</td>
   <td>${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</td>
-      <td>${monthIn} | ${monthOut}</td>
       <td>${netNow}</td>
       <td>${netTotal}</td>
   <td>${online?gaugeHTML('cpu', s.cpu||0):'-'}</td>
@@ -140,8 +145,14 @@ function renderServersCards(){
     const pill = `<span class="status-pill ${online?'on':'off'}">${proto}</span>`;
     const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
     const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-    const monthIn = bytes(s.network_in - s.last_network_in);
-    const monthOut = bytes(s.network_out - s.last_network_out);
+  // 月流量（移动端）并应用 500GB 阈值配色逻辑
+  const monthInBytes = (s.network_in - s.last_network_in) || 0;
+  const monthOutBytes = (s.network_out - s.last_network_out) || 0;
+  const monthIn = bytes(monthInBytes);
+  const monthOut = bytes(monthOutBytes);
+  const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
+  const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
+  const trafficCls = heavy ? 'caps-traffic duo heavy sm' : 'caps-traffic duo normal sm';
     const netNow = bytes(s.network_rx)+' | '+bytes(s.network_tx);
     const netTotal = bytes(s.network_in)+' | '+bytes(s.network_out);
     const p1 = (s.ping_10010||0); const p2=(s.ping_189||0); const p3=(s.ping_10086||0);
@@ -149,7 +160,7 @@ function renderServersCards(){
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
     const key = s.name || s.location || 'node';
   const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span>${monthIn}/${monthOut}</span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
+  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
   });
   wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
   wrap.querySelectorAll('.card').forEach(card=>{
@@ -321,8 +332,22 @@ function openDetail(i){
     return `<div class="bar-wrap" data-role="${role}"><div class="bar-label"><span>${label}</span><span>${text}</span></div><div class="bar${ioCls}" ${lvl?`data-${lvl}`:''}><span style="--p:${(valPct/100).toFixed(3)}"></span></div></div>`;
   }
   function ioBar(label,bytesVal,role){ const peak=150*1000*1000; const pct=Math.min(100,(bytesVal/peak)*100); const lvl = bytesVal>100*1000*1000?'bad': bytesVal>50*1000*1000?'warn':''; return barHTML(label,pct, (bytes(bytesVal)+'/s'), role, true).replace('<div class="bar io"', `<div class="bar io" ${lvl?`data-${lvl}`:''}`); }
+  // 资源行（移除百分比显示，仅显示 已用 / 总量）
+  const memLine = s.memory_total? bytes(s.memory_used)+' / '+bytes(s.memory_total):'-';
+  const swapLine = s.swap_total? bytes(s.swap_used)+' / '+bytes(s.swap_total):'-';
+  const diskLine = s.hdd_total? bytes(s.hdd_used)+' / '+bytes(s.hdd_total):'-';
+  const ioReadLine = ioRead? bytes(ioRead)+'/s':'-';
+  const ioWriteLine = ioWrite? bytes(ioWrite)+'/s':'-';
+  // 阈值着色 ( >80% / >100MB/s )
+  const memColor = memPct>80? ' style="color:var(--danger)"':'';
+  const swapColor = swapPct>80? ' style="color:var(--danger)"':'';
+  const hddColor = hddPct>80? ' style="color:var(--danger)"':'';
+  const readColor = ioRead>100*1000*1000? ' style="color:var(--danger)"':'';
+  const writeColor = ioWrite>100*1000*1000? ' style="color:var(--danger)"':'';
   box.innerHTML = `
     <div class="kv"><span>TCP/UDP/进/线</span><span class="mono" id="detail-proc">${procLine}</span></div>
+  <div class="kv"><span>内存 / 虚存</span><span class="mono"><span${memColor}>${memLine}</span> | <span${swapColor}>${swapLine}</span></span></div>
+  <div class="kv"><span>硬盘 / 读写</span><span class="mono"><span${hddColor}>${diskLine}</span> | 读 <span${readColor}>${ioReadLine}</span> / 写 <span${writeColor}>${ioWriteLine}</span></span></div>
     <div style="display:flex;flex-direction:column;gap:.35rem;">
       <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
       <div class="mono" style="font-size:11px;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;opacity:.8;">
@@ -332,15 +357,7 @@ function openDetail(i){
         <span style="opacity:.6">(~${(S.loadHist[key]?S.loadHist[key].l1.length:0)} 条)</span>
       </div>
     </div>
-    <div class="row-bars" style="margin-top:.25rem;">
-      ${offline?'<div class="bar-wrap" data-role="mem"><div class="bar-label"><span>内存</span><span>-</span></div><div class="bar"><span style="--p:0"></span></div></div>':barHTML('内存', memPct, memPct.toFixed(1)+'%','mem')}
-      ${offline?'<div class="bar-wrap" data-role="swap"><div class="bar-label"><span>虚存</span><span>-</span></div><div class="bar"><span style="--p:0"></span></div></div>':barHTML('虚存', swapPct, s.swap_total? swapPct.toFixed(1)+'%':'-','swap')}
-    </div>
-    <div class="row-bars" style="margin-top:.4rem;">
-      ${offline?'<div class="bar-wrap" data-role="disk"><div class="bar-label"><span>硬盘</span><span>-</span></div><div class="bar"><span style="--p:0"></span></div></div>':barHTML('硬盘', hddPct, hddPct.toFixed(1)+'%','disk')}
-      ${offline?'<div class="bar-wrap" data-role="io-read"><div class="bar-label"><span>读速</span><span>-</span></div><div class="bar io"><span style="--p:0"></span></div></div>':ioBar('读速', ioRead,'io-read')}
-      ${offline?'<div class="bar-wrap" data-role="io-write"><div class="bar-label"><span>写速</span><span>-</span></div><div class="bar io"><span style="--p:0"></span></div></div>':ioBar('写速', ioWrite,'io-write')}
-    </div>
+  <!-- 进度条移除：读/写/虚存以文本形式显示于上方合并行 -->
     ${latencyBlock}
   `;
   modal.style.display='flex';
@@ -484,9 +501,7 @@ function updateDetailMetrics(key){
   const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
   const procEl = document.getElementById('detail-proc'); if(procEl) procEl.textContent = procLine;
   function upd(role,pct,text){ const wrap=document.querySelector(`#detailContent .bar-wrap[data-role="${role}"]`); if(!wrap) return; const valSpan=wrap.querySelector('.bar-label span:last-child'); if(valSpan) valSpan.textContent=text; const bar=wrap.querySelector('.bar span'); if(bar) bar.style.setProperty('--p',(pct/100).toFixed(3)); const box=wrap.querySelector('.bar'); if(box){ box.removeAttribute('data-warn'); box.removeAttribute('data-bad'); if(pct>=90) box.setAttribute('data-bad',''); else if(pct>=80) box.setAttribute('data-warn',''); } }
-  upd('mem', memPct, memPct.toFixed(1)+'%');
   if(document.querySelector('.bar-wrap[data-role="swap"]')) upd('swap', swapPct, s.swap_total? swapPct.toFixed(1)+'%':'-');
-  upd('disk', hddPct, hddPct.toFixed(1)+'%');
   function updIO(role,val){ const wrap=document.querySelector(`#detailContent .bar-wrap[data-role="${role}"]`); if(!wrap) return; const peak=150*1000*1000; const pct=Math.min(100,(val/peak)*100); const bar=wrap.querySelector('.bar span'); if(bar) bar.style.setProperty('--p',(pct/100).toFixed(3)); const lbl=wrap.querySelector('.bar-label span:last-child'); if(lbl) lbl.textContent= bytes(val)+'/s'; const box=wrap.querySelector('.bar'); if(box){ box.removeAttribute('data-warn'); box.removeAttribute('data-bad'); if(val>100*1000*1000) box.setAttribute('data-bad',''); else if(val>50*1000*1000) box.setAttribute('data-warn',''); } }
   updIO('io-read', ioRead);
   updIO('io-write', ioWrite);

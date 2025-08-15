@@ -25,18 +25,65 @@ table.data thead th{position:sticky;top:0;background:var(--bg-alt);font-weight:5
 table.data tbody td{padding:.55rem .75rem;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;white-space:nowrap}
 /* 防止数值变化导致列抖动：为月流量(7)/当前网络(8)/总流量(9)设置固定宽度并使用等宽数字 */
 table.data th,table.data td{font-variant-numeric:tabular-nums}
-table.data thead th:nth-child(7),table.data tbody td:nth-child(7),
+/* 月流量(2) 左对齐；当前网络(8)/总流量(9) 居中 */
+table.data thead th:nth-child(2),table.data tbody td:nth-child(2){
+	/* 月流量列：向左贴近协议（减小左 padding），同时加大右 padding 拉开与节点距离 */
+	width:128px;min-width:128px;max-width:128px;font-variant-numeric:tabular-nums;letter-spacing:.3px;text-align:center;padding:0 1.05rem 0 .15rem;
+}
+/* 节点列加宽，避免被月流量胶囊视觉挤压 */
+table.data thead th:nth-child(3),table.data tbody td:nth-child(3){
+	width:160px;min-width:160px;max-width:160px;
+}
+/* 协议列继续收紧右侧 padding 与固定宽度 */
+table.data thead th:nth-child(1),table.data tbody td:nth-child(1){
+	padding-right:.14rem;width:78px;min-width:78px;max-width:78px; /* 扩大协议列并恢复适度间距 */
+}
+/* 让双色胶囊更靠近协议列 */
+table.data tbody td:nth-child(2) .caps-traffic.duo{margin-left:-6px;} /* 向协议方向微移，视觉更靠近；右侧 padding 增大避免靠近节点 */
 table.data thead th:nth-child(8),table.data tbody td:nth-child(8),
 table.data thead th:nth-child(9),table.data tbody td:nth-child(9){
-	width:132px;min-width:132px;max-width:132px;/* 适配示例 111.1GB|222.2GB */
-	font-variant-numeric:tabular-nums;letter-spacing:.3px;
+	width:132px;min-width:132px;max-width:132px;font-variant-numeric:tabular-nums;letter-spacing:.3px;text-align:center;
+	    /* 进一步拉开与 CPU/内存/硬盘 组的视觉距离 */
+	    padding-right:1.95rem;
 }
 /* CPU / 内存 / 硬盘 列：居中 + 固定宽度 与仪表盘一致 */
 table.data thead th:nth-child(10),table.data tbody td:nth-child(10),
 table.data thead th:nth-child(11),table.data tbody td:nth-child(11),
 table.data thead th:nth-child(12),table.data tbody td:nth-child(12){
-	width:70px;min-width:70px;max-width:70px;text-align:center;padding-left:.25rem;padding-right:.25rem;
+	width:70px;min-width:70px;max-width:70px;text-align:center;padding-left:1.1rem;padding-right:0; /* 继续右移并贴近右侧列 */
 }
+/* 月流量胶囊 */
+.caps-traffic{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);padding:3px 12px 3px 10px;border-radius:999px;font-size:12px;line-height:1;font-weight:500;position:relative;box-shadow:0 2px 4px -2px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.03);}
+.caps-traffic:before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.06),transparent 70%);pointer-events:none;}
+.caps-traffic .io{display:inline-flex;align-items:center;gap:2px;font-variant-numeric:tabular-nums;letter-spacing:.3px;}
+.caps-traffic .io.in{color:var(--ok);}
+.caps-traffic .io.out{color:var(--accent);}
+.caps-traffic .sep{opacity:.4;font-size:11px;display:none;}
+.caps-traffic.sm{padding:2px 8px 2px 7px;font-size:11px;gap:5px;}
+.caps-traffic.sm .io{font-size:11px;}
+/* 双色胶囊：左红右黄 */
+.caps-traffic.duo{background:none;border:0;gap:0;padding:0;box-shadow:none;position:relative;border-radius:999px;overflow:hidden;font-size:12px;}
+/* 宽度按内容自适应（不再拉伸占满列），每半边仅为其文本 + padding，可容纳最大 111.1MB */
+.caps-traffic.duo .half{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:2px 4px;font-variant-numeric:tabular-nums;font-weight:600;line-height:1.25; /* 与 .pill 保持一致高度 */ letter-spacing:.25px;color:#fff;font-size:12px;white-space:nowrap;}
+/* 双色胶囊配色：
+	normal (默认): 左白(#fff) 右蓝(accent)
+	heavy (>=500GB 任一方向): 左黄(warn) 右红(danger)
+*/
+/* normal 初始：淡绿色(入) + 淡蓝色(出) */
+.caps-traffic.duo.normal .half.in{background:#d1fae5;color:#065f46;} /* emerald-100 / text-emerald-800 */
+body.light .caps-traffic.duo.normal .half.in{background:#d1fae5;color:#065f46;}
+.caps-traffic.duo.normal .half.out{background:#bfdbfe;color:#1e3a8a;} /* blue-200 / text-blue-900 */
+body.light .caps-traffic.duo.normal .half.out{background:#bfdbfe;color:#1e3a8a;}
+
+.caps-traffic.duo.heavy .half.in{background:var(--warn);color:#111;}
+body.light .caps-traffic.duo.heavy .half.in{background:var(--warn);color:#111;}
+.caps-traffic.duo.heavy .half.out{background:var(--danger);color:#fff;}
+body.light .caps-traffic.duo.heavy .half.out{color:#fff;}
+
+/* 半之间分隔线 */
+.caps-traffic.duo .half + .half{border-left:1px solid rgba(0,0,0,.18);} 
+body.light .caps-traffic.duo .half + .half{border-left:1px solid rgba(0,0,0,.08);} 
+.caps-traffic.duo.sm .half{padding:1px 4px;font-size:10px;min-width:0;}
 table.data tbody tr:last-child td{border-bottom:none}
 table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .badge{display:inline-block;padding:2px 6px;font-size:11px;border-radius:12px;font-weight:500;line-height:1.2;background:var(--bg);border:1px solid var(--border);color:var(--text-dim)}
@@ -66,6 +113,10 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .kv{display:flex;justify-content:space-between;gap:1rem;padding:.5rem .75rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));border:1px solid var(--border);border-radius:10px}
 .kv span{white-space:nowrap}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+/* 资源使用百分比色彩标签 */
+/* 回退：移除资源使用百分比彩色标签样式 */
+
+/* 详情弹窗三列信息行 */
 
 /* spark lines */
 .spark{width:82px;height:28px;display:flex;align-items:center;justify-content:center}
@@ -96,7 +147,7 @@ body.light .gauge-half path.arc{filter:none}
 body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text-dim))}
 
 /* status pill */
-.pill{display:inline-block;padding:2px 12px;font-size:12px;font-weight:600;border-radius:999px;letter-spacing:.5px;min-width:54px;text-align:center;line-height:1.3;border:0;box-shadow:0 2px 4px -1px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04);transition:var(--trans);color:#fff}
+.pill{display:inline-block;padding:2px 8px;font-size:12px;font-weight:600;border-radius:999px;letter-spacing:.45px;min-width:48px;text-align:center;line-height:1.25;border:0;box-shadow:0 2px 4px -1px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.04);transition:var(--trans);color:#fff}
 .pill.on{background:var(--ok)}
 .pill.off{background:var(--danger)}
 .pill.on:hover{filter:brightness(1.1)}
@@ -115,17 +166,19 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 table.data thead th:last-child, table.data tbody td:last-child { text-align:center; }
 /* 放大第13列宽度以容纳更宽水桶 */
 table.data thead th:nth-child(13),table.data tbody td:nth-child(13){
-	width:170px;min-width:170px;max-width:170px;
+	width:150px;min-width:150px;max-width:150px;padding-left:0;padding-right:.55rem; /* 去除左 padding 进一步贴近 */
 }
+/* 调整“总流量”表头（第9列）padding 使标题文字居中，不受正文额外右 padding 影响 */
+table.data thead th:nth-child(9){padding-left:.75rem;padding-right:.75rem;}
 .buckets{justify-content:center}
 
 /* 响应式隐藏非关键列，保持可读性 */
 @media (max-width:1100px){
 	table.data{min-width:100%;}
 	table.data thead th:nth-child(3),
-	table.data tbody td:nth-child(3), /* 虚拟化 */
-	table.data thead th:nth-child(7),
-	table.data tbody td:nth-child(7), /* 月流量 */
+	table.data tbody td:nth-child(3), /* 节点 */
+	table.data thead th:nth-child(4),
+	table.data tbody td:nth-child(4), /* 虚拟化 */
 	table.data thead th:nth-child(8),
 	table.data tbody td:nth-child(8)  /* 当前网络 */ {display:none}
 }
