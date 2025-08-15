@@ -326,12 +326,7 @@ function openDetail(i){
     </div>`;
   }
 
-  function barHTML(label,valPct,text,role,io){
-    const lvl = valPct>=90?'bad':(valPct>=80?'warn':'');
-    const ioCls = io? ' io':'';
-    return `<div class="bar-wrap" data-role="${role}"><div class="bar-label"><span>${label}</span><span>${text}</span></div><div class="bar${ioCls}" ${lvl?`data-${lvl}`:''}><span style="--p:${(valPct/100).toFixed(3)}"></span></div></div>`;
-  }
-  function ioBar(label,bytesVal,role){ const peak=150*1000*1000; const pct=Math.min(100,(bytesVal/peak)*100); const lvl = bytesVal>100*1000*1000?'bad': bytesVal>50*1000*1000?'warn':''; return barHTML(label,pct, (bytes(bytesVal)+'/s'), role, true).replace('<div class="bar io"', `<div class="bar io" ${lvl?`data-${lvl}`:''}`); }
+  // 旧进度条函数 barHTML/ioBar 已弃用
   // 资源行（移除百分比显示，仅显示 已用 / 总量）
   const memLine = s.memory_total? bytes(s.memory_used)+' / '+bytes(s.memory_total):'-';
   const swapLine = s.swap_total? bytes(s.swap_used)+' / '+bytes(s.swap_total):'-';
@@ -493,22 +488,15 @@ function drawLoadChart(key){
 function findServerByKey(key){ return S.servers.find(x=> (x.name||x.location||'node')===key); }
 function updateDetailMetrics(key){
   const s = findServerByKey(key); if(!s) return; if(!(s.online4||s.online6)) return; // 离线不更新
-  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-  const swapPct = s.swap_total? (s.swap_used/s.swap_total*100):0;
-  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-  const ioRead = (typeof s.io_read==='number')? s.io_read:0;
-  const ioWrite = (typeof s.io_write==='number')? s.io_write:0;
-  const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
-  const procEl = document.getElementById('detail-proc'); if(procEl) procEl.textContent = procLine;
-  function upd(role,pct,text){ const wrap=document.querySelector(`#detailContent .bar-wrap[data-role="${role}"]`); if(!wrap) return; const valSpan=wrap.querySelector('.bar-label span:last-child'); if(valSpan) valSpan.textContent=text; const bar=wrap.querySelector('.bar span'); if(bar) bar.style.setProperty('--p',(pct/100).toFixed(3)); const box=wrap.querySelector('.bar'); if(box){ box.removeAttribute('data-warn'); box.removeAttribute('data-bad'); if(pct>=90) box.setAttribute('data-bad',''); else if(pct>=80) box.setAttribute('data-warn',''); } }
-  if(document.querySelector('.bar-wrap[data-role="swap"]')) upd('swap', swapPct, s.swap_total? swapPct.toFixed(1)+'%':'-');
-  function updIO(role,val){ const wrap=document.querySelector(`#detailContent .bar-wrap[data-role="${role}"]`); if(!wrap) return; const peak=150*1000*1000; const pct=Math.min(100,(val/peak)*100); const bar=wrap.querySelector('.bar span'); if(bar) bar.style.setProperty('--p',(pct/100).toFixed(3)); const lbl=wrap.querySelector('.bar-label span:last-child'); if(lbl) lbl.textContent= bytes(val)+'/s'; const box=wrap.querySelector('.bar'); if(box){ box.removeAttribute('data-warn'); box.removeAttribute('data-bad'); if(val>100*1000*1000) box.setAttribute('data-bad',''); else if(val>50*1000*1000) box.setAttribute('data-warn',''); } }
-  updIO('io-read', ioRead);
-  updIO('io-write', ioWrite);
+    const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
+    const procEl = document.getElementById('detail-proc'); if(procEl) procEl.textContent = procLine;
+    const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
+    const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
+    const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
   // 延迟动态刷新 (若存在)
-  const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
-  const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
-  const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
+  const cuE1=document.getElementById('lat-cu'); if(cuE1) cuE1.textContent = num(s.time_10010)+'ms';
+  const ctE1=document.getElementById('lat-ct'); if(ctE1) ctE1.textContent = num(s.time_189)+'ms';
+  const cmE1=document.getElementById('lat-cm'); if(cmE1) cmE1.textContent = num(s.time_10086)+'ms';
 }
 function startDetailAutoUpdate(){ stopDetailAutoUpdate(); S._detailTimer = setInterval(()=>{ if(S._openDetailKey) updateDetailMetrics(S._openDetailKey); }, 1000); }
 function stopDetailAutoUpdate(){ if(S._detailTimer){ clearInterval(S._detailTimer); S._detailTimer=null; } }
