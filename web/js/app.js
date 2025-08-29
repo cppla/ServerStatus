@@ -33,17 +33,21 @@ async function fetchData(){
     if(!r.ok) throw new Error(r.status);
     const j = await r.json();
     if(j.reload) location.reload();
-    S.updated = j.updated; S.servers = j.servers||[]; S.ssl = j.sslcerts||[]; S.error=false;
-    // 更新延迟历史 (按节点名聚合)
-  S.servers.forEach(s=>{
-      const key = s.name || s.location || 'node';
+  S.updated = j.updated; S.servers = j.servers||[]; S.ssl = j.sslcerts||[]; S.error=false;
+  // 为每个服务器生成唯一 key（基于 name|location|type + 顺序号），避免同名节点写入同一历史
+  const keyCount = Object.create(null);
+  S.servers.forEach((s, idx)=>{
+    const base = [s.name||'-', s.location||'-', s.type||'-'].join('|');
+    const seq = (keyCount[base]||0) + 1; keyCount[base] = seq;
+    const key = `${base}#${seq}`;
+    s._key = key; // 挂到对象上，后续查找/弹窗均用它
       if(!S.hist[key]) S.hist[key] = {cu:[],ct:[],cm:[]};
       const H = S.hist[key];
       // 使用 time_ 字段 (ms) 若不存在则跳过
       if(typeof s.time_10010 === 'number') H.cu.push(s.time_10010);
       if(typeof s.time_189 === 'number') H.ct.push(s.time_189);
       if(typeof s.time_10086 === 'number') H.cm.push(s.time_10086);
-  const MAX=256; // 保留最多 256 条
+  const MAX=120; // 保留最多 120 条
       ['cu','ct','cm'].forEach(k=>{ if(H[k].length>MAX) H[k].splice(0,H[k].length-MAX); });
       // 指标历史 (仅在线时记录)
       if(!S.metricHist[key]) S.metricHist[key] = {cpu:[],mem:[],hdd:[]};
@@ -59,7 +63,7 @@ async function fetchData(){
   // 负载历史 (记录 load_1 / load_5 / load_15)
   if(!S.loadHist[key]) S.loadHist[key] = {l1:[],l5:[],l15:[]};
   const LH = S.loadHist[key];
-  const pushLoad = (arr,val)=>{ if(typeof val === 'number' && val >= 0){ arr.push(val); if(arr.length>256) arr.splice(0,arr.length-256); } };
+  const pushLoad = (arr,val)=>{ if(typeof val === 'number' && val >= 0){ arr.push(val); if(arr.length>120) arr.splice(0,arr.length-120); } };
   pushLoad(LH.l1, s.load_1);
   pushLoad(LH.l5, s.load_5);
   pushLoad(LH.l15, s.load_15);
@@ -99,7 +103,7 @@ function renderServers(){
   const p1 = (s.ping_10010||0); const p2 = (s.ping_189||0); const p3 = (s.ping_10086||0);
   function bucket(p){ const v = Math.max(0, Math.min(100, p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
   const pingBuckets = `<div class=\"buckets\" title=\"CU/CT/CM\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
-    const key = s.name || s.location || 'node';
+  // 唯一 key 已附加为 s._key（如需使用）
   const rowCursor = online? 'pointer':'default';
     const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
   html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server${highLoad?' high-load':''}" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
@@ -170,7 +174,7 @@ function renderServersCards(){
     const p1 = (s.ping_10010||0); const p2=(s.ping_189||0); const p3=(s.ping_10086||0);
     function bucket(p){ const v=Math.max(0,Math.min(100,p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
-    const key = s.name || s.location || 'node';
+  // 唯一 key 已附加为 s._key（如需使用）
   const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
   html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
   });
@@ -316,7 +320,7 @@ function openDetail(i){
   const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
   // 保留延迟数据用于图表，但不再展示当前延迟文字行
   const latText = offline ? '离线' : `CU/CT/CM: ${num(s.time_10010)}ms (${(s.ping_10010||0).toFixed(0)}%) / ${num(s.time_189)}ms (${(s.ping_189||0).toFixed(0)}%) / ${num(s.time_10086)}ms (${(s.ping_10086||0).toFixed(0)}%)`;
-  const key = s.name || s.location || 'node';
+  const key = s._key || [s.name||'-', s.location||'-', s.type||'-'].join('|')+'#1';
 
   let latencyBlock = '';
   if(!offline){
@@ -372,7 +376,7 @@ function openDetail(i){
         <span style="color:#8b5cf6">● load1 (<span id="load1-val">${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</span>)</span>
         <span style="color:#10b981">● load5 (<span id="load5-val">${s.load_5==-1?'–':Math.max(0,(s.load_5||0)).toFixed(2)}</span>)</span>
         <span style="color:#f59e0b">● load15 (<span id="load15-val">${s.load_15==-1?'–':Math.max(0,(s.load_15||0)).toFixed(2)}</span>)</span>
-        <span style="opacity:.6">(~<span id="load-count">${(S.loadHist[key]?Math.max(S.loadHist[key].l1.length, S.loadHist[key].l5.length, S.loadHist[key].l15.length):0)}</span> 条)</span>
+  <span style="opacity:.6">(~<span id="load-count">${(S.loadHist[key]?Math.max(S.loadHist[key].l1.length, S.loadHist[key].l5.length, S.loadHist[key].l15.length):0)}</span> 条)</span>
       </div>
     </div>
   <!-- 进度条移除：读/写/虚存以文本形式显示于上方合并行 -->
@@ -383,7 +387,7 @@ function openDetail(i){
   if(!offline){
     drawLatencyChart(key);
     drawLoadChart(key);
-    S._openDetailKey = key; // 记录当前弹窗对应节点
+  S._openDetailKey = key; // 记录当前弹窗对应节点（唯一 key）
     startDetailAutoUpdate();
   } else {
     S._openDetailKey = null;
@@ -496,7 +500,7 @@ function drawLoadChart(key){
 //# sourceMappingURL=app.js.map
 
 // ====== 详情动态刷新 ======
-function findServerByKey(key){ return S.servers.find(x=> (x.name||x.location||'node')===key); }
+function findServerByKey(key){ return S.servers.find(x=> (x._key)===key); }
 function updateDetailMetrics(key){
   const s = findServerByKey(key); if(!s) return; if(!(s.online4||s.online6)) return; // 离线不更新
     const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;

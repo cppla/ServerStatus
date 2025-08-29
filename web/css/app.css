@@ -152,12 +152,7 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 .bucket span{display:block;width:100%;background:var(--accent);border-radius:4px 4px 6px 6px;height:var(--h);align-self:flex-end;transition:height .8s cubic-bezier(.4,0,.2,1),background .3s}
 .bucket[data-lv=warn] span{background:var(--warn)}
 .bucket[data-lv=bad] span{background:var(--danger)}
-.bucket label{position:absolute;left:0;right:0;bottom:2px;text-align:center;pointer-events:none;
-	/* 统一为与仪表盘数值相同的风格 */
-	font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-	font-size:12px;font-weight:600;letter-spacing:.25px;
-	font-variant-numeric:tabular-nums;color:var(--text);
-}
+.bucket label{position:absolute;left:0;right:0;bottom:2px;font-size:10px;text-align:center;color:var(--text-dim);pointer-events:none}
 .bucket:hover label{color:var(--text)}
 
 /* 居中联通电信移动列 */
