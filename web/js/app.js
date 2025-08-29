@@ -43,7 +43,7 @@ async function fetchData(){
       if(typeof s.time_10010 === 'number') H.cu.push(s.time_10010);
       if(typeof s.time_189 === 'number') H.ct.push(s.time_189);
       if(typeof s.time_10086 === 'number') H.cm.push(s.time_10086);
-      const MAX=120; // 保留约 120*4s ≈ 8 分钟
+  const MAX=256; // 保留最多 256 条
       ['cu','ct','cm'].forEach(k=>{ if(H[k].length>MAX) H[k].splice(0,H[k].length-MAX); });
       // 指标历史 (仅在线时记录)
       if(!S.metricHist[key]) S.metricHist[key] = {cpu:[],mem:[],hdd:[]};
@@ -59,7 +59,7 @@ async function fetchData(){
   // 负载历史 (记录 load_1 / load_5 / load_15)
   if(!S.loadHist[key]) S.loadHist[key] = {l1:[],l5:[],l15:[]};
   const LH = S.loadHist[key];
-  const pushLoad = (arr,val)=>{ if(typeof val === 'number' && val >= 0){ arr.push(val); if(arr.length>120) arr.splice(0,arr.length-120); } };
+  const pushLoad = (arr,val)=>{ if(typeof val === 'number' && val >= 0){ arr.push(val); if(arr.length>256) arr.splice(0,arr.length-256); } };
   pushLoad(LH.l1, s.load_1);
   pushLoad(LH.l5, s.load_5);
   pushLoad(LH.l15, s.load_15);
@@ -327,7 +327,7 @@ function openDetail(i){
         <span style="color:#3b82f6">● 联通 (<span id="lat-cu">${num(s.time_10010)}ms</span>)</span>
         <span style="color:#10b981">● 电信 (<span id="lat-ct">${num(s.time_189)}ms</span>)</span>
         <span style="color:#f59e0b">● 移动 (<span id="lat-cm">${num(s.time_10086)}ms</span>)</span>
-        <span style="opacity:.6"> (~${S.hist[key]?S.hist[key].cu.length:0} 条)</span>
+  <span style="opacity:.6"> (~<span id="lat-count">${(S.hist[key]?Math.max(S.hist[key].cu.length, S.hist[key].ct.length, S.hist[key].cm.length):0)}</span> 条)</span>
       </div>
     </div>`;
   } else {
@@ -369,10 +369,10 @@ function openDetail(i){
     <div style="display:flex;flex-direction:column;gap:.35rem;">
       <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
       <div class="mono" style="font-size:11px;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;opacity:.8;">
-        <span style="color:#8b5cf6">● load1</span>
-        <span style="color:#10b981">● load5</span>
-        <span style="color:#f59e0b">● load15</span>
-        <span style="opacity:.6">(~${(S.loadHist[key]?S.loadHist[key].l1.length:0)} 条)</span>
+        <span style="color:#8b5cf6">● load1 (<span id="load1-val">${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</span>)</span>
+        <span style="color:#10b981">● load5 (<span id="load5-val">${s.load_5==-1?'–':Math.max(0,(s.load_5||0)).toFixed(2)}</span>)</span>
+        <span style="color:#f59e0b">● load15 (<span id="load15-val">${s.load_15==-1?'–':Math.max(0,(s.load_15||0)).toFixed(2)}</span>)</span>
+        <span style="opacity:.6">(~<span id="load-count">${(S.loadHist[key]?Math.max(S.loadHist[key].l1.length, S.loadHist[key].l5.length, S.loadHist[key].l15.length):0)}</span> 条)</span>
       </div>
     </div>
   <!-- 进度条移除：读/写/虚存以文本形式显示于上方合并行 -->
@@ -508,6 +508,13 @@ function updateDetailMetrics(key){
   const cuE1=document.getElementById('lat-cu'); if(cuE1) cuE1.textContent = num(s.time_10010)+'ms';
   const ctE1=document.getElementById('lat-ct'); if(ctE1) ctE1.textContent = num(s.time_189)+'ms';
   const cmE1=document.getElementById('lat-cm'); if(cmE1) cmE1.textContent = num(s.time_10086)+'ms';
+  // 刷新联通/电信/移动历史计数（取三者最大长度）
+  const latCntEl = document.getElementById('lat-count');
+  if(latCntEl){
+    const H = S.hist[key];
+    const n = H ? Math.max(H.cu.length||0, H.ct.length||0, H.cm.length||0) : 0;
+    latCntEl.textContent = n;
+  }
   // 资源动态刷新
   const memLineEl = document.getElementById('mem-line');
   if(memLineEl){
@@ -532,6 +539,12 @@ function updateDetailMetrics(key){
   }
   const ioReadEl = document.getElementById('io-read'); if(ioReadEl){ const v = (typeof s.io_read==='number')? s.io_read:0; ioReadEl.textContent = humanRateMinMBFromB(v); ioReadEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
   const ioWriteEl = document.getElementById('io-write'); if(ioWriteEl){ const v = (typeof s.io_write==='number')? s.io_write:0; ioWriteEl.textContent = humanRateMinMBFromB(v); ioWriteEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
+  // 动态刷新负载标签与条数
+  const l1El = document.getElementById('load1-val'); if(l1El) l1El.textContent = s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2);
+  const l5El = document.getElementById('load5-val'); if(l5El) l5El.textContent = s.load_5==-1?'–':Math.max(0,(s.load_5||0)).toFixed(2);
+  const l15El = document.getElementById('load15-val'); if(l15El) l15El.textContent = s.load_15==-1?'–':Math.max(0,(s.load_15||0)).toFixed(2);
+  const cntEl = document.getElementById('load-count');
+  if(cntEl){ const L=S.loadHist[key]; const n = L? Math.max(L.l1.length, L.l5.length, L.l15.length):0; cntEl.textContent = n; }
 }
 function startDetailAutoUpdate(){ stopDetailAutoUpdate(); S._detailTimer = setInterval(()=>{ if(S._openDetailKey) updateDetailMetrics(S._openDetailKey); }, 1000); }
 function stopDetailAutoUpdate(){ if(S._detailTimer){ clearInterval(S._detailTimer); S._detailTimer=null; } }
