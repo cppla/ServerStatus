@@ -383,6 +383,9 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 			pClient->m_Stats.m_Online6 = rStart["online6"].u.boolean;
 		if(rStart["custom"].type == json_string)
 			str_copy(pClient->m_Stats.m_aCustom, rStart["custom"].u.string.ptr, sizeof(pClient->m_Stats.m_aCustom));
+		// optional OS field from clients
+		if(rStart["os"].type == json_string)
+			str_copy(pClient->m_Stats.m_aOS, rStart["os"].u.string.ptr, sizeof(pClient->m_Stats.m_aOS));
 
 		//copy message for watchdog to analysis
         WatchdogMessage(ClientNetID,
@@ -630,7 +633,7 @@ void CMain::JSONUpdateThread(void *pUser)
                 }
 
 				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf),
-				 "{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\" },\n",
+                 "{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\", \"os\": \"%s\" },\n",
 					pClients[i].m_aName,pClients[i].m_aType,pClients[i].m_aHost,pClients[i].m_aLocation,
 					pClients[i].m_Stats.m_Online4 ? "true" : "false",pClients[i].m_Stats.m_Online6 ? "true" : "false",
 					aUptime, pClients[i].m_Stats.m_Load_1, pClients[i].m_Stats.m_Load_5, pClients[i].m_Stats.m_Load_15, pClients[i].m_Stats.m_ping_10010, pClients[i].m_Stats.m_ping_189, pClients[i].m_Stats.m_ping_10086,
@@ -640,15 +643,17 @@ void CMain::JSONUpdateThread(void *pUser)
 					pClients[i].m_Stats.m_NetworkIN == 0 || pClients[i].m_LastNetworkIN == 0 ? pClients[i].m_Stats.m_NetworkIN : pClients[i].m_LastNetworkIN,
 					pClients[i].m_Stats.m_NetworkOUT == 0 || pClients[i].m_LastNetworkOUT == 0 ? pClients[i].m_Stats.m_NetworkOUT : pClients[i].m_LastNetworkOUT,
 					pClients[i].m_Stats.m_IORead, pClients[i].m_Stats.m_IOWrite,
-					pClients[i].m_Stats.m_aCustom);
+					pClients[i].m_Stats.m_aCustom,
+					pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "");
 				pBuf += strlen(pBuf);
 			}
 			else
 			{
 			    // sava network traffic record to json when close client
 			    // last_network_in == last network in record, last_network_out == last network out record
-				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 " },\n",
-					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation, pClients[i].m_LastNetworkIN, pClients[i].m_LastNetworkOUT);
+				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ", \"os\": \"%s\" },\n",
+					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation, pClients[i].m_LastNetworkIN, pClients[i].m_LastNetworkOUT,
+					pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "");
 				pBuf += strlen(pBuf);
 			}
 		}

@@ -78,6 +78,8 @@ class CMain
 			int64_t m_IOWrite;
 			double m_CPU;
 			char m_aCustom[1024];
+			// OS name reported by client (e.g. linux/windows/darwin/freebsd)
+			char m_aOS[64];
 			// Options
 			bool m_Pong;
 		} m_Stats;

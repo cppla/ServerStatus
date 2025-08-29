@@ -32,6 +32,7 @@ import json
 import errno
 import subprocess
 import threading
+import platform
 if sys.version_info.major == 3:
     from queue import Queue
 elif sys.version_info.major == 2:
@@ -520,6 +521,34 @@ if __name__ == '__main__':
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
                 array['io_read'] = diskIO.get("read")
                 array['io_write'] = diskIO.get("write")
+                # report OS (normalized)
+                try:
+                    sysname = platform.system().lower()
+                    if sysname.startswith('linux'):
+                        os_name = 'linux'
+                        # try distro from os-release
+                        try:
+                            with open('/etc/os-release') as f:
+                                for line in f:
+                                    if line.startswith('ID='):
+                                        val = line.strip().split('=',1)[1].strip().strip('"')
+                                        if val: os_name = val
+                                        break
+                        except Exception:
+                            pass
+                    elif sysname.startswith('darwin'):
+                        os_name = 'darwin'
+                    elif sysname.startswith('freebsd'):
+                        os_name = 'freebsd'
+                    elif sysname.startswith('openbsd'):
+                        os_name = 'openbsd'
+                    elif sysname.startswith('netbsd'):
+                        os_name = 'netbsd'
+                    else:
+                        os_name = sysname or 'unknown'
+                except Exception:
+                    os_name = 'unknown'
+                array['os'] = os_name
                 array['custom'] = "<br>".join(f"{k}\\t解析: {v['dns_time']}\\t连接: {v['connect_time']}\\t下载: {v['download_time']}\\t在线率: <code>{v['online_rate']*100:.1f}%</code>" for k, v in monitorServer.items())
                 s.send(byte_str("update " + json.dumps(array) + "\n"))
         except KeyboardInterrupt:

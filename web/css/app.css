@@ -230,9 +230,39 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card.offline{opacity:.6;}
-.cards .card.high-load{border-color:rgba(239,68,68,.55);box-shadow:0 0 0 1px rgba(239,68,68,.4),0 4px 16px -4px rgba(239,68,68,.3);}
-table.data tbody tr.high-load{background:rgba(239,68,68,.10);}
-table.data tbody tr.high-load:hover{background:rgba(239,68,68,.18);}
+.cards .card.high-load{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.22), rgba(239,68,68,.12));box-shadow:0 0 0 1px rgba(239,68,68,.48),0 6px 18px -6px rgba(239,68,68,.28);} 
+table.data tbody tr.high-load{background:rgba(239,68,68,.18) !important;} 
+table.data tbody tr.high-load:hover{background:rgba(239,68,68,.26) !important;} 
+
+/* OS 着色（更明显）：
+	1) 为各 OS 类定义 --os-color 变量
+	2) 行左侧使用 inset box-shadow 画 4px 彩条
+	3) 行背景叠加轻度渐变以提示 OS
+*/
+table.data tbody tr[class*="os-"]{box-shadow:inset 4px 0 0 0 var(--os-color, transparent);background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 10%, transparent), transparent 60%);} 
+table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 16%, transparent), transparent 65%);} 
+.cards .card[class*="os-"]{border-color:color-mix(in srgb, var(--os-color, var(--accent)) 60%, transparent);box-shadow:0 0 0 1px color-mix(in srgb, var(--os-color, var(--accent)) 40%, transparent),0 4px 16px -6px color-mix(in srgb, var(--os-color, #000) 35%, transparent);} 
+
+/* 为常见系统赋色 */
+.os-linux{--os-color: rgba(16,185,129,.85);} /* emerald */
+.os-ubuntu{--os-color: rgba(251,146,60,.9);} /* orange */
+.os-debian{--os-color: rgba(236,72,153,.9);} /* pink */
+.os-centos{--os-color: rgba(59,130,246,.9);} /* blue */
+.os-rocky{--os-color: rgba(59,130,246,.9);} 
+.os-almalinux{--os-color: rgba(59,130,246,.9);} 
+.os-rhel{--os-color: rgba(59,130,246,.9);} 
+.os-arch{--os-color: rgba(14,165,233,.9);} /* sky */
+.os-alpine{--os-color: rgba(2,132,199,.9);} /* blue-600 */
+.os-fedora{--os-color: rgba(59,130,246,.9);} 
+.os-amazon{--os-color: rgba(245,158,11,.9);} /* amber */
+.os-suse{--os-color: rgba(34,197,94,.9);} /* green */
+.os-freebsd{--os-color: rgba(244,63,94,.9);} /* rose */
+.os-openbsd{--os-color: rgba(244,63,94,.9);} 
+.os-bsd{--os-color: rgba(244,63,94,.9);} 
+.os-darwin{--os-color: rgba(148,163,184,.95);} /* slate */
+.os-windows{--os-color: rgba(59,130,246,.95);} /* blue */
+
+/* 已移除徽标叠加与伪元素，仅保留色条 + 渐变背景作为 OS 提示 */
 
 /* 旧进度条相关样式已清理 */
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}

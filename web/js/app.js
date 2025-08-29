@@ -27,6 +27,31 @@ function humanMinKBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // �
 function humanAgo(ts){ if(!ts) return '-'; const s=Math.floor((Date.now()/1000 - ts)); const m=Math.floor(s/60); return m>0? m+' 分钟前':'几秒前'; }
 function num(v){ return (typeof v==='number' && !isNaN(v)) ? v : '-'; }
 
+// 将服务端上报的 os 映射为样式类名（用于为行/卡片着色）
+function osClass(os){
+  if(!os) return '';
+  const v = String(os).toLowerCase();
+  const pick = (k)=>' os-'+k;
+  if(v.includes('ubuntu')) return pick('ubuntu');
+  if(v.includes('debian')) return pick('debian');
+  if(v.includes('centos')) return pick('centos');
+  if(v.includes('rocky')) return pick('rocky');
+  if(v.includes('alma')) return pick('almalinux');
+  if(v.includes('arch')) return pick('arch');
+  if(v.includes('alpine')) return pick('alpine');
+  if(v.includes('fedora')) return pick('fedora');
+  if(v.includes('rhel') || v.includes('redhat')) return pick('rhel');
+  if(v.includes('suse')) return pick('suse');
+  if(v.includes('amazon')) return pick('amazon');
+  if(v.includes('freebsd')) return pick('freebsd');
+  if(v.includes('openbsd')) return pick('openbsd');
+  if(v.includes('netbsd') || v.includes('bsd')) return pick('bsd');
+  if(v.includes('darwin') || v.includes('mac')) return pick('darwin');
+  if(v.includes('win')) return pick('windows');
+  if(v.includes('linux')) return pick('linux');
+  return pick(v.replace(/[^a-z0-9_-]+/g,'-').slice(0,20));
+}
+
 async function fetchData(){
   try {
     const r = await fetch('json/stats.json?_='+Date.now());
@@ -106,7 +131,7 @@ function renderServers(){
   // 唯一 key 已附加为 s._key（如需使用）
   const rowCursor = online? 'pointer':'default';
     const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server${highLoad?' high-load':''}" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
+  html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server${highLoad?' high-load':''}${osClass(s.os)}" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
   <td>${statusPill}</td>
   <td><span class="${trafficCls}" title="本月下行 | 上行 (≥500GB 触发红黄)"><span class="half in">${monthIn}</span><span class="half out">${monthOut}</span></span></td>
       <td>${s.name||'-'}</td>
@@ -176,7 +201,7 @@ function renderServersCards(){
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
   // 唯一 key 已附加为 s._key（如需使用）
   const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
+  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}${osClass(s.os)}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
   });
   wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
   wrap.querySelectorAll('.card').forEach(card=>{

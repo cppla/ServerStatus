@@ -32,6 +32,7 @@ import json
 import errno
 import psutil
 import threading
+import platform
 if sys.version_info.major == 3:
     from queue import Queue
 elif sys.version_info.major == 2:
@@ -509,7 +510,31 @@ if __name__ == '__main__':
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
                 array['io_read'] = diskIO.get("read")
                 array['io_write'] = diskIO.get("write")
-                array['custom'] = "<br>".join(f"{k}\\t解析: {v['dns_time']}\\t连接: {v['connect_time']}\\t下载: {v['download_time']}\\t在线率: <code>{v['online_rate']*100:.2f}%</code>" for k, v in monitorServer.items())
+                # report OS (normalized)
+                try:
+                    sysname = platform.system().lower()
+                    if sysname.startswith('windows'):
+                        os_name = 'windows'
+                    elif sysname.startswith('darwin') or 'mac' in sysname:
+                        os_name = 'darwin'
+                    elif 'bsd' in sysname:
+                        os_name = 'bsd'
+                    elif sysname.startswith('linux'):
+                        # try distro if available
+                        os_name = 'linux'
+                        try:
+                            import distro  # optional
+                            os_name = distro.id() or 'linux'
+                        except Exception:
+                            pass
+                    else:
+                        os_name = sysname or 'unknown'
+                except Exception:
+                    os_name = 'unknown'
+                array['os'] = os_name
+                array['custom'] = "<br>".join("{}\t解析: {}\t连接: {}\t下载: {}\t在线率: <code>{:.2f}%</code>".format(
+                    k, v.get('dns_time'), v.get('connect_time'), v.get('download_time'), (v.get('online_rate') or 0.0)*100
+                ) for k, v in monitorServer.items())
                 s.send(byte_str("update " + json.dumps(array) + "\n"))
         except KeyboardInterrupt:
             raise
