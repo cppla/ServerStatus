@@ -46,7 +46,8 @@ function osClass(os){
   if(v.includes('freebsd')) return pick('freebsd');
   if(v.includes('openbsd')) return pick('openbsd');
   if(v.includes('netbsd') || v.includes('bsd')) return pick('bsd');
-  if(v.includes('darwin') || v.includes('mac')) return pick('darwin');
+  // macOS / Darwin 变体：darwin | macOS | os x | osx | apple
+  if(v.includes('darwin') || v.includes('macos') || v.includes('os x') || v.includes('osx') || v.includes('apple') || v.includes('mac')) return pick('darwin');
   if(v.includes('win')) return pick('windows');
   if(v.includes('linux')) return pick('linux');
   return pick(v.replace(/[^a-z0-9_-]+/g,'-').slice(0,20));
