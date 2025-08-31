@@ -53,6 +53,32 @@ function osClass(os){
   return pick(v.replace(/[^a-z0-9_-]+/g,'-').slice(0,20));
 }
 
+// 将服务端 os 字段转为友好的显示名称
+function osLabel(os){
+  if(!os) return '';
+  const v = String(os).toLowerCase();
+  const is = (k)=>v.includes(k);
+  if(is('ubuntu')) return 'Ubuntu';
+  if(is('debian')) return 'Debian';
+  if(is('centos')) return 'CentOS';
+  if(is('rocky')) return 'Rocky Linux';
+  if(is('alma')) return 'AlmaLinux';
+  if(is('rhel') || is('redhat')) return 'Red Hat Enterprise Linux';
+  if(is('arch')) return 'Arch Linux';
+  if(is('alpine')) return 'Alpine Linux';
+  if(is('fedora')) return 'Fedora';
+  if(is('amazon')) return 'Amazon Linux';
+  if(is('suse')) return 'SUSE Linux';
+  if(is('freebsd')) return 'FreeBSD';
+  if(is('openbsd')) return 'OpenBSD';
+  if(is('netbsd') || is('bsd')) return 'BSD';
+  if(is('darwin') || is('macos') || is('os x') || is('osx') || is('apple') || is('mac')) return 'macOS';
+  if(is('win')) return 'Windows';
+  if(is('linux')) return 'Linux';
+  // 默认：首字母大写
+  return String(os).charAt(0).toUpperCase() + String(os).slice(1);
+}
+
 async function fetchData(){
   try {
     const r = await fetch('json/stats.json?_='+Date.now());
@@ -336,7 +362,15 @@ function openDetail(i){
   const s = S.servers[i]; if(!s) return;
   const box = document.getElementById('detailContent');
   const modal = document.getElementById('detailModal');
-  document.getElementById('detailTitle').textContent = s.name + ' 详情';
+  const osText = osLabel(s.os);
+  const titleEl = document.getElementById('detailTitle');
+  titleEl.textContent = s.name + ' 详情';
+  if(osText){
+    const chip = document.createElement('span');
+    chip.className = 'os-chip' + osClass(s.os);
+    chip.textContent = osText;
+    titleEl.appendChild(chip);
+  }
   const offline = !(s.online4||s.online6);
   const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
   const swapPct = s.swap_total? (s.swap_used/s.swap_total*100):0;

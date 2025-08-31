@@ -242,6 +242,9 @@ table.data tbody tr.high-load:hover{background:rgba(239,68,68,.26) !important;}
 table.data tbody tr[class*="os-"]{box-shadow:inset 4px 0 0 0 var(--os-color, transparent);background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 10%, transparent), transparent 60%);} 
 table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 16%, transparent), transparent 65%);} 
 .cards .card[class*="os-"]{border-color:color-mix(in srgb, var(--os-color, var(--accent)) 60%, transparent);box-shadow:0 0 0 1px color-mix(in srgb, var(--os-color, var(--accent)) 40%, transparent),0 4px 16px -6px color-mix(in srgb, var(--os-color, #000) 35%, transparent);} 
+/* 弹窗 OS 着色：左侧彩条 + 渐变与卡片一致 */
+/* 取消弹窗背景着色，改为仅在标题展示系统胶囊 */
+.os-chip{display:inline-flex;align-items:center;padding:2px 8px;margin-left:.5rem;border-radius:999px;font-size:12px;font-weight:600;line-height:1.2;background:var(--os-color, var(--border));color:#fff;border:0;white-space:nowrap;}
 
 /* 为常见系统赋色 */
 .os-linux{--os-color: rgba(16,185,129,.85);} /* emerald */
