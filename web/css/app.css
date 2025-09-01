@@ -247,25 +247,25 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .os-chip{display:inline-flex;align-items:center;padding:2px 8px;margin-left:.5rem;border-radius:999px;font-size:12px;font-weight:600;line-height:1.2;background:var(--os-color, var(--border));color:#fff;border:0;white-space:nowrap;}
 
 /* 为常见系统赋色 */
-.os-linux{--os-color: rgba(16,185,129,.85);} /* emerald */
-.os-ubuntu{--os-color: rgba(251,146,60,.9);} /* orange */
-.os-debian{--os-color: rgba(236,72,153,.9);} /* pink */
-.os-centos{--os-color: rgba(59,130,246,.9);} /* blue */
-.os-rocky{--os-color: rgba(59,130,246,.9);} 
-.os-almalinux{--os-color: rgba(59,130,246,.9);} 
-.os-rhel{--os-color: rgba(59,130,246,.9);} 
-.os-arch{--os-color: rgba(14,165,233,.9);} /* sky */
-.os-alpine{--os-color: rgba(2,132,199,.9);} /* blue-600 */
-.os-fedora{--os-color: rgba(59,130,246,.9);} 
-.os-amazon{--os-color: rgba(245,158,11,.9);} /* amber */
-.os-suse{--os-color: rgba(34,197,94,.9);} /* green */
-.os-freebsd{--os-color: rgba(244,63,94,.9);} /* rose */
-.os-openbsd{--os-color: rgba(244,63,94,.9);} 
-.os-bsd{--os-color: rgba(244,63,94,.9);} 
-.os-darwin{--os-color: rgba(148,163,184,.95);} /* slate */
-.os-windows{--os-color: rgba(59,130,246,.95);} /* blue */
+.os-linux{--os-color: rgba(16,185,129,.85);}   /* 绿色 (通用 Linux，保持不变) */
+.os-ubuntu{--os-color: rgba(221,72,20,.9);}    /* Ubuntu 橙 (#dd4814) */
+.os-debian{--os-color: rgba(215,10,83,.9);}    /* Debian 品红 (#d70a53) */
+.os-centos{--os-color: rgba(102,0,153,.9);}    /* CentOS 紫 (#660099) */
+.os-rocky{--os-color: rgba(1,122,66,.9);}      /* Rocky Linux 绿 (#017a42) */
+.os-almalinux{--os-color: rgba(0,92,170,.9);}  /* AlmaLinux 蓝 (#005caa) */
+.os-rhel{--os-color: rgba(204,0,0,.9);}        /* Red Hat 红 (#cc0000) */
+.os-arch{--os-color: rgba(23,147,209,.9);}     /* Arch Linux 蓝 (#1793d1) */
+.os-alpine{--os-color: rgba(14,87,123,.9);}    /* Alpine Linux 蓝 (#0e577b) */
+.os-fedora{--os-color: rgba(60,110,180,.9);}   /* Fedora 蓝 (#3c6eb4) */
+.os-amazon{--os-color: rgba(255,153,0,.9);}    /* Amazon Linux 橙 (#ff9900) */
+.os-suse{--os-color: rgba(0,150,0,.9);}        /* openSUSE 绿 (#009600) */
+.os-freebsd{--os-color: rgba(166,31,47,.9);}   /* FreeBSD 红 (#a61f2f) */
+.os-openbsd{--os-color: rgba(255,204,0,.9);}   /* OpenBSD 黄 (#ffcc00) */
+.os-bsd{--os-color: rgba(166,31,47,.9);}       /* BSD 系统一般跟 FreeBSD 接近 */
+.os-darwin{--os-color: rgba(29,29,31,.95);} 	/* macOS 深空灰 (#1d1d1f) */
+.os-windows{--os-color: rgba(0,120,215,.95);}  /* Windows 蓝 (#0078d7) */
 
-/* 已移除徽标叠加与伪元素，仅保留色条 + 渐变背景作为 OS 提示 */
+
 
 /* 旧进度条相关样式已清理 */
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
