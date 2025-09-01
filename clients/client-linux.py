@@ -93,7 +93,7 @@ def liuliang():
     NET_OUT = 0
     with open('/proc/net/dev') as f:
         for line in f.readlines():
-            netinfo = re.findall('([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
+            netinfo = re.findall(r'([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
             if netinfo:
                 if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
                         or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \

@@ -128,7 +128,7 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .gauge-half path.track{stroke:color-mix(in srgb,var(--text-dim) 18%,transparent);stroke-width:6;}
 .gauge-half path.arc{stroke:var(--gauge-base,#3b82f6);stroke-width:8;stroke-dasharray:126;stroke-dashoffset:calc(126*(1 - var(--p)));transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1),stroke .35s;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
 .gauge-half[data-type=mem] path.arc{--gauge-base:#10b981}
-.gauge-half[data-type=hdd] path.arc{--gauge-base:#f59e0b}
+.gauge-half[data-type=hdd] path.arc{--gauge-base:#06b6d4}
 /* 阈值颜色：>=50% 警告黄，>=90% 危险红 */
 .gauge-half[data-warn] path.arc{stroke:var(--warn)}
 .gauge-half[data-bad] path.arc{stroke:var(--danger)}
