@@ -40,16 +40,28 @@
 	],
 	"monitors": [
 		{
-			"name": "baidu",
+			"name": "抖音",
+			"host": "https://www.douyin.com",
+			"interval": 1200,
+			"type": "https"
+		},
+		{
+			"name": "京东",
+			"host": "https://www.jd.com",
+			"interval": 1200,
+			"type": "https"
+		},
+		{
+			"name": "百度",
 			"host": "https://www.baidu.com",
 			"interval": 1200,
 			"type": "https"
 		},
 		{
-			"name": "1111",
-			"host": "1.1.1.1:80",
+			"name": "淘宝",
+			"host": "https://www.taobao.com",
 			"interval": 1200,
-			"type": "tcp"
+			"type": "https"
 		}
 	],
 	"sslcerts": [
