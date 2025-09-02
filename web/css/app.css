@@ -94,8 +94,7 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 .footer a{color:var(--text-dim)}
 .footer a:hover{color:var(--accent)}
 .muted{color:var(--text-dim)}
-.status-off{color:var(--danger);font-weight:600}
-.status-on{color:var(--ok);font-weight:600}
+/* 旧状态文字样式已不再使用（采用 pill） */
 @media (max-width:1100px){.nav{flex-wrap:wrap}.table-wrap{border-radius:8px}}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
@@ -283,6 +282,27 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .cards .expand-area{margin-top:.4rem;display:none;animation:fadeIn .25s ease;}
 .cards .card.expanded .expand-area{display:block;}
 /* 旧移动端 latency spark 样式移除 */
+
+/* 简易信号格，用于服务连通性延迟展示 */
+.sig{display:inline-flex;gap:2px;vertical-align:baseline;margin:0 4px 0 6px;align-items:flex-end;line-height:1}
+.sig .b{width:3px;background:color-mix(in srgb,var(--text-dim) 35%,transparent);border-radius:2px;display:inline-block}
+.sig .b:nth-child(1){height:7px}
+.sig .b:nth-child(2){height:9px}
+.sig .b:nth-child(3){height:11px}
+.sig .b:nth-child(4){height:13px}
+.sig .b:nth-child(5){height:15px}
+.sig .b.on{background:var(--ok)}
+.sig .b.off{opacity:.35}
+
+/* 服务监测项：横向排列的“名称 信号格 Nms”，自动换行 */
+.mon-items{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.mon-item{display:inline-flex;align-items:center;white-space:nowrap;line-height:1}
+.mon-item .name{margin-right:4px}
+.mon-item .ms{margin-left:4px;font-variant-numeric:tabular-nums}
+.mon-item .sig{margin:0 4px;transform:translateY(-1px)}
+
+/* 允许服务表第 4 列换行，便于横向 chip 自动折行 */
+#monitorsTable tbody td:nth-child(4){white-space:normal}
 
 /* 新 Logo 样式 */
 .brand{display:flex;align-items:center;gap:.55rem;font-weight:600;letter-spacing:.5px;font-size:16px;position:relative}

@@ -42,25 +42,25 @@
 		{
 			"name": "抖音",
 			"host": "https://www.douyin.com",
-			"interval": 1200,
+			"interval": 600,
 			"type": "https"
 		},
 		{
 			"name": "京东",
 			"host": "https://www.jd.com",
-			"interval": 1200,
+			"interval": 600,
 			"type": "https"
 		},
 		{
 			"name": "百度",
 			"host": "https://www.baidu.com",
-			"interval": 1200,
+			"interval": 600,
 			"type": "https"
 		},
 		{
 			"name": "淘宝",
 			"host": "https://www.taobao.com",
-			"interval": 1200,
+			"interval": 600,
 			"type": "https"
 		}
 	],
@@ -69,21 +69,21 @@
 			"name": "my.cloudcpp.com",
 			"domain": "https://my.cloudcpp.com",
 			"port": 443,
-			"interval": 3600,
+			"interval": 7200,
 			"callback": "https://yourSMSurl" 
 		},
 		{
 			"name": "tz.cloudcpp.com",
 			"domain": "https://tz.cloudcpp.com",
 			"port": 443,
-			"interval": 3600,
+			"interval": 7200,
 			"callback": "https://yourSMSurl" 
 		},
 		{
 			"name": "3.0.2.1",
 			"domain": "https://3.0.2.1",
 			"port": 443,
-			"interval": 3600,
+			"interval": 7200,
 			"callback": "https://yourSMSurl"
 		}
 	],

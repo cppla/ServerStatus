@@ -1,5 +1,5 @@
 // 简洁现代前端 - 仅使用原生 JS
-const S = { updated:0, servers:[], ssl:[], error:false, hist:{}, metricHist:{}, loadHist:{} };// hist latency; metricHist: {key:{cpu:[],mem:[],hdd:[]}}; loadHist: {key:[]}
+const S = { updated:0, servers:[], ssl:[], error:false, hist:{}, loadHist:{} };// hist latency; loadHist: {key:{l1:[],l5:[],l15:[]}}
 const els = {
   notice: ()=>document.getElementById('notice'),
   last: ()=>document.getElementById('lastUpdate'),
@@ -8,7 +8,7 @@ const els = {
   sslBody: ()=>document.getElementById('sslBody')
 };
 
-// (清理) 已移除 bytes / humanAuto 等未使用的通用进位函数
+// (清理) 精简进位函数，仅保留最小所需
 // 最小单位 MB：
 function humanMinMBFromKB(kb){ if(kb==null||isNaN(kb)) return '-'; // 输入单位: KB
   let mb = kb/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
@@ -102,16 +102,7 @@ async function fetchData(){
   const MAX=120; // 保留最多 120 条
       ['cu','ct','cm'].forEach(k=>{ if(H[k].length>MAX) H[k].splice(0,H[k].length-MAX); });
       // 指标历史 (仅在线时记录)
-      if(!S.metricHist[key]) S.metricHist[key] = {cpu:[],mem:[],hdd:[]};
-      const MH = S.metricHist[key];
-      if(s.online4||s.online6){
-        const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-        const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-        MH.cpu.push(s.cpu||0);
-        MH.mem.push(memPct||0);
-        MH.hdd.push(hddPct||0);
-        const MAXM=120; ['cpu','mem','hdd'].forEach(k=>{ if(MH[k].length>MAXM) MH[k].splice(0,MH[k].length-MAXM); });
-      }
+  // 移除 CPU/内存/硬盘历史累积（不再使用）
   // 负载历史 (记录 load_1 / load_5 / load_15)
   if(!S.loadHist[key]) S.loadHist[key] = {l1:[],l5:[],l15:[]};
   const LH = S.loadHist[key];
@@ -138,8 +129,8 @@ function renderServers(){
   const tbody = els.serversBody();
   let html='';
   S.servers.forEach((s,idx)=>{
-    const online = s.online4||s.online6;
-  const proto = online ? (s.online4 && s.online6? '双栈': s.online4? 'IPv4':'IPv6') : '离线';
+  const online = (s.online4 || s.online6);
+  const proto = online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
   const statusPill = online ? `<span class="pill on">${proto}</span>` : `<span class="pill off">${proto}</span>`;
   const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
   const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
@@ -244,12 +235,35 @@ function renderServersCards(){
 function renderMonitors(){
   const tbody = els.monitorsBody();
   let html='';
+  function parseCustom(str){
+    const items = [];
+    if(typeof str !== 'string' || !str.trim()) return {items:[]};
+    str.split(';').forEach(seg=>{
+      if(!seg) return;
+      const [rawK,rawV] = seg.split('=');
+      if(!rawK) return;
+      const k = String(rawK).trim();
+      const v = parseInt((rawV||'').trim(),10);
+      if(!isNaN(v)) items.push({key:k, label:k, ms:Math.max(0,v)});
+    });
+    return {items};
+  }
+  function bars(ms){
+  const levels = [50,100,150,220];
+    let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
+    return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
+  }
   S.servers.forEach(s=>{
+    const isOnline = (s.online4||s.online6);
+    const proto = isOnline ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
+    const pill = isOnline ? `<span class="pill on">${proto}</span>` : `<span class="pill off">${proto}</span>`;
+    const parsed = parseCustom(s.custom||'');
+    const row = parsed.items.map(it=> `<span class="mon-item"><span class="name">${it.label}</span>${bars(it.ms)}<span class="ms">${it.ms}ms</span></span>`).join('');
     html += `<tr>
-      <td>${(s.online4||s.online6)?'在线':'离线'}</td>
+      <td>${pill}</td>
       <td>${s.name||'-'}</td>
       <td>${s.location||'-'}</td>
-      <td>${s.custom||'-'}</td>
+  <td><div class="mon-items">${row||'-'}</div></td>
     </tr>`;
   });
   tbody.innerHTML = html || `<tr><td colspan="4" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
@@ -260,14 +274,34 @@ function renderMonitorsCards(){
   const wrap = document.getElementById('monitorsCards');
   if(!wrap) return; if(window.innerWidth>700){ wrap.innerHTML=''; return; }
   let html='';
+  function parseCustom(str){
+    const items = [];
+    if(typeof str !== 'string' || !str.trim()) return {items:[]};
+    str.split(';').forEach(seg=>{
+      if(!seg) return;
+      const [rawK,rawV] = seg.split('=');
+      if(!rawK) return;
+      const k = String(rawK).trim();
+      const v = parseInt((rawV||'').trim(),10);
+      if(!isNaN(v)) items.push({key:k, label:k, ms:Math.max(0,v)});
+    });
+    return {items};
+  }
+  function bars(ms){
+  const levels = [50,100,150,220];
+    let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
+    return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
+  }
   S.servers.forEach(s=>{
-    const online = (s.online4||s.online6)?'在线':'离线';
-    const pill = `<span class="status-pill ${online==='在线'?'on':'off'}">${online}</span>`;
+    const isOnline = (s.online4||s.online6);
+    const proto = isOnline ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
+    const pill = `<span class="status-pill ${isOnline?'on':'off'}">${proto}</span>`;
+  const parsed = parseCustom(s.custom||'');
+  const row = parsed.items.map(it=> `<span class=\"mon-item\"><span class=\"name\">${it.label}</span>${bars(it.ms)}<span class=\"ms\">${it.ms}ms</span></span>`).join('');
     html += `<div class="card">
       <div class="card-header"><div class="card-title">${s.name||'-'} <span class="tag">${s.location||'-'}</span></div>${pill}</div>
       <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-        <div><span class="key">监测内容</span><span>${s.custom||'-'}</span></div>
-        <div><span class="key">协议</span><span>${online}</span></div>
+  <div><span class="key">监测内容</span><span class="mon-items">${row||'-'}</span></div>
       </div>
     </div>`;
   });
@@ -307,7 +341,7 @@ function renderSSLCards(){
       <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
         <div><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
         <div><span class="key">端口</span><span>${c.port||443}</span></div>
-        <div><span class="key">剩余(天)</span><span>${c.expire_days??'-'}</span></div>
+  <div><span class="key">剩余(天)</span><span><span class="badge ${cls}">${c.expire_days??'-'}</span></span></div>
         <div><span class="key">到期</span><span>${dt.split(' ')[0]||dt}</span></div>
       </div>
     </div>`;
@@ -378,8 +412,7 @@ function openDetail(i){
   const ioRead = (typeof s.io_read==='number')? s.io_read:0;
   const ioWrite = (typeof s.io_write==='number')? s.io_write:0;
   const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
-  // 保留延迟数据用于图表，但不再展示当前延迟文字行
-  const latText = offline ? '离线' : `CU/CT/CM: ${num(s.time_10010)}ms (${(s.ping_10010||0).toFixed(0)}%) / ${num(s.time_189)}ms (${(s.ping_189||0).toFixed(0)}%) / ${num(s.time_10086)}ms (${(s.ping_10086||0).toFixed(0)}%)`;
+  // 保留延迟数据用于图表
   const key = s._key || [s.name||'-', s.location||'-', s.type||'-'].join('|')+'#1';
 
   let latencyBlock = '';
@@ -557,7 +590,7 @@ function drawLoadChart(key){
   });
 }
 
-//# sourceMappingURL=app.js.map
+// source map 注释移除，避免 404 请求
 
 // ====== 详情动态刷新 ======
 function findServerByKey(key){ return S.servers.find(x=> (x._key)===key); }
@@ -565,13 +598,10 @@ function updateDetailMetrics(key){
   const s = findServerByKey(key); if(!s) return; if(!(s.online4||s.online6)) return; // 离线不更新
     const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
     const procEl = document.getElementById('detail-proc'); if(procEl) procEl.textContent = procLine;
-    const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
-    const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
-    const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
   // 延迟动态刷新 (若存在)
-  const cuE1=document.getElementById('lat-cu'); if(cuE1) cuE1.textContent = num(s.time_10010)+'ms';
-  const ctE1=document.getElementById('lat-ct'); if(ctE1) ctE1.textContent = num(s.time_189)+'ms';
-  const cmE1=document.getElementById('lat-cm'); if(cmE1) cmE1.textContent = num(s.time_10086)+'ms';
+  const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
+  const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
+  const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
   // 刷新联通/电信/移动历史计数（取三者最大长度）
   const latCntEl = document.getElementById('lat-count');
   if(latCntEl){

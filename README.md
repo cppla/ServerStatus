@@ -92,16 +92,16 @@ cd ServerStatus/server && make
 	],
 	"monitors": [
 		{
-			"name": "监测网站，默认为一天在线率",
-			"host": "https://www.baidu.com",
-			"interval": 1200,
+			"name": "抖音",
+			"host": "https://www.douyin.com",
+			"interval": 600,
 			"type": "https"
 		},
 		{
-			"name": "监测tcp服务端口",
-			"host": "1.1.1.1:80",
-			"interval": 1200,
-			"type": "tcp"
+			"name": "京东",
+			"host": "https://www.jd.com",
+			"interval": 600,
+			"type": "https"
 		}
 	],
 	"sslcerts": [
@@ -183,21 +183,24 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 
 客户端有两个版本，client-linux为普通linux，client-psutil为跨平台版，普通版不成功，换成跨平台版即可。        
 
-#### 一、client-linux版配置：       
+## 4.1、client-linux版配置：       
 1、vim client-linux.py, 修改SERVER地址，username帐号， password密码        
 2、python3 client-linux.py 运行即可。      
 
-#### 二、client-psutil版配置:                
+## 4.2、client-psutil版配置:                
 1、安装psutil跨平台依赖库       
 ```
-`Debian/Ubuntu`: apt -y install python3-pip && pip3 install psutil    
+`Debian/Ubuntu`: apt -y install python3-psutil        
 `Centos/Redhat`: yum -y install python3-pip gcc python3-devel && pip3 install psutil      
 `Windows`: https://pypi.org/project/psutil/    
 ```
 2、vim client-psutil.py, 修改SERVER地址，username帐号， password密码       
 3、python3 client-psutil.py 运行即可。    
 
-服务器和客户端自行加入开机启动，或进程守护，或后台方式运行。 例如： nohup python3 client-linux.py &    
+## 4.3 服务器和客户端自行加入开机启动，或后台方式运行。 
+1、后台运行： nohup python3 client-linux.py &    
+
+2、开机启动(crontab -e)： @reboot /usr/bin/python3 /root/client-linux.py
 
 `extra scene (run web/ssview.py)`
 ![Shell View](https://dl.cpp.la/Archive/serverstatus-shell.png?version=2023)
