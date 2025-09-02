@@ -198,9 +198,8 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 3、python3 client-psutil.py 运行即可。    
 
 ## 4.3 服务器和客户端自行加入开机启动，或后台方式运行。 
-1、后台运行： nohup python3 client-linux.py &    
-
-2、开机启动(crontab -e)： @reboot /usr/bin/python3 /root/client-linux.py
+1、后台运行： nohup python3 client-linux.py &        
+2、开机启动(crontab -e)： @reboot /usr/bin/python3 /root/client-linux.py 
 
 `extra scene (run web/ssview.py)`
 ![Shell View](https://dl.cpp.la/Archive/serverstatus-shell.png?version=2023)
