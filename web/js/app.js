@@ -249,7 +249,7 @@ function renderMonitors(){
     return {items};
   }
   function bars(ms){
-  const levels = [50,100,150,220];
+  const levels = [20,50,100,160];
     let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
     return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
   }
@@ -288,7 +288,7 @@ function renderMonitorsCards(){
     return {items};
   }
   function bars(ms){
-  const levels = [50,100,150,220];
+  const levels = [20,50,100,160];
     let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
     return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
   }

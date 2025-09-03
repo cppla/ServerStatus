@@ -98,8 +98,8 @@ cd ServerStatus/server && make
 			"type": "https"
 		},
 		{
-			"name": "京东",
-			"host": "https://www.jd.com",
+			"name": "百度",
+			"host": "https://www.baidu.com",
 			"interval": 600,
 			"type": "https"
 		}

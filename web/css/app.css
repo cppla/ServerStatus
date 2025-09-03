@@ -294,15 +294,12 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .sig .b.on{background:var(--ok)}
 .sig .b.off{opacity:.35}
 
-/* 服务监测项：横向排列的“名称 信号格 Nms”，自动换行 */
-.mon-items{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+/* 服务监测项：不同组竖排，同一组横排；不考虑自动换行 */
+.mon-items{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .mon-item{display:inline-flex;align-items:center;white-space:nowrap;line-height:1}
-.mon-item .name{margin-right:4px}
-.mon-item .ms{margin-left:4px;font-variant-numeric:tabular-nums}
-.mon-item .sig{margin:0 4px;transform:translateY(-1px)}
-
-/* 允许服务表第 4 列换行，便于横向 chip 自动折行 */
-#monitorsTable tbody td:nth-child(4){white-space:normal}
+.mon-item .name{margin-right:6px}
+.mon-item .ms{margin-left:6px;font-variant-numeric:tabular-nums}
+.mon-item .sig{margin:0 6px;transform:translateY(-1px)}
 
 /* 新 Logo 样式 */
 .brand{display:flex;align-items:center;gap:.55rem;font-weight:600;letter-spacing:.5px;font-size:16px;position:relative}
