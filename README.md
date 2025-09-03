@@ -35,7 +35,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 ```
 
 
-# 手动安装教程：     
+# 教程：     
    
 **【服务端配置】**           
           
@@ -165,30 +165,34 @@ web-dir参数为上一步设置的网站根目录，务必修改成自己网站�
 ```
 
 **【客户端配置】**    
+    
+#### client-linux.py Linux版
+```bash
+# 1、修改 client-linux.py 中的 SERVER、username、password
+python3 client-linux.py
+# 2、以传参的方式启动
+python3 client-linux.py SERVER=127.0.0.1 USER=s01
 
-客户端有两个版本，client-linux为普通linux，client-psutil为跨平台版，普通版不成功，换成跨平台版即可。        
-
-## 4.1、client-linux版配置：       
-1、vim client-linux.py, 修改SERVER地址，username帐号， password密码        
-2、python3 client-linux.py 运行即可。      
-
-## 4.2、client-psutil版配置:                
-1、安装psutil跨平台依赖库       
 ```
-`Debian/Ubuntu`: apt -y install python3-psutil        
-`Centos/Redhat`: yum -y install python3-pip gcc python3-devel && pip3 install psutil      
-`Windows`: https://pypi.org/project/psutil/    
+
+#### client-psutil.py 跨平台版
+```bash
+# 安装依赖
+# Debian/Ubuntu
+apt -y install python3-psutil
+# Centos/Redhat
+yum -y install python3-pip gcc python3-devel && pip3 install psutil
+# Windows: 从 https://pypi.org/project/psutil/ 安装
 ```
-2、vim client-psutil.py, 修改SERVER地址，username帐号， password密码       
-3、python3 client-psutil.py 运行即可。    
 
-## 4.3 服务器和客户端自行加入开机启动，或后台方式运行。 
-1、后台运行： nohup python3 client-linux.py &        
-2、开机启动(crontab -e)： @reboot /usr/bin/python3 /root/client-linux.py 
+#### 后台运行与开机启动
+```bash
+# 后台运行
+nohup python3 client-linux.py &
 
-`extra scene (run web/ssview.py)`
-![Shell View](https://dl.cpp.la/Archive/serverstatus-shell.png?version=2023)
-
+# 开机启动 (crontab -e)
+@reboot /usr/bin/python3 /path/to/client-linux.py
+```
 
 # Make Better        
 
