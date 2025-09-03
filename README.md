@@ -10,7 +10,7 @@
 
 ![Latest Host Version](https://dl.cpp.la/Archive/serverstatus_1_1_7.png)
 
-`Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复。 `    
+`Watchdog触发式告警，interval只是为了防止频繁收到报警，并不是探测间隔。值得注意的是Exprtk使用窄字符类型，中文等Unicode字符无法解析计算。 AI已经能够取代大部分程序员`    
     
 
 # 部署：
