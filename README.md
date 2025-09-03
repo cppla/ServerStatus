@@ -1,6 +1,6 @@
 # ServerStatus中文版：   
 
-* ServerStatus中文版是一个酷炫高逼格的云探针、云监控、服务器云监控、多服务器探针~。。
+* ServerStatus中文版是一个酷炫高逼格的云探针、云监控、服务器云监控、多服务器探针~。
 * 在线演示：https://tz.cloudcpp.com    
 
 [![Python Support](https://img.shields.io/badge/python-3.6%2B%20-blue.svg)](https://github.com/cppla/ServerStatus)
@@ -11,14 +11,7 @@
 ![Latest Host Version](https://dl.cpp.la/Archive/serverstatus_1_1_7.png)
 
 `Watchdog触发式告警，interval只是为了防止频繁收到报警信息造成的骚扰，并不是探测间隔。值得注意的是，Exprtk库默认使用窄字符类型，中文等Unicode字符无法解析计算，等待修复。 `    
-
-# 目录：
-
-* clients       	客户端文件
-* server       	 	服务端文件  
-* web           	网站文件
-* server/config.json	探针配置文件                                
-* web/json      	探针月流量        
+    
 
 # 部署：
 
@@ -40,14 +33,6 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 eg:
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
 ```
-
-# 主题：            
-
-* layui：https://github.com/zeyudada/StatusServerLayui ，预览：https://sslt.8zyw.cn            
-<img src=https://dl.cpp.la/Archive/serverstatus_layui.png width=200 height=100 />
-
-* light：https://github.com/orilights/ServerStatus-Theme-Light ，预览：https://tz.cloudcpp.com/index3.html    
-<img src=https://dl.cpp.la/Archive/serverstatus_light.png width=200 height=100 />  
 
 
 # 手动安装教程：     
