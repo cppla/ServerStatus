@@ -153,7 +153,10 @@ names_done:
 			}
 			// alarm logic
 			if(cert->m_aExpireTS>0){
-				int days = (int)((cert->m_aExpireTS - nowt)/86400);
+				// 实际剩余天数（向上取整），用于提醒文本展示
+				int64_t secsLeft = cert->m_aExpireTS - nowt;
+				int days = (int)(secsLeft/86400); // 分桶用：向下取整
+				int daysLeft = secsLeft>0 ? (int)((secsLeft + 86399)/86400) : 0; // 文案用：向上取整
 				int64_t *lastAlarm = NULL; int need=0; int target=0;
 				if(days <=7 && days >3){ lastAlarm=&cert->m_aLastAlarm7; target=7; }
 				else if(days <=3 && days >1){ lastAlarm=&cert->m_aLastAlarm3; target=3; }
@@ -166,7 +169,8 @@ names_done:
 						char timebuf[32];
 						time_t expt = (time_t)cert->m_aExpireTS;
 						strftime(timebuf,sizeof(timebuf),"%Y-%m-%d %H:%M:%S", gmtime(&expt));
-						snprintf(msg,sizeof(msg),"【SSL证书提醒】%s(%s) 将在 %d 天后(%s UTC) 到期", cert->m_aName, cert->m_aDomain, target, timebuf);
+						// 文案显示实际剩余天数（递减 7/6/5/...），而非阈值常量
+						snprintf(msg,sizeof(msg),"【SSL证书提醒】%s(%s) 将在 %d 天后(%s UTC) 到期", cert->m_aName, cert->m_aDomain, daysLeft, timebuf);
 						char *enc = curl_easy_escape(curl,msg,0);
 						char url[1500]; snprintf(url,sizeof(url),"%s%s", cert->m_aCallback, enc?enc:"");
 						curl_easy_setopt(curl, CURLOPT_POST, 1L);
