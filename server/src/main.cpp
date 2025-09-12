@@ -169,8 +169,8 @@ names_done:
 						char timebuf[32];
 						time_t expt = (time_t)cert->m_aExpireTS;
 						strftime(timebuf,sizeof(timebuf),"%Y-%m-%d %H:%M:%S", gmtime(&expt));
-						// 文案显示实际剩余天数（递减 7/6/5/...），而非阈值常量
-						snprintf(msg,sizeof(msg),"【SSL证书提醒】%s(%s) 将在 %d 天后(%s UTC) 到期", cert->m_aName, cert->m_aDomain, daysLeft, timebuf);
+						// 统一策略：与 JSON 中 expire_days 一致，使用 floor 结果 days
+										snprintf(msg,sizeof(msg),"【SSL证书提醒】%s(%s) 将在 %d 天后(%s UTC) 到期", cert->m_aName, cert->m_aDomain, days, timebuf);
 						char *enc = curl_easy_escape(curl,msg,0);
 						char url[1500]; snprintf(url,sizeof(url),"%s%s", cert->m_aCallback, enc?enc:"");
 						curl_easy_setopt(curl, CURLOPT_POST, 1L);
