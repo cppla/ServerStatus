@@ -101,6 +101,8 @@ table.data tbody tr:hover{background:rgba(255,255,255,.04)}
 /* modal styles */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:5vh 1rem;z-index:50;backdrop-filter:blur(4px)}
 .modal-box{position:relative;width:100%;max-width:560px;background:var(--bg-alt);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 30px -6px rgba(0,0,0,.6);padding:1.25rem 1.35rem;display:flex;flex-direction:column;gap:.9rem;animation:fade .25s ease}
+.modal-box.high-load{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.16), rgba(239,68,68,.08)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.38),0 10px 28px -10px rgba(239,68,68,.28)}
+body:not(.light) .modal-box.high-load{background:linear-gradient(180deg, rgba(239,68,68,.24), rgba(239,68,68,.12)), var(--bg-alt)}
 .modal-title{margin:0;font-size:16px;font-weight:600;letter-spacing:.5px}
 .modal-close{position:absolute;top:10px;right:12px;background:transparent;border:0;color:var(--text-dim);font-size:20px;line-height:1;cursor:pointer;padding:4px;border-radius:8px;transition:var(--trans)}
 .modal-close:hover{color:var(--text);background:var(--bg)}
@@ -229,9 +231,13 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card.offline{opacity:.6;}
-.cards .card.high-load{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.22), rgba(239,68,68,.12));box-shadow:0 0 0 1px rgba(239,68,68,.48),0 6px 18px -6px rgba(239,68,68,.28);} 
+.cards .card.high-load{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.22), rgba(239,68,68,.12)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.48),0 6px 18px -6px rgba(239,68,68,.28);} 
 table.data tbody tr.high-load{background:rgba(239,68,68,.18) !important;} 
 table.data tbody tr.high-load:hover{background:rgba(239,68,68,.26) !important;} 
+
+/* SSL 域名告警底色：与高负载相同 */
+#sslTable td.alert-domain{background:rgba(239,68,68,.18) !important;}
+#sslTable tr:hover td.alert-domain{background:rgba(239,68,68,.26) !important;}
 
 /* OS 着色（更明显）：
 	1) 为各 OS 类定义 --os-color 变量
@@ -277,10 +283,10 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .cards .kvlist div{display:flex;flex-direction:column;}
 .cards .kvlist span.key{opacity:.6;}
 .cards .buckets{margin-top:.25rem;}
-.cards .expand-btn{position:absolute;top:.5rem;right:.5rem;background:transparent;border:0;color:var(--text-dim);cursor:pointer;font-size:.9rem;padding:.2rem;}
-.cards .expand-btn:focus, .cards .expand-btn:hover{color:var(--text);}
-.cards .expand-area{margin-top:.4rem;display:none;animation:fadeIn .25s ease;}
-.cards .card.expanded .expand-area{display:block;}
+/* 证书卡片：域名告警底色（与高负载卡片风格一致） */
+.cards .kvlist .alert-domain{background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:.4rem .5rem;}
+.cards .kvlist .alert-domain .key{opacity:.85}
+/* 移除移动端卡片展开箭头与展开区域（已按需简化交互） */
 /* 旧移动端 latency spark 样式移除 */
 
 /* 简易信号格，用于服务连通性延迟展示 */

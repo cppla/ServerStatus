@@ -219,15 +219,14 @@ function renderServersCards(){
     const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
   // 唯一 key 已附加为 s._key（如需使用）
   const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}${osClass(s.os)}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <button class=\"expand-btn\" aria-label=\"展开\">▼</button>\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n      <div class=\"expand-area\">\n        <div style=\"font-size:.65rem;opacity:.7;margin-top:.3rem\">${online?'点击卡片可查看详情':'离线，不可查看详情'}</div>\n      </div>\n    </div>`;
+  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}${osClass(s.os)}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n    </div>`;
   });
   wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
   wrap.querySelectorAll('.card').forEach(card=>{
     const idx = parseInt(card.getAttribute('data-idx'));
-    card.addEventListener('click', e=>{ 
-      if(e.target.classList.contains('expand-btn')){ card.classList.toggle('expanded'); e.stopPropagation(); return;}
+    card.addEventListener('click', ()=>{ 
       if(card.getAttribute('data-online')!=='1') return; // 离线不弹
-      openDetail(idx); 
+      openDetail(idx);
     });
   });
 }
@@ -315,9 +314,11 @@ function renderSSL(){
     const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
     const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
     const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
+    // 当证书进入警告/错误状态时，高亮域名列底色（与高负载相同的底色）
+    const domainCellCls = (cls !== 'ok') ? 'alert-domain' : '';
     html += `<tr>
       <td>${c.name||'-'}</td>
-      <td>${(c.domain||'').replace(/^https?:\/\//,'')}</td>
+      <td class="${domainCellCls}">${(c.domain||'').replace(/^https?:\/\//,'')}</td>
       <td>${c.port||443}</td>
       <td><span class="badge ${cls}">${c.expire_days??'-'}</span></td>
       <td>${dt}</td>
@@ -336,10 +337,11 @@ function renderSSLCards(){
     const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
     const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
     const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
+    const domainRowCls = (cls !== 'ok') ? 'alert-domain' : '';
     html += `<div class="card">
       <div class="card-header"><div class="card-title">${c.name||'-'}</div><span class="status-pill ${cls==='err'?'off':'on'}">${status}</span></div>
       <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-        <div><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
+        <div class="${domainRowCls}"><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
         <div><span class="key">端口</span><span>${c.port||443}</span></div>
   <div><span class="key">剩余(天)</span><span><span class="badge ${cls}">${c.expire_days??'-'}</span></span></div>
         <div><span class="key">到期</span><span>${dt.split(' ')[0]||dt}</span></div>
@@ -396,6 +398,7 @@ function openDetail(i){
   const s = S.servers[i]; if(!s) return;
   const box = document.getElementById('detailContent');
   const modal = document.getElementById('detailModal');
+  const modalBox = modal.querySelector('.modal-box');
   const osText = osLabel(s.os);
   const titleEl = document.getElementById('detailTitle');
   titleEl.textContent = s.name + ' 详情';
@@ -476,6 +479,9 @@ function openDetail(i){
     ${latencyBlock}
   `;
   modal.style.display='flex';
+  // 根据高负载阈值（>=90% 任一项）给弹窗加高亮底色
+  const highLoad = (s.cpu||0) >= 90 || memPct >= 90 || hddPct >= 90;
+  if(modalBox){ modalBox.classList.toggle('high-load', highLoad); }
   document.addEventListener('keydown', escCloseOnce);
   if(!offline){
     drawLatencyChart(key);
@@ -488,7 +494,14 @@ function openDetail(i){
   }
 }
 function escCloseOnce(e){ if(e.key==='Escape'){ closeDetail(); } }
-function closeDetail(){ const m=document.getElementById('detailModal'); m.style.display='none'; document.removeEventListener('keydown', escCloseOnce); stopDetailAutoUpdate(); }
+function closeDetail(){
+  const m=document.getElementById('detailModal');
+  m.style.display='none';
+  const b = m.querySelector('.modal-box');
+  if(b) b.classList.remove('high-load');
+  document.removeEventListener('keydown', escCloseOnce);
+  stopDetailAutoUpdate();
+}
 document.getElementById('detailClose').addEventListener('click', closeDetail);
 document.getElementById('detailModal').addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
 
