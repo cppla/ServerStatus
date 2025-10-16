@@ -314,11 +314,11 @@ function renderSSL(){
     const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
     const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
     const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
-    // 当证书进入警告/错误状态时，高亮域名列底色（与高负载相同的底色）
-    const domainCellCls = (cls !== 'ok') ? 'alert-domain' : '';
-    html += `<tr>
+    // 当证书进入警告/错误状态时，高亮整行底色（复用 high-load 行样式）
+    const rowCls = (cls !== 'ok') ? 'high-load' : '';
+    html += `<tr class="${rowCls}">
       <td>${c.name||'-'}</td>
-      <td class="${domainCellCls}">${(c.domain||'').replace(/^https?:\/\//,'')}</td>
+      <td>${(c.domain||'').replace(/^https?:\/\//,'')}</td>
       <td>${c.port||443}</td>
       <td><span class="badge ${cls}">${c.expire_days??'-'}</span></td>
       <td>${dt}</td>
@@ -337,11 +337,11 @@ function renderSSLCards(){
     const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
     const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
     const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
-    const domainRowCls = (cls !== 'ok') ? 'alert-domain' : '';
-    html += `<div class="card">
+    const cardHigh = (cls !== 'ok') ? ' high-load' : '';
+    html += `<div class="card${cardHigh}">
       <div class="card-header"><div class="card-title">${c.name||'-'}</div><span class="status-pill ${cls==='err'?'off':'on'}">${status}</span></div>
       <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-        <div class="${domainRowCls}"><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
+        <div><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
         <div><span class="key">端口</span><span>${c.port||443}</span></div>
   <div><span class="key">剩余(天)</span><span><span class="badge ${cls}">${c.expire_days??'-'}</span></span></div>
         <div><span class="key">到期</span><span>${dt.split(' ')[0]||dt}</span></div>
