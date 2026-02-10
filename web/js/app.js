@@ -10,19 +10,57 @@ const els = {
 
 // (清理) 精简进位函数，仅保留最小所需
 // 最小单位 MB：
-function humanMinMBFromKB(kb){ if(kb==null||isNaN(kb)) return '-'; // 输入单位: KB
-  let mb = kb/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
-  const out = mb>=100? mb.toFixed(0): mb.toFixed(1); return out+units[i]; }
-function humanMinMBFromMB(mbVal){ if(mbVal==null||isNaN(mbVal)) return '-'; // 输入单位: MB
-  let v=mbVal; const units=['MB','GB','TB','PB']; let i=0; while(v>=1000 && i<units.length-1){ v/=1000;i++; }
-  const out = v>=100? v.toFixed(0): v.toFixed(1); return out+units[i]; }
-function humanMinMBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // 输入单位: B
-  let mb = bytes/1000/1000; const units=['MB','GB','TB','PB']; let i=0; while(mb>=1000 && i<units.length-1){ mb/=1000;i++; }
-  const out = mb>=100? mb.toFixed(0): mb.toFixed(1); return out+units[i]; }
-function humanRateMinMBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; if(bytes<=0) return '0.0MB'; return humanMinMBFromB(bytes); }
-function humanMinKBFromB(bytes){ if(bytes==null||isNaN(bytes)) return '-'; // 输入单位: B; 最小单位 KB
-  let kb = bytes/1000; const units=['KB','MB','GB','TB','PB']; let i=0; while(kb>=1000 && i<units.length-1){ kb/=1000; i++; }
-  const out = kb>=100? kb.toFixed(0): kb.toFixed(1); return out+units[i]; }
+function humanMinMBFromKB(kb){
+  if(kb==null) return '-';
+  const n = Number(kb);
+  if(!Number.isFinite(n)) return '-';
+  let mb = n/1000; // 输入单位: KB
+  const units=['MB','GB','TB','PB'];
+  let i=0;
+  while(mb>=1000 && i<units.length-1){ mb/=1000; i++; }
+  const out = mb>=100? mb.toFixed(0): mb.toFixed(1);
+  return out + (units[i] || units[units.length-1]);
+}
+function humanMinMBFromMB(mbVal){
+  if(mbVal==null) return '-';
+  const n = Number(mbVal);
+  if(!Number.isFinite(n)) return '-';
+  let v=n; // 输入单位: MB
+  const units=['MB','GB','TB','PB'];
+  let i=0;
+  while(v>=1000 && i<units.length-1){ v/=1000; i++; }
+  const out = v>=100? v.toFixed(0): v.toFixed(1);
+  return out + (units[i] || units[units.length-1]);
+}
+function humanMinMBFromB(bytes){
+  if(bytes==null) return '-';
+  const n = Number(bytes);
+  if(!Number.isFinite(n)) return '-';
+  let mb = n/1000/1000; // 输入单位: B
+  const units=['MB','GB','TB','PB'];
+  let i=0;
+  while(mb>=1000 && i<units.length-1){ mb/=1000; i++; }
+  const out = mb>=100? mb.toFixed(0): mb.toFixed(1);
+  return out + (units[i] || units[units.length-1]);
+}
+function humanRateMinMBFromB(bytes){
+  if(bytes==null) return '-';
+  const n = Number(bytes);
+  if(!Number.isFinite(n)) return '-';
+  if(n<=0) return '0.0MB';
+  return humanMinMBFromB(n);
+}
+function humanMinKBFromB(bytes){
+  if(bytes==null) return '-';
+  const n = Number(bytes);
+  if(!Number.isFinite(n)) return '-';
+  let kb = n/1000; // 输入单位: B; 最小单位 KB
+  const units=['KB','MB','GB','TB','PB'];
+  let i=0;
+  while(kb>=1000 && i<units.length-1){ kb/=1000; i++; }
+  const out = kb>=100? kb.toFixed(0): kb.toFixed(1);
+  return out + (units[i] || units[units.length-1]);
+}
 // (清理) pct / clsBy 已不再使用
 function humanAgo(ts){ if(!ts) return '-'; const s=Math.floor((Date.now()/1000 - ts)); const m=Math.floor(s/60); return m>0? m+' 分钟前':'几秒前'; }
 function num(v){ return (typeof v==='number' && !isNaN(v)) ? v : '-'; }
