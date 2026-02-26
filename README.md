@@ -18,12 +18,15 @@
 【服务端】：
 ```bash
 
-`Docker`:     
+`Docker`:
 
 wget --no-check-certificate -qO ~/serverstatus-config.json https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json && mkdir ~/serverstatus-monthtraffic    
 docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest     
 
 `Docker-compose(推荐)`: docker-compose up -d
+
+`Dockerfile.server`(本地构建服务端):
+docker build -f Dockerfile.server -t serverstatus-server .
 ```
 
 【客户端】：
@@ -32,6 +35,26 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 
 eg:
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
+```
+
+【客户端 Docker】：
+```bash
+# 构建客户端镜像
+docker build -f Dockerfile.client -t serverstatus-client .
+
+# 默认 client-linux.py
+docker run --network=host --rm \
+  -e SERVER=127.0.0.1 -e USER=s01 -e PASSWORD=USER_DEFAULT_PASSWORD \
+  serverstatus-client
+
+# 选择 client-psutil.py
+docker run --network=host --rm \
+  -e CLIENT=psutil \
+  -e SERVER=127.0.0.1 -e USER=s01 -e PASSWORD=USER_DEFAULT_PASSWORD \
+  serverstatus-client
+
+# 或直接覆盖命令
+docker run --network=host --rm serverstatus-client python3 /app/client-psutil.py
 ```
 
 

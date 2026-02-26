@@ -32,6 +32,34 @@ import threading
 import platform
 from queue import Queue
 
+def _env_str(name, default):
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    return value
+
+def _env_int(name, default):
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+# Allow docker env overrides
+SERVER = _env_str("SERVER", SERVER)
+USER = _env_str("USER", USER)
+PASSWORD = _env_str("PASSWORD", PASSWORD)
+PORT = _env_int("PORT", PORT)
+INTERVAL = _env_int("INTERVAL", INTERVAL)
+PROBEPORT = _env_int("PROBEPORT", PROBEPORT)
+PROBE_PROTOCOL_PREFER = _env_str("PROBE_PROTOCOL_PREFER", PROBE_PROTOCOL_PREFER)
+PING_PACKET_HISTORY_LEN = _env_int("PING_PACKET_HISTORY_LEN", PING_PACKET_HISTORY_LEN)
+CU = _env_str("CU", CU)
+CT = _env_str("CT", CT)
+CM = _env_str("CM", CM)
+
 def get_uptime():
     with open('/proc/uptime', 'r') as f:
         uptime = f.readline().split('.', 2)
