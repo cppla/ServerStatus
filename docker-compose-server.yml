@@ -1,16 +1,16 @@
 version: "3"
 services:
-  serverstatus:
+  serverstatus-server:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: cppla/serverstatus:latest
+      dockerfile: Dockerfile.server
+    image: cppla/serverstatus:server
     healthcheck:
       test: curl --fail http://localhost:80 || bash -c 'kill -s 15 -1 && (sleep 10; kill -s 9 -1)'
       interval: 30s
       timeout: 10s
       retries: 5
-    container_name: serverstatus
+    container_name: serverstatus-server
     restart: unless-stopped
     networks:
       serverstatus-network:

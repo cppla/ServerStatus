@@ -21,9 +21,10 @@
 `Docker`:
 
 wget --no-check-certificate -qO ~/serverstatus-config.json https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json && mkdir ~/serverstatus-monthtraffic    
-docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:latest     
+docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:server     
 
-`Docker-compose(推荐)`: docker-compose up -d
+`Docker-compose`: 
+docker compose -f docker-compose-server.yml up -d
 
 `Dockerfile.server`(本地构建服务端):
 docker build -f Dockerfile.server -t serverstatus-server .
@@ -31,32 +32,34 @@ docker build -f Dockerfile.server -t serverstatus-server .
 
 【客户端】：
 ```bash
-wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER={$SERVER} USER={$USER} PASSWORD={$PASSWORD} >/dev/null 2>&1 &
 
-eg:
-wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER=45.79.67.132 USER=s04  >/dev/null 2>&1 &
-```
+`Shell`:
 
-【客户端 Docker】：
-```bash
-# 构建客户端镜像
+wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER={$SERVER} USER={$USER} >/dev/null 2>&1 &  
+
+`Docker`: 
+docker run --network=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serververstatus:client
+
+`Docker-compose`: 
+docker compose -f docker-compose-client.yml up -d
+
+`Dockerfile.client`(本地构建客户端):
 docker build -f Dockerfile.client -t serverstatus-client .
 
-# 默认 client-linux.py
-docker run --network=host --rm \
-  -e SERVER=127.0.0.1 -e USER=s01 -e PASSWORD=USER_DEFAULT_PASSWORD \
-  serverstatus-client
-
-# 选择 client-psutil.py
-docker run --network=host --rm \
-  -e CLIENT=psutil \
-  -e SERVER=127.0.0.1 -e USER=s01 -e PASSWORD=USER_DEFAULT_PASSWORD \
-  serverstatus-client
-
-# 或直接覆盖命令
-docker run --network=host --rm serverstatus-client python3 /app/client-psutil.py
+`docker环境变量`: 
+SERVER --- 可选 - 默认 127.0.0.1
+USER --- 可选 - 默认 s01
+PORT --- 可选 - 默认 35601
+PASSWORD --- 可选 - 默认 USER_DEFAULT_PASSWORD
+INTERVAL --- 可选 - 默认 1
+PROBEPORT --- 可选 - 默认 80
+PROBE_PROTOCOL_PREFER --- 可选 - 默认 ipv4
+PING_PACKET_HISTORY_LEN --- 可选 - 默认 100
+CU --- 可选 - 默认 cu.tz.cloudcpp.com
+CT --- 可选 - 默认 ct.tz.cloudcpp.com
+CM --- 可选 - 默认 cm.tz.cloudcpp.com
+CLIENT --- 可选 - 默认client, psutil可选
 ```
-
 
 # 教程：     
    
