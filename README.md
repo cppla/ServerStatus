@@ -38,7 +38,7 @@ docker build -f Dockerfile.server -t serverstatus-server .
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER={$SERVER} USER={$USER} >/dev/null 2>&1 &  
 
 `Docker`: 
-docker run --restart=always --name=serverstatus-client --network=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serverstatus:client
+docker run -d --restart=always --name=serverstatus-client --network=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serverstatus:client
 
 `Docker-compose`: 
 docker compose -f docker-compose-client.yml up -d
