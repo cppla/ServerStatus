@@ -41,7 +41,7 @@ wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.c
 docker run -d --restart=always --name=serverstatus-client --network=host --pid=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serverstatus:client
 
 `Docker-compose`: 
-SERVER='127.0.0.1' USER='s01' docker compose -f docker-compose-client.yml up -d --force-recreate
+SERVER=127.0.0.1 USER=s01 docker compose -f docker-compose-client.yml up -d --force-recreate
 
 `Dockerfile.client`(本地构建客户端):
 docker build -f Dockerfile.client -t serverstatus-client .
