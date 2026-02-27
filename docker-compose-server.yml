@@ -1,4 +1,3 @@
-version: "3"
 services:
   serverstatus-server:
     build:
@@ -11,7 +10,7 @@ services:
       timeout: 10s
       retries: 5
     container_name: serverstatus-server
-    restart: unless-stopped
+    restart: unless-stoppeddocker-compose-server.yml
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.2
