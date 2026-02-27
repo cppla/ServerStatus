@@ -21,7 +21,7 @@
 `Docker`:
 
 wget --no-check-certificate -qO ~/serverstatus-config.json https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json && mkdir ~/serverstatus-monthtraffic    
-docker run -d --restart=always --name=serverstatus -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:server     
+docker run -d --restart=always --name=serverstatus-server -v ~/serverstatus-config.json:/ServerStatus/server/config.json -v ~/serverstatus-monthtraffic:/usr/share/nginx/html/json -p 80:80 -p 35601:35601 cppla/serverstatus:server     
 
 `Docker-compose`: 
 docker compose -f docker-compose-server.yml up -d
@@ -38,7 +38,7 @@ docker build -f Dockerfile.server -t serverstatus-server .
 wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && nohup python3 client-linux.py SERVER={$SERVER} USER={$USER} >/dev/null 2>&1 &  
 
 `Docker`: 
-docker run --network=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serververstatus:client
+docker run --restart=always --name=serverstatus-client --network=host -e SERVER=127.0.0.1 -e USER=s01 cppla/serverstatus:client
 
 `Docker-compose`: 
 docker compose -f docker-compose-client.yml up -d

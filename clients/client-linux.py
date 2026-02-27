@@ -81,11 +81,37 @@ def get_memory():
     return int(MemTotal), int(MemUsed), int(SwapTotal), int(SwapFree)
 
 def get_hdd():
-    p = subprocess.check_output(['df', '-Tlm', '--total', '-t', 'ext4', '-t', 'ext3', '-t', 'ext2', '-t', 'reiserfs', '-t', 'jfs', '-t', 'ntfs', '-t', 'fat32', '-t', 'btrfs', '-t', 'fuseblk', '-t', 'zfs', '-t', 'simfs', '-t', 'xfs']).decode("Utf-8")
-    total = p.splitlines()[-1]
-    used = total.split()[3]
-    size = total.split()[2]
-    return int(size), int(used)
+    valid_fs = {
+        "ext4", "ext3", "ext2", "reiserfs", "jfs", "ntfs", "fat32",
+        "btrfs", "fuseblk", "zfs", "simfs", "xfs", "exfat", "f2fs"
+    }
+    seen = set()
+    size = 0
+    used = 0
+    try:
+        with open("/proc/mounts", "r") as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) < 3:
+                    continue
+                mountpoint = parts[1]
+                fstype = parts[2].lower()
+                if fstype not in valid_fs or mountpoint in seen:
+                    continue
+                seen.add(mountpoint)
+                st = os.statvfs(mountpoint)
+                total_bytes = st.f_blocks * st.f_frsize
+                used_bytes = (st.f_blocks - st.f_bavail) * st.f_frsize
+                size += total_bytes
+                used += used_bytes
+    except Exception:
+        pass
+    # Keep client alive even on minimal/containerized systems.
+    if size <= 0:
+        st = os.statvfs("/")
+        size = st.f_blocks * st.f_frsize
+        used = (st.f_blocks - st.f_bavail) * st.f_frsize
+    return int(size / 1024 / 1024), int(used / 1024 / 1024)
 
 def get_time():
     with open("/proc/stat", "r") as f:
