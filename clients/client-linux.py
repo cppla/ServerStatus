@@ -82,10 +82,10 @@ def get_memory():
 
 def get_hdd():
     valid_fs = {
-        "ext4", "ext3", "ext2", "reiserfs", "jfs", "ntfs", "fat32",
-        "btrfs", "fuseblk", "zfs", "simfs", "xfs", "exfat", "f2fs"
+        "ext4", "ext3", "ext2", "reiserfs", "jfs", "btrfs", "fuseblk",
+        "zfs", "simfs", "ntfs", "fat32", "exfat", "xfs"
     }
-    seen = set()
+    disks = {}
     size = 0
     used = 0
     try:
@@ -94,23 +94,20 @@ def get_hdd():
                 parts = line.split()
                 if len(parts) < 3:
                     continue
+                device = parts[0]
                 mountpoint = parts[1]
                 fstype = parts[2].lower()
-                if fstype not in valid_fs or mountpoint in seen:
+                if fstype not in valid_fs or device in disks:
                     continue
-                seen.add(mountpoint)
-                st = os.statvfs(mountpoint)
-                total_bytes = st.f_blocks * st.f_frsize
-                used_bytes = (st.f_blocks - st.f_bavail) * st.f_frsize
-                size += total_bytes
-                used += used_bytes
+                disks[device] = mountpoint
+        for mountpoint in disks.values():
+            st = os.statvfs(mountpoint)
+            total_bytes = st.f_blocks * st.f_frsize
+            used_bytes = (st.f_blocks - st.f_bavail) * st.f_frsize
+            size += total_bytes
+            used += used_bytes
     except Exception:
         pass
-    # Keep client alive even on minimal/containerized systems.
-    if size <= 0:
-        st = os.statvfs("/")
-        size = st.f_blocks * st.f_frsize
-        used = (st.f_blocks - st.f_bavail) * st.f_frsize
     return int(size / 1024 / 1024), int(used / 1024 / 1024)
 
 def get_time():
