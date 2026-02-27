@@ -1,13 +1,9 @@
-FROM python:3.11-slim
+FROM alpine:3.13
 
 WORKDIR /app
 
-# Runtime deps for client-linux.py (ss/ps) and optional psutil client
-RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends iproute2 procps \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN pip install --no-cache-dir psutil
+# Runtime deps for client-linux.py and client-psutil.py
+RUN apk add --no-cache python3 py3-psutil iproute2 procps
 
 COPY clients/client-linux.py /app/client-linux.py
 COPY clients/client-psutil.py /app/client-psutil.py
