@@ -10,7 +10,7 @@ services:
       timeout: 10s
       retries: 5
     container_name: serverstatus-server
-    restart: unless-stoppeddocker-compose-server.yml
+    restart: unless-stopped
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.2
