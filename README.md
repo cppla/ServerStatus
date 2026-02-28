@@ -58,7 +58,7 @@ PING_PACKET_HISTORY_LEN --- 可选 - 默认 100
 CU --- 可选 - 默认 cu.tz.cloudcpp.com
 CT --- 可选 - 默认 ct.tz.cloudcpp.com
 CM --- 可选 - 默认 cm.tz.cloudcpp.com
-CLIENT --- 可选 - 默认client, psutil可选
+CLIENT --- 可选 - 默认psutil, client可选
 ```
 
 # 教程：     

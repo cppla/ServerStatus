@@ -20,4 +20,4 @@ services:
       CU: "${CU:-cu.tz.cloudcpp.com}"
       CT: "${CT:-ct.tz.cloudcpp.com}"
       CM: "${CM:-cm.tz.cloudcpp.com}"
-      CLIENT: "${CLIENT:-linux}"
+      CLIENT: "${CLIENT:-psutil}"
