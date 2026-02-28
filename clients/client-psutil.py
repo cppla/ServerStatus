@@ -521,13 +521,16 @@ if __name__ == '__main__':
                     elif 'bsd' in sysname:
                         os_name = 'bsd'
                     elif sysname.startswith('linux'):
-                        # try distro if available
-                        os_name = 'linux'
+                        # try distro from os-release
                         try:
-                            import distro  # optional
-                            os_name = distro.id() or 'linux'
+                            with open('/etc/os-release') as f:
+                                for line in f:
+                                    if line.startswith('ID='):
+                                        val = line.strip().split('=',1)[1].strip().strip('"')
+                                        if val: os_name = val
+                                        break
                         except Exception:
-                            pass
+                            os_name = 'linux'
                     else:
                         os_name = sysname or 'unknown'
                 except Exception:
