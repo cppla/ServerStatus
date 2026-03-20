@@ -6,8 +6,8 @@
 # 支持操作系统： Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD and NetBSD, both 32-bit and 64-bit architectures
 # 说明: 默认情况下修改server和user就可以了。丢包率监测方向可以自定义，例如：CU = "www.facebook.com"。
 
-SERVER = "127.0.0.1"
-USER = "s01"
+SERVER = ""
+USER = ""
 
 
 PASSWORD = "USER_DEFAULT_PASSWORD"
@@ -47,9 +47,9 @@ def _env_int(name, default):
     except ValueError:
         return default
 
-# Allow docker env overrides
-SERVER = _env_str("SERVER", SERVER)
-USER = _env_str("USER", USER)
+# Allow docker env overrides. 优先级：运行程序传递参数 > 用户修改的USER > Docker/系统
+SERVER = _env_str("SERVER", SERVER) if SERVER == "" else SERVER
+USER = _env_str("USER", USER) if USER == "" else USER
 PASSWORD = _env_str("PASSWORD", PASSWORD)
 PORT = _env_int("PORT", PORT)
 INTERVAL = _env_int("INTERVAL", INTERVAL)
