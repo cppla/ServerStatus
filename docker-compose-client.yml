@@ -10,6 +10,10 @@ services:
     pid: host
     environment:
       SERVER: "${SERVER:-127.0.0.1}"
+      # 注意：USER 会被 docker compose 在宿主机环境中先插值。
+      # 如果运行时没有显式传递，或传递方式不正确，可能会被 Docker/系统环境中的 $USER
+      # 替换成本机用户名，而不是期望的默认 s01。
+      # 推荐优先级：运行程序时显式传递 USER > 用户修改这里的 USER 默认值 > Docker/系统环境。
       USER: "${USER:-s01}"
       PORT: "${PORT:-35601}"
       PASSWORD: "${PASSWORD:-USER_DEFAULT_PASSWORD}"

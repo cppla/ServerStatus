@@ -21,7 +21,7 @@ ENV SERVER=127.0.0.1 \
     CU=cu.tz.cloudcpp.com \
     CT=ct.tz.cloudcpp.com \
     CM=cm.tz.cloudcpp.com \
-    CLIENT=linux
+    CLIENT=psutil
 
 RUN chmod +x /app/entrypoint.sh
 

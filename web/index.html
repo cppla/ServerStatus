@@ -6,17 +6,14 @@
     <meta name="description" content="云监控,ServerStatus中文版,ServerStatus,ServerStatus cppla" />
     <title>云监控</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="alternate icon" href="favicon.ico" />
-    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/app.css?v=20260630-7" />
 </head>
 <body>
     <header class="topbar">
         <div class="brand" title="云监控">
             <span class="logo-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M7.5 17a4.5 4.5 0 0 1-.9-8.92A6 6 0 0 1 18.4 9.6 4 4 0 0 1 18 17H7.5Z" />
-                    <rect x="9" y="11" width="6" height="4" rx="1" />
-                    <path d="M11 15v2.5a.5.5 0 0 0 .5.5h1" />
+                <svg viewBox="0 0 128 86" width="24" height="18" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 46H28L38 34L55 82L65 4L74 47H88M100 47H110M122 47H126" />
                 </svg>
             </span>
             <span class="logo-text"><span class="logo-accent">云</span>监控</span>
@@ -25,6 +22,7 @@
             <button data-tab="servers" class="active">主机</button>
             <button data-tab="monitors">服务</button>
             <button data-tab="ssl">证书</button>
+            <button data-tab="config">配置</button>
         </nav>
         <div class="actions">
             <button id="themeToggle" title="切换主题 (当前: 自动或手动)" aria-label="切换主题">🌓</button>
@@ -35,24 +33,59 @@
     <main class="wrapper">
         <div id="notice" class="notice info">初始化中...</div>
 
+        <section class="ops-overview" id="overviewCards" aria-label="运行概览"></section>
+
+        <section class="ops-toolbar" id="serversToolbar" aria-label="主机筛选">
+            <label class="search-field">
+                <span>搜索</span>
+                <input id="serverSearch" type="search" autocomplete="off" placeholder="节点 / 地区 / 系统 / 主机名" />
+            </label>
+            <div class="segmented" id="statusFilter" role="group" aria-label="状态筛选">
+                <button data-filter="all" class="active">全部</button>
+                <button data-filter="online">在线</button>
+                <button data-filter="offline">离线</button>
+                <button data-filter="alert" title="只显示在线但资源、丢包或流量异常的节点">异常</button>
+            </div>
+            <label class="select-field">
+                <span>系统</span>
+                <select id="osFilter">
+                    <option value="all">全部系统</option>
+                </select>
+            </label>
+            <label class="select-field">
+                <span>排序</span>
+                <select id="sortSelect">
+                    <option value="name">节点</option>
+                    <option value="status">在线状态</option>
+                    <option value="load">负载</option>
+                    <option value="cpu">CPU</option>
+                    <option value="memory">内存</option>
+                    <option value="hdd">硬盘</option>
+                    <option value="traffic">月流量</option>
+                    <option value="loss">丢包</option>
+                </select>
+            </label>
+            <button id="sortDirection" class="icon-text" title="切换排序方向">降序</button>
+        </section>
+
         <section id="panel-servers" class="panel active" aria-labelledby="主机">
             <div class="table-wrap">
                 <table class="data" id="serversTable">
                     <thead>
                     <tr>
-                        <th>协议</th>
-                        <th>月流量 ↓|↑</th>
-                        <th>节点</th>
-                        <th>虚拟化</th>
-                        <th>位置</th>
+                        <th data-sort="status">协议</th>
+                        <th data-sort="traffic">月流量 ↓|↑</th>
+                        <th data-sort="name">节点</th>
+                        <th data-sort="type">虚拟化</th>
+                        <th data-sort="location">位置</th>
                         <th>在线</th>
-                        <th>负载</th>
+                        <th data-sort="load">负载</th>
                         <th>当前网络 ↓|↑</th>
                         <th>总流量 ↓|↑</th>
-                        <th>CPU</th>
-                        <th>内存</th>
-                        <th>硬盘</th>
-                        <th style="text-align:center;">联通|电信|移动</th>
+                        <th data-sort="cpu">CPU</th>
+                        <th data-sort="memory">内存</th>
+                        <th data-sort="hdd">硬盘</th>
+                        <th data-sort="loss" style="text-align:center;">联通|电信|移动</th>
                     </tr>
                     </thead>
                     <tbody id="serversBody"></tbody>
@@ -99,21 +132,73 @@
             <!-- 移动端卡片布局 (证书) -->
             <div id="sslCards" class="cards" style="display:none;"></div>
         </section>
+
+        <section id="panel-config" class="panel" aria-labelledby="配置">
+            <div class="config-grid">
+                <section class="admin-card">
+                    <div class="section-head">
+                        <div>
+                            <h2>配置管理</h2>
+                            <p class="muted">可编辑节点、服务监测、证书与告警规则，保存后自动重载。</p>
+                        </div>
+                        <div class="section-actions">
+                            <button id="adminReload" class="icon-text">重载配置</button>
+                            <button id="adminRestart" class="danger-btn">重启服务</button>
+                        </div>
+                    </div>
+                    <div id="adminStatus" class="admin-status">正在检测管理 API...</div>
+                    <form id="adminTokenForm" class="admin-login">
+                        <label class="search-field">
+                            <span>管理令牌</span>
+                            <input id="adminToken" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" />
+                        </label>
+                        <button type="submit" class="primary-btn">连接</button>
+                    </form>
+                    <div class="segmented config-tabs" id="configTypeTabs" role="group" aria-label="配置类型">
+                        <button type="button" data-type="servers" class="active">节点</button>
+                        <button type="button" data-type="monitors">监测</button>
+                        <button type="button" data-type="sslcerts">证书</button>
+                        <button type="button" data-type="watchdog">告警</button>
+                    </div>
+                    <div class="config-actions">
+                        <button id="addConfigItemBtn" class="primary-btn">新增节点</button>
+                        <button id="refreshConfigBtn" class="icon-text">刷新配置</button>
+                    </div>
+                    <div id="configItemList" class="config-list"></div>
+                </section>
+                <section class="admin-card">
+                    <div class="section-head">
+                        <div>
+                            <h2 id="configEditorTitle">新增节点</h2>
+                            <p class="muted" id="configEditorHint">保存后会写入 config.json，并向 sergate 发送 SIGHUP 重载。</p>
+                        </div>
+                    </div>
+                    <form id="configForm" class="config-form">
+                        <div id="configFields" class="config-fields"></div>
+                        <div class="form-actions">
+                            <button type="submit" class="primary-btn">保存配置</button>
+                            <button type="button" id="deleteConfigItemBtn" class="danger-btn">删除配置</button>
+                            <button type="button" id="resetConfigFormBtn" class="icon-text">清空</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </section>
     </main>
 
-    <!-- 详情弹窗 -->
-    <div id="detailModal" class="modal-backdrop" style="display:none;">
-        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <!-- 详情抽屉 -->
+    <div id="detailModal" class="modal-backdrop drawer-backdrop" style="display:none;">
+        <aside class="modal-box detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
             <button class="modal-close" id="detailClose" aria-label="关闭">×</button>
             <h3 id="detailTitle" class="modal-title">节点详情</h3>
             <div id="detailContent" class="modal-content">加载中...</div>
-        </div>
+        </aside>
     </div>
 
     <footer class="footer">
         <a href="https://github.com/cppla/ServerStatus" target="_blank" rel="noopener">ServerStatus中文版</a>
     </footer>
 
-    <script src="js/app.js" defer></script>
+    <script src="js/app.js?v=20260630-7" defer></script>
 </body>
 </html>

@@ -1,71 +1,53 @@
-// 简洁现代前端 - 仅使用原生 JS
-const S = { updated:0, servers:[], ssl:[], error:false, hist:{}, loadHist:{} };// hist latency; loadHist: {key:{l1:[],l5:[],l15:[]}}
-const els = {
-  notice: ()=>document.getElementById('notice'),
-  last: ()=>document.getElementById('lastUpdate'),
-  serversBody: ()=>document.getElementById('serversBody'),
-  monitorsBody: ()=>document.getElementById('monitorsBody'),
-  sslBody: ()=>document.getElementById('sslBody')
+const S = {
+  updated: 0,
+  servers: [],
+  ssl: [],
+  hist: {},
+  loadHist: {},
+  openDetailKey: null,
+  activeTab: 'servers',
+  osOptionsSignature: '',
+  suppressStatsReloadUntil: 0,
+  filters: { query: '', status: 'all', os: 'all', sort: 'name', dir: 'desc' },
+  admin: {
+    token: localStorage.getItem('serverstatusAdminToken') || '',
+    enabled: false,
+    connected: false,
+    config: null,
+    selectedType: 'servers',
+    selectedIndex: -1,
+    saving: false
+  }
 };
 
-// (清理) 精简进位函数，仅保留最小所需
-// 最小单位 MB：
-function humanMinMBFromKB(kb){
-  if(kb==null) return '-';
-  const n = Number(kb);
-  if(!Number.isFinite(n)) return '-';
-  let mb = n/1000; // 输入单位: KB
-  const units=['MB','GB','TB','PB'];
-  let i=0;
-  while(mb>=1000 && i<units.length-1){ mb/=1000; i++; }
-  const out = mb>=100? mb.toFixed(0): mb.toFixed(1);
-  return out + (units[i] || units[units.length-1]);
-}
-function humanMinMBFromMB(mbVal){
-  if(mbVal==null) return '-';
-  const n = Number(mbVal);
-  if(!Number.isFinite(n)) return '-';
-  let v=n; // 输入单位: MB
-  const units=['MB','GB','TB','PB'];
-  let i=0;
-  while(v>=1000 && i<units.length-1){ v/=1000; i++; }
-  const out = v>=100? v.toFixed(0): v.toFixed(1);
-  return out + (units[i] || units[units.length-1]);
-}
-function humanMinMBFromB(bytes){
-  if(bytes==null) return '-';
-  const n = Number(bytes);
-  if(!Number.isFinite(n)) return '-';
-  let mb = n/1000/1000; // 输入单位: B
-  const units=['MB','GB','TB','PB'];
-  let i=0;
-  while(mb>=1000 && i<units.length-1){ mb/=1000; i++; }
-  const out = mb>=100? mb.toFixed(0): mb.toFixed(1);
-  return out + (units[i] || units[units.length-1]);
-}
-function humanRateMinMBFromB(bytes){
-  if(bytes==null) return '-';
-  const n = Number(bytes);
-  if(!Number.isFinite(n)) return '-';
-  if(n<=0) return '0.0MB';
-  return humanMinMBFromB(n);
-}
-function humanMinKBFromB(bytes){
-  if(bytes==null) return '-';
-  const n = Number(bytes);
-  if(!Number.isFinite(n)) return '-';
-  let kb = n/1000; // 输入单位: B; 最小单位 KB
-  const units=['KB','MB','GB','TB','PB'];
-  let i=0;
-  while(kb>=1000 && i<units.length-1){ kb/=1000; i++; }
-  const out = kb>=100? kb.toFixed(0): kb.toFixed(1);
-  return out + (units[i] || units[units.length-1]);
-}
-// (清理) pct / clsBy 已不再使用
-function humanAgo(ts){ if(!ts) return '-'; const s=Math.floor((Date.now()/1000 - ts)); const m=Math.floor(s/60); return m>0? m+' 分钟前':'几秒前'; }
-function num(v){ return (typeof v==='number' && !isNaN(v)) ? v : '-'; }
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const num = (v) => typeof v === 'number' && Number.isFinite(v) ? v : 0;
 
-// 将服务端上报的 os 映射为样式类名（用于为行/卡片着色）
+function humanMinMBFromKB(kb){ return humanBytes(num(kb) * 1000, 1000 * 1000); }
+function humanMinMBFromMB(mb){ return humanBytes(num(mb) * 1000 * 1000, 1000 * 1000); }
+function humanMinMBFromB(bytes){ return humanBytes(num(bytes), 1000 * 1000); }
+function humanMinKBFromB(bytes){ return humanBytes(num(bytes), 1000); }
+function humanBytes(bytes, minUnit){
+  if(!Number.isFinite(bytes)) return '-';
+  const units = ['B','KB','MB','GB','TB','PB'];
+  let index = minUnit >= 1000 * 1000 ? 2 : minUnit >= 1000 ? 1 : 0;
+  let divisor = Math.pow(1000, index);
+  let value = Math.max(0, bytes) / divisor;
+  while(value >= 1000 && index < units.length - 1){ value /= 1000; index++; }
+  const out = value >= 100 ? value.toFixed(0) : value.toFixed(1);
+  return out + units[index];
+}
+function humanAgo(ts){
+  if(!ts) return '-';
+  const sec = Math.max(0, Math.floor(Date.now() / 1000 - Number(ts)));
+  if(sec < 60) return '几秒前';
+  const min = Math.floor(sec / 60);
+  if(min < 60) return `${min} 分钟前`;
+  return `${Math.floor(min / 60)} 小时前`;
+}
+
 function osClass(os){
   if(!os) return '';
   const v = String(os).toLowerCase();
@@ -84,77 +66,130 @@ function osClass(os){
   if(v.includes('freebsd')) return pick('freebsd');
   if(v.includes('openbsd')) return pick('openbsd');
   if(v.includes('netbsd') || v.includes('bsd')) return pick('bsd');
-  // macOS / Darwin 变体：darwin | macOS | os x | osx | apple
   if(v.includes('darwin') || v.includes('macos') || v.includes('os x') || v.includes('osx') || v.includes('apple') || v.includes('mac')) return pick('darwin');
   if(v.includes('win')) return pick('windows');
   if(v.includes('linux')) return pick('linux');
   return pick(v.replace(/[^a-z0-9_-]+/g,'-').slice(0,20));
 }
-
-// 将服务端 os 字段转为友好的显示名称
 function osLabel(os){
   if(!os) return '';
   const v = String(os).toLowerCase();
-  const is = (k)=>v.includes(k);
-  if(is('ubuntu')) return 'Ubuntu';
-  if(is('debian')) return 'Debian';
-  if(is('centos')) return 'CentOS';
-  if(is('rocky')) return 'Rocky Linux';
-  if(is('alma')) return 'AlmaLinux';
-  if(is('rhel') || is('redhat')) return 'Red Hat Enterprise Linux';
-  if(is('arch')) return 'Arch Linux';
-  if(is('alpine')) return 'Alpine Linux';
-  if(is('fedora')) return 'Fedora';
-  if(is('amazon')) return 'Amazon Linux';
-  if(is('suse')) return 'SUSE Linux';
-  if(is('freebsd')) return 'FreeBSD';
-  if(is('openbsd')) return 'OpenBSD';
-  if(is('netbsd') || is('bsd')) return 'BSD';
-  if(is('darwin') || is('macos') || is('os x') || is('osx') || is('apple') || is('mac')) return 'macOS';
-  if(is('win')) return 'Windows';
-  if(is('linux')) return 'Linux';
-  // 默认：首字母大写
+  if(v.includes('ubuntu')) return 'Ubuntu';
+  if(v.includes('debian')) return 'Debian';
+  if(v.includes('centos')) return 'CentOS';
+  if(v.includes('rocky')) return 'Rocky Linux';
+  if(v.includes('alma')) return 'AlmaLinux';
+  if(v.includes('rhel') || v.includes('redhat')) return 'Red Hat Enterprise Linux';
+  if(v.includes('arch')) return 'Arch Linux';
+  if(v.includes('alpine')) return 'Alpine Linux';
+  if(v.includes('fedora')) return 'Fedora';
+  if(v.includes('amazon')) return 'Amazon Linux';
+  if(v.includes('suse')) return 'SUSE Linux';
+  if(v.includes('freebsd')) return 'FreeBSD';
+  if(v.includes('openbsd')) return 'OpenBSD';
+  if(v.includes('netbsd') || v.includes('bsd')) return 'BSD';
+  if(v.includes('darwin') || v.includes('macos') || v.includes('os x') || v.includes('osx') || v.includes('apple') || v.includes('mac')) return 'macOS';
+  if(v.includes('win')) return 'Windows';
+  if(v.includes('linux')) return 'Linux';
   return String(os).charAt(0).toUpperCase() + String(os).slice(1);
 }
 
+function isBlocked(s){
+  return [s.ping_10010, s.ping_189, s.ping_10086].every(p => clamp(num(p), 0, 100) >= 100);
+}
+
+function metrics(s){
+  const online = !!(s.online4 || s.online6);
+  const memPct = s.memory_total ? s.memory_used / s.memory_total * 100 : 0;
+  const hddPct = s.hdd_total ? s.hdd_used / s.hdd_total * 100 : 0;
+  const monthIn = Math.max(0, num(s.network_in) - num(s.last_network_in));
+  const monthOut = Math.max(0, num(s.network_out) - num(s.last_network_out));
+  const traffic = monthIn + monthOut;
+  const loss = Math.max(num(s.ping_10010), num(s.ping_189), num(s.ping_10086));
+  const blocked = online && isBlocked(s);
+  const critical = online && (num(s.cpu) >= 90 || memPct >= 90 || hddPct >= 90 || loss >= 20);
+  const warning = online && (traffic >= 500 * 1000 * 1000 * 1000 || loss >= 10 || num(s.cpu) >= 75 || memPct >= 80 || hddPct >= 85);
+  return { online, memPct, hddPct, monthIn, monthOut, traffic, loss, blocked, critical, warning, alert: critical || warning, highlight: !online || critical || warning };
+}
+
 async function fetchData(){
-  try {
-    const r = await fetch('json/stats.json?_='+Date.now());
-    if(!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    if(j.reload) location.reload();
-  S.updated = j.updated; S.servers = j.servers||[]; S.ssl = j.sslcerts||[]; S.error=false;
-  // 为每个服务器生成唯一 key（基于 name|location|type + 顺序号），避免同名节点写入同一历史
-  const keyCount = Object.create(null);
-  S.servers.forEach((s, idx)=>{
-    const base = [s.name||'-', s.location||'-', s.type||'-'].join('|');
-    const seq = (keyCount[base]||0) + 1; keyCount[base] = seq;
-    const key = `${base}#${seq}`;
-    s._key = key; // 挂到对象上，后续查找/弹窗均用它
-      if(!S.hist[key]) S.hist[key] = {cu:[],ct:[],cm:[]};
-      const H = S.hist[key];
-      // 使用 time_ 字段 (ms) 若不存在则跳过
-      if(typeof s.time_10010 === 'number') H.cu.push(s.time_10010);
-      if(typeof s.time_189 === 'number') H.ct.push(s.time_189);
-      if(typeof s.time_10086 === 'number') H.cm.push(s.time_10086);
-  const MAX=120; // 保留最多 120 条
-      ['cu','ct','cm'].forEach(k=>{ if(H[k].length>MAX) H[k].splice(0,H[k].length-MAX); });
-      // 指标历史 (仅在线时记录)
-  // 移除 CPU/内存/硬盘历史累积（不再使用）
-  // 负载历史 (记录 load_1 / load_5 / load_15)
-  if(!S.loadHist[key]) S.loadHist[key] = {l1:[],l5:[],l15:[]};
-  const LH = S.loadHist[key];
-  const pushLoad = (arr,val)=>{ if(typeof val === 'number' && val >= 0){ arr.push(val); if(arr.length>120) arr.splice(0,arr.length-120); } };
-  pushLoad(LH.l1, s.load_1);
-  pushLoad(LH.l5, s.load_5);
-  pushLoad(LH.l15, s.load_15);
+  try{
+    const res = await fetch('json/stats.json?_=' + Date.now(), { cache: 'no-store' });
+    if(!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    if(data.reload && !shouldSuppressStatsReload()) {
+      location.reload();
+      return;
+    }
+    S.updated = Number(data.updated || 0);
+    S.servers = (data.servers || []).map((server, index) => {
+      const base = [server.name || '-', server.location || '-', server.type || '-'].join('|');
+      const key = `${base}#${index + 1}`;
+      server._key = key;
+      if(!S.hist[key]) S.hist[key] = { cu: [], ct: [], cm: [] };
+      if(!S.loadHist[key]) S.loadHist[key] = { l1: [], l5: [], l15: [] };
+      pushHistory(S.hist[key].cu, server.time_10010);
+      pushHistory(S.hist[key].ct, server.time_189);
+      pushHistory(S.hist[key].cm, server.time_10086);
+      pushHistory(S.loadHist[key].l1, server.load_1);
+      pushHistory(S.loadHist[key].l5, server.load_5);
+      pushHistory(S.loadHist[key].l15, server.load_15);
+      return server;
     });
+    S.ssl = data.sslcerts || [];
     render();
-  }catch(e){ S.error=true; els.notice().textContent = '数据获取失败'; console.error(e); }
+  }catch(err){
+    const notice = $('notice');
+    notice.style.display = 'flex';
+    notice.textContent = '数据获取失败: ' + err.message;
+  }
+}
+function shouldSuppressStatsReload(){
+  return S.admin.saving || S.activeTab === 'config' || Date.now() < S.suppressStatsReloadUntil;
+}
+function pushHistory(arr, value){
+  if(typeof value === 'number' && Number.isFinite(value) && value >= 0) arr.push(value);
+  if(arr.length > 120) arr.splice(0, arr.length - 120);
+}
+
+function visibleServers(){
+  const q = S.filters.query.trim().toLowerCase();
+  let rows = S.servers.filter(server => {
+    const m = metrics(server);
+    if(S.filters.status === 'online' && !m.online) return false;
+    if(S.filters.status === 'offline' && m.online) return false;
+    if(S.filters.status === 'alert' && !m.alert) return false;
+    const os = osLabel(server.os);
+    if(S.filters.os !== 'all' && os !== S.filters.os) return false;
+    if(!q) return true;
+    return [server.name, server.type, server.host, server.location, os].some(v => String(v || '').toLowerCase().includes(q));
+  });
+  rows.sort((a, b) => {
+    const dir = S.filters.dir === 'asc' ? 1 : -1;
+    const ma = metrics(a), mb = metrics(b);
+    const value = (server, m) => ({
+      name: String(server.name || ''),
+      type: String(server.type || ''),
+      location: String(server.location || ''),
+      status: m.online ? 1 : 0,
+      load: num(server.load_1),
+      cpu: num(server.cpu),
+      memory: m.memPct,
+      hdd: m.hddPct,
+      traffic: m.traffic,
+      loss: m.loss
+    })[S.filters.sort];
+    const va = value(a, ma), vb = value(b, mb);
+    if(typeof va === 'string') return va.localeCompare(vb, 'zh-CN') * dir;
+    return (va - vb) * dir;
+  });
+  return rows;
 }
 
 function render(){
-  els.notice().style.display='none';
+  $('notice').style.display = 'none';
+  renderOverview();
+  renderOsOptions();
   renderServers();
   renderServersCards();
   renderMonitors();
@@ -162,534 +197,647 @@ function render(){
   renderSSL();
   renderSSLCards();
   updateTime();
+  if(S.openDetailKey) refreshDetail();
 }
+
+function renderOverview(){
+  const total = S.servers.length;
+  const online = S.servers.filter(s => metrics(s).online).length;
+  const alerts = alertStats();
+  const sslWarn = S.ssl.filter(c => c.mismatch || c.expire_days <= 7).length;
+  const monthDown = S.servers.reduce((sum, s) => sum + metrics(s).monthIn, 0);
+  const monthUp = S.servers.reduce((sum, s) => sum + metrics(s).monthOut, 0);
+  $('overviewCards').innerHTML = [
+    card('在线主机', `${online}/${total}`, '当前在线节点', online === total ? 'ok' : 'warn'),
+    card('证书风险', sslWarn, sslWarn ? '过期或域名不匹配' : '证书正常', sslWarn ? 'warn' : 'ok'),
+    card('本月上行', humanMinMBFromB(monthUp), '上传累计', ''),
+    card('本月下行', humanMinMBFromB(monthDown), '下载累计', ''),
+    card('活跃告警', alerts.total, `离线 ${alerts.offline} / 异常 ${alerts.abnormal} / 被墙 ${alerts.blocked}`, alerts.total ? (alerts.offline || alerts.blocked ? 'err' : 'warn') : 'ok')
+  ].join('');
+}
+function card(label, value, hint, cls){ return `<div class="overview-card ${cls}"><span class="label">${esc(label)}</span><span class="value">${esc(value)}</span><span class="hint">${esc(hint)}</span></div>`; }
+
+function alertStats(){
+  const stats = { offline: 0, abnormal: 0, blocked: 0, total: 0 };
+  S.servers.forEach(s => {
+    const m = metrics(s);
+    if(!m.online) stats.offline++;
+    else if(m.blocked) stats.blocked++;
+    else if(m.alert) stats.abnormal++;
+  });
+  stats.total = stats.offline + stats.abnormal + stats.blocked;
+  return stats;
+}
+
+function renderOsOptions(){
+  const select = $('osFilter');
+  const labels = [...new Set(S.servers.map(s => osLabel(s.os)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-CN'));
+  const signature = labels.join('\u001f');
+  const current = labels.includes(S.filters.os) ? S.filters.os : 'all';
+  if(document.activeElement === select) return;
+  if(S.osOptionsSignature !== signature){
+    select.innerHTML = '<option value="all">全部系统</option>' + labels.map(label => `<option value="${esc(label)}">${esc(label)}</option>`).join('');
+    S.osOptionsSignature = signature;
+  }
+  if(select.value !== current) select.value = current;
+  S.filters.os = select.value;
+}
+
+function protoPill(s){
+  const m = metrics(s);
+  const proto = m.online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
+  return `<span class="pill ${m.online ? 'on' : 'off'}">${proto}</span>`;
+}
+function trafficCaps(s, small){
+  const m = metrics(s);
+  const heavy = m.traffic >= 500 * 1000 * 1000 * 1000;
+  return `<span class="caps-traffic duo ${heavy ? 'heavy' : 'normal'}${small ? ' sm' : ''}" title="本月下行 | 上行"><span class="half in">${humanMinMBFromB(m.monthIn)}</span><span class="half out">${humanMinMBFromB(m.monthOut)}</span></span>`;
+}
+function gaugeHTML(type, value){
+  const pct = clamp(num(value), 0, 100);
+  const warnAttr = pct >= 90 ? 'data-bad' : (pct >= 50 ? 'data-warn' : '');
+  const label = type === 'cpu' ? 'CPU' : type === 'mem' ? '内存' : '硬盘';
+  return `<div class="gauge-half" data-type="${type}" ${warnAttr} style="--p:${(pct / 100).toFixed(3)}" title="${label} ${pct.toFixed(0)}%">
+    <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="track" d="M10 50 A40 40 0 0 1 90 50" /><path class="arc" d="M10 50 A40 40 0 0 1 90 50" /></svg>
+    <span>${pct.toFixed(0)}%</span>
+  </div>`;
+}
+function resourceMeter(label, value, pct, kind){
+  const safePct = clamp(num(pct), 0, 100);
+  const level = safePct >= 90 ? 'bad' : (safePct >= 75 ? 'warn' : 'ok');
+  return `<div class="resource-meter" data-kind="${esc(kind)}" data-level="${level}" style="--p:${safePct.toFixed(1)}%">
+    <div class="resource-meter-head"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>
+    <div class="resource-track"><i></i></div>
+  </div>`;
+}
+function detailResourceHTML(s, m){
+  const swapPct = s.swap_total ? num(s.swap_used) / num(s.swap_total) * 100 : 0;
+  return `
+    ${resourceMeter('CPU', `${num(s.cpu).toFixed(0)}%`, num(s.cpu), 'cpu')}
+    ${resourceMeter('内存', `${humanMinMBFromKB(s.memory_used)} / ${humanMinMBFromKB(s.memory_total)}`, m.memPct, 'mem')}
+    ${resourceMeter('虚存', `${humanMinMBFromKB(s.swap_used)} / ${humanMinMBFromKB(s.swap_total)}`, swapPct, 'swap')}
+    ${resourceMeter('硬盘', `${humanMinMBFromMB(s.hdd_used)} / ${humanMinMBFromMB(s.hdd_total)}`, m.hddPct, 'hdd')}
+    <div class="resource-mini"><span>IO</span><strong>读 ${humanMinMBFromB(s.io_read)} / 写 ${humanMinMBFromB(s.io_write)}</strong></div>`;
+}
+function packetLossLine(s){
+  return [s.ping_10010, s.ping_189, s.ping_10086].map(p => `${clamp(num(p), 0, 100).toFixed(0)}%`).join('|');
+}
+function chartLegend(series){
+  return `<div class="chart-legend">${series.map(item => `<span><i style="background:${esc(item.color)}"></i>${esc(item.label)}</span>`).join('')}</div>`;
+}
+function buckets(s){
+  return `<div class="buckets" title="联通 / 电信 / 移动">${[s.ping_10010, s.ping_189, s.ping_10086].map(p => {
+    const v = clamp(num(p), 0, 100);
+    const level = v >= 20 ? 'bad' : (v >= 10 ? 'warn' : 'ok');
+    return `<div class="bucket" data-lv="${level}"><span style="--h:${v}%"></span><label>${v.toFixed(0)}%</label></div>`;
+  }).join('')}</div>`;
+}
+
 function renderServers(){
-  const tbody = els.serversBody();
-  let html='';
-  S.servers.forEach((s,idx)=>{
-  const online = (s.online4 || s.online6);
-  const proto = online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
-  const statusPill = online ? `<span class="pill on">${proto}</span>` : `<span class="pill off">${proto}</span>`;
-  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-  const monthInBytes = (s.network_in - s.last_network_in) || 0; // 原始: B
-  const monthOutBytes = (s.network_out - s.last_network_out) || 0;
-  const monthIn = humanMinMBFromB(monthInBytes); // 最小单位 MB
-  const monthOut = humanMinMBFromB(monthOutBytes);
-  const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
-  const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
-  const trafficCls = heavy ? 'caps-traffic duo heavy' : 'caps-traffic duo normal';
-    const netNow = humanMinKBFromB(s.network_rx) + ' | ' + humanMinKBFromB(s.network_tx); // 最小单位 KB
-    const netTotal = humanMinMBFromB(s.network_in)+' | '+humanMinMBFromB(s.network_out); // 最小单位 MB
-  const p1 = (s.ping_10010||0); const p2 = (s.ping_189||0); const p3 = (s.ping_10086||0);
-  function bucket(p){ const v = Math.max(0, Math.min(100, p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
-  const pingBuckets = `<div class=\"buckets\" title=\"CU/CT/CM\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
-  // 唯一 key 已附加为 s._key（如需使用）
-  const rowCursor = online? 'pointer':'default';
-    const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<tr data-idx="${idx}" data-online="${online?1:0}" class="row-server${highLoad?' high-load':''}${osClass(s.os)}" style="cursor:${rowCursor};${online?'':'opacity:.65;'}">
-  <td>${statusPill}</td>
-  <td><span class="${trafficCls}" title="本月下行 | 上行 (≥500GB 触发红黄)"><span class="half in">${monthIn}</span><span class="half out">${monthOut}</span></span></td>
-      <td>${s.name||'-'}</td>
-      <td>${s.type||'-'}</td>
-      <td>${s.location||'-'}</td>
-      <td>${s.uptime||'-'}</td>
-  <td>${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</td>
+  const rows = visibleServers();
+  document.querySelectorAll('#serversTable th[data-sort]').forEach(th => {
+    th.classList.toggle('sorted-asc', th.dataset.sort === S.filters.sort && S.filters.dir === 'asc');
+    th.classList.toggle('sorted-desc', th.dataset.sort === S.filters.sort && S.filters.dir === 'desc');
+  });
+  $('serversBody').innerHTML = rows.map(s => {
+    const m = metrics(s);
+    const netNow = `${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}`;
+    const netTotal = `${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}`;
+    return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" class="row-server${m.highlight ? ' high-load' : ''}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
+      <td>${protoPill(s)}</td>
+      <td>${trafficCaps(s)}</td>
+      <td>${esc(s.name || '-')}</td>
+      <td>${esc(s.type || '-')}</td>
+      <td>${esc(s.location || '-')}</td>
+      <td>${esc(s.uptime || '-')}</td>
+      <td>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</td>
       <td>${netNow}</td>
       <td>${netTotal}</td>
-  <td>${online?gaugeHTML('cpu', s.cpu||0):'-'}</td>
-  <td>${online?gaugeHTML('mem', memPct):'-'}</td>
-  <td>${online?gaugeHTML('hdd', hddPct):'-'}</td>
-  <td>${pingBuckets}</td>
+      <td>${m.online ? gaugeHTML('cpu', s.cpu) : '-'}</td>
+      <td>${m.online ? gaugeHTML('mem', m.memPct) : '-'}</td>
+      <td>${m.online ? gaugeHTML('hdd', m.hddPct) : '-'}</td>
+      <td>${buckets(s)}</td>
     </tr>`;
-  });
-  tbody.innerHTML = html || `<tr><td colspan="13" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
-
-  // 绑定行点击
-  tbody.querySelectorAll('tr.row-server').forEach(tr=>{
-    tr.addEventListener('click',()=>{
-      if(tr.getAttribute('data-online')!=='1') return; // 离线不弹出
-      const i = parseInt(tr.getAttribute('data-idx'));
-      openDetail(i);
-    });
-  });
-
-  // 仪表盘无需历史 spark 小图
+  }).join('') || `<tr><td colspan="13" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
+  document.querySelectorAll('#serversBody .row-server').forEach(row => row.addEventListener('click', () => {
+    if(row.dataset.online !== '1') return;
+    openDetail(row.dataset.key);
+  }));
 }
-// 生成仪表盘 (圆形 conic-gradient)
-function gaugeHTML(type,val){
-  const pct = Math.max(0,Math.min(100,val));
-  const p = (pct/100).toFixed(3);
-  const warnAttr = pct>=90? 'data-bad' : (pct>=50? 'data-warn' : '');
-    return `<div class="gauge-half" data-type="${type}" ${warnAttr} style="--p:${p}" title="${labelOf(type)} ${pct.toFixed(0)}%">
-      <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-        <path class="track" d="M10 50 A40 40 0 0 1 90 50" />
-        <path class="arc" d="M10 50 A40 40 0 0 1 90 50" />
-      </svg>
-      <span>${pct.toFixed(0)}%</span>
-    </div>`;
-}
-function labelOf(t){ return t==='cpu'?'CPU': t==='mem'?'内存':'硬盘'; }
+
 function renderServersCards(){
-  const wrap = document.getElementById('serversCards');
-  if(!wrap) return;
-  // 仅在窄屏时显示 (和 CSS 一致判断, 可稍放宽避免闪烁)
-  if(window.innerWidth>700){ wrap.innerHTML=''; return; }
-  let html='';
-  S.servers.forEach((s,idx)=>{
-    const online = s.online4||s.online6;
-    const proto = online ? (s.online4 && s.online6? '双栈': s.online4? 'IPv4':'IPv6') : '离线';
-    const pill = `<span class="status-pill ${online?'on':'off'}">${proto}</span>`;
-  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-  // 月流量（移动端）并应用 500GB 阈值配色逻辑
-  const monthInBytes = (s.network_in - s.last_network_in) || 0; // B
-  const monthOutBytes = (s.network_out - s.last_network_out) || 0;
-  const monthIn = humanMinMBFromB(monthInBytes);
-  const monthOut = humanMinMBFromB(monthOutBytes);
-  const HEAVY_THRESHOLD = 500 * 1000 * 1000 * 1000; // 500GB
-  const heavy = monthInBytes >= HEAVY_THRESHOLD || monthOutBytes >= HEAVY_THRESHOLD;
-  const trafficCls = heavy ? 'caps-traffic duo heavy sm' : 'caps-traffic duo normal sm';
-    const netNow = humanMinKBFromB(s.network_rx)+' | '+humanMinKBFromB(s.network_tx);
-    const netTotal = humanMinMBFromB(s.network_in)+' | '+humanMinMBFromB(s.network_out);
-    const p1 = (s.ping_10010||0); const p2=(s.ping_189||0); const p3=(s.ping_10086||0);
-    function bucket(p){ const v=Math.max(0,Math.min(100,p)); const level = v>=20?'bad':(v>=10?'warn':'ok'); return `<div class=\"bucket\" data-lv=\"${level}\"><span style=\"--h:${v}%\"></span><label>${v.toFixed(0)}%</label></div>`; }
-    const buckets = `<div class=\"buckets\">${bucket(p1)}${bucket(p2)}${bucket(p3)}</div>`;
-  // 唯一 key 已附加为 s._key（如需使用）
-  const highLoad = online && ( (s.cpu||0)>=90 || (memPct)>=90 || (hddPct)>=90 );
-  html += `<div class=\"card${online?'':' offline'}${highLoad?' high-load':''}${osClass(s.os)}\" data-idx=\"${idx}\" data-online=\"${online?1:0}\">\n      <div class=\"card-header\">\n        <div class=\"card-title\">${s.name||'-'} <span class=\"tag\">${s.location||'-'}</span></div>\n        ${pill}\n      </div>\n      <div class=\"kvlist\">\n        <div><span class=\"key\">负载</span><span>${s.load_1==-1?'–':s.load_1?.toFixed(2)}</span></div>\n        <div><span class=\"key\">在线</span><span>${s.uptime||'-'}</span></div>\n        <div><span class=\"key\">月流量</span><span><span class=\"${trafficCls}\" title=\"本月下行 | 上行 (≥500GB 触发红黄)\"><span class=\"half in\">${monthIn}</span><span class=\"half out\">${monthOut}</span></span></span></div>\n        <div><span class=\"key\">网络</span><span>${netNow}</span></div>\n        <div><span class=\"key\">总流量</span><span>${netTotal}</span></div>\n        <div><span class=\"key\">CPU</span><span>${s.cpu||0}%</span></div>\n        <div><span class=\"key\">内存</span><span>${memPct.toFixed(0)}%</span></div>\n        <div><span class=\"key\">硬盘</span><span>${hddPct.toFixed(0)}%</span></div>\n      </div>\n      ${buckets}\n    </div>`;
-  });
-  wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
-  wrap.querySelectorAll('.card').forEach(card=>{
-    const idx = parseInt(card.getAttribute('data-idx'));
-    card.addEventListener('click', ()=>{ 
-      if(card.getAttribute('data-online')!=='1') return; // 离线不弹
-      openDetail(idx);
-    });
-  });
+  const wrap = $('serversCards');
+  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = visibleServers().map(s => {
+    const m = metrics(s);
+    return `<div class="card${m.online ? '' : ' offline'}${m.highlight ? ' high-load' : ''}${osClass(s.os)}" data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}">
+      <div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div>
+      <div class="kvlist">
+        <div><span class="key">负载</span><span>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</span></div>
+        <div><span class="key">在线</span><span>${esc(s.uptime || '-')}</span></div>
+        <div><span class="key">月流量</span><span>${trafficCaps(s, true)}</span></div>
+        <div><span class="key">网络</span><span>${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}</span></div>
+        <div><span class="key">CPU</span><span>${num(s.cpu).toFixed(0)}%</span></div>
+        <div><span class="key">内存</span><span>${m.memPct.toFixed(0)}%</span></div>
+      </div>
+      ${buckets(s)}
+    </div>`;
+  }).join('') || '<div class="empty-state">无数据</div>';
+  wrap.querySelectorAll('.card').forEach(card => card.addEventListener('click', () => {
+    if(card.dataset.online !== '1') return;
+    openDetail(card.dataset.key);
+  }));
 }
 
+function parseCustom(str){
+  if(typeof str !== 'string' || !str.trim()) return [];
+  return str.split(';').map(seg => {
+    const [name, val] = seg.split('=');
+    const ms = parseInt((val || '').trim(), 10);
+    return name && Number.isFinite(ms) ? { name: name.trim(), ms: Math.max(0, ms) } : null;
+  }).filter(Boolean);
+}
+function signalBars(ms){
+  const levels = [20, 50, 100, 160];
+  let on = typeof ms === 'number' ? (ms <= levels[0] ? 5 : ms <= levels[1] ? 4 : ms <= levels[2] ? 3 : ms <= levels[3] ? 2 : 1) : 0;
+  return `<span class="sig">${[0,1,2,3,4].map(i => `<i class="b ${i < on ? 'on' : 'off'}"></i>`).join('')}</span>`;
+}
+function monitorItems(s){
+  const items = parseCustom(s.custom);
+  return items.map(item => `<span class="mon-item"><span class="name">${esc(item.name)}</span>${signalBars(item.ms)}<span class="ms">${item.ms}ms</span></span>`).join('') || '-';
+}
 function renderMonitors(){
-  const tbody = els.monitorsBody();
-  let html='';
-  function parseCustom(str){
-    const items = [];
-    if(typeof str !== 'string' || !str.trim()) return {items:[]};
-    str.split(';').forEach(seg=>{
-      if(!seg) return;
-      const [rawK,rawV] = seg.split('=');
-      if(!rawK) return;
-      const k = String(rawK).trim();
-      const v = parseInt((rawV||'').trim(),10);
-      if(!isNaN(v)) items.push({key:k, label:k, ms:Math.max(0,v)});
-    });
-    return {items};
-  }
-  function bars(ms){
-  const levels = [20,50,100,160];
-    let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
-    return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
-  }
-  S.servers.forEach(s=>{
-    const isOnline = (s.online4||s.online6);
-    const proto = isOnline ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
-    const pill = isOnline ? `<span class="pill on">${proto}</span>` : `<span class="pill off">${proto}</span>`;
-    const parsed = parseCustom(s.custom||'');
-    const row = parsed.items.map(it=> `<span class="mon-item"><span class="name">${it.label}</span>${bars(it.ms)}<span class="ms">${it.ms}ms</span></span>`).join('');
-    html += `<tr>
-      <td>${pill}</td>
-      <td>${s.name||'-'}</td>
-      <td>${s.location||'-'}</td>
-  <td><div class="mon-items">${row||'-'}</div></td>
-    </tr>`;
-  });
-  tbody.innerHTML = html || `<tr><td colspan="4" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
+  $('monitorsBody').innerHTML = S.servers.map(s => `<tr><td>${protoPill(s)}</td><td>${esc(s.name || '-')}</td><td>${esc(s.location || '-')}</td><td><div class="mon-items">${monitorItems(s)}</div></td></tr>`).join('') || `<tr><td colspan="4" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
 }
-
-// 服务卡片 (移动端)
 function renderMonitorsCards(){
-  const wrap = document.getElementById('monitorsCards');
-  if(!wrap) return; if(window.innerWidth>700){ wrap.innerHTML=''; return; }
-  let html='';
-  function parseCustom(str){
-    const items = [];
-    if(typeof str !== 'string' || !str.trim()) return {items:[]};
-    str.split(';').forEach(seg=>{
-      if(!seg) return;
-      const [rawK,rawV] = seg.split('=');
-      if(!rawK) return;
-      const k = String(rawK).trim();
-      const v = parseInt((rawV||'').trim(),10);
-      if(!isNaN(v)) items.push({key:k, label:k, ms:Math.max(0,v)});
-    });
-    return {items};
-  }
-  function bars(ms){
-  const levels = [20,50,100,160];
-    let on = 0; if(typeof ms==='number'){ if(ms<=levels[0]) on=5; else if(ms<=levels[1]) on=4; else if(ms<=levels[2]) on=3; else if(ms<=levels[3]) on=2; else on=1; }
-    return '<span class="sig">'+[0,1,2,3,4].map(i=>`<i class="b ${i<on?'on':'off'}"></i>`).join('')+'</span>';
-  }
-  S.servers.forEach(s=>{
-    const isOnline = (s.online4||s.online6);
-    const proto = isOnline ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
-    const pill = `<span class="status-pill ${isOnline?'on':'off'}">${proto}</span>`;
-  const parsed = parseCustom(s.custom||'');
-  const row = parsed.items.map(it=> `<span class=\"mon-item\"><span class=\"name\">${it.label}</span>${bars(it.ms)}<span class=\"ms\">${it.ms}ms</span></span>`).join('');
-    html += `<div class="card">
-      <div class="card-header"><div class="card-title">${s.name||'-'} <span class="tag">${s.location||'-'}</span></div>${pill}</div>
-      <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-  <div><span class="key">监测内容</span><span class="mon-items">${row||'-'}</span></div>
-      </div>
-    </div>`;
-  });
-  wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无数据</div>';
+  const wrap = $('monitorsCards');
+  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = S.servers.map(s => `<div class="card"><div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div><div class="kvlist"><div><span class="key">监测内容</span><span class="mon-items">${monitorItems(s)}</span></div></div></div>`).join('') || '<div class="empty-state">无数据</div>';
 }
-
 function renderSSL(){
-  const tbody = els.sslBody();
-  let html='';
-  S.ssl.forEach(c=>{
-    const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
-    const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
-    const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
-    // 当证书进入警告/错误状态时，高亮整行底色（复用 high-load 行样式）
-    const rowCls = (cls !== 'ok') ? 'high-load' : '';
-    html += `<tr class="${rowCls}">
-      <td>${c.name||'-'}</td>
-      <td>${(c.domain||'').replace(/^https?:\/\//,'')}</td>
-      <td>${c.port||443}</td>
-      <td><span class="badge ${cls}">${c.expire_days??'-'}</span></td>
-      <td>${dt}</td>
-      <td><span class="badge ${cls}">${status}</span></td>
-    </tr>`;
-  });
-  tbody.innerHTML = html || `<tr><td colspan="6" class="muted" style="text-align:center;padding:1rem;">无证书数据</td></tr>`;
+  $('sslBody').innerHTML = S.ssl.map(c => {
+    const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
+    const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
+    const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().replace('T',' ').replace(/\.\d+Z/,'') : '-';
+    return `<tr class="${cls !== 'ok' ? 'high-load' : ''}"><td>${esc(c.name || '-')}</td><td>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</td><td>${esc(c.port || 443)}</td><td><span class="badge ${cls}">${esc(c.expire_days ?? '-')}</span></td><td>${dt}</td><td><span class="badge ${cls}">${status}</span></td></tr>`;
+  }).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:1rem;">无证书数据</td></tr>`;
+}
+function renderSSLCards(){
+  const wrap = $('sslCards');
+  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = S.ssl.map(c => {
+    const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
+    const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
+    const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().slice(0,10) : '-';
+    return `<div class="card${cls !== 'ok' ? ' high-load' : ''}"><div class="card-header"><div class="card-title">${esc(c.name || '-')}</div><span class="status-pill ${cls === 'err' ? 'off' : 'on'}">${status}</span></div><div class="kvlist"><div><span class="key">域名</span><span>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</span></div><div><span class="key">端口</span><span>${esc(c.port || 443)}</span></div><div><span class="key">剩余</span><span>${esc(c.expire_days ?? '-')} 天</span></div><div><span class="key">到期</span><span>${dt}</span></div></div></div>`;
+  }).join('') || '<div class="empty-state">无证书数据</div>';
 }
 
-// 证书卡片 (移动端)
-function renderSSLCards(){
-  const wrap = document.getElementById('sslCards');
-  if(!wrap) return; if(window.innerWidth>700){ wrap.innerHTML=''; return; }
-  let html='';
-  S.ssl.forEach(c=>{
-    const cls = c.expire_days<=0? 'err': c.expire_days<=7? 'warn':'ok';
-    const status = c.expire_days<=0? '已过期': c.expire_days<=7? '将到期':'正常';
-    const dt = c.expire_ts? new Date(c.expire_ts*1000).toISOString().replace('T',' ').replace(/\.\d+Z/,''):'-';
-    const cardHigh = (cls !== 'ok') ? ' high-load' : '';
-    html += `<div class="card${cardHigh}">
-      <div class="card-header"><div class="card-title">${c.name||'-'}</div><span class="status-pill ${cls==='err'?'off':'on'}">${status}</span></div>
-      <div class="kvlist" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-        <div><span class="key">域名</span><span>${(c.domain||'').replace(/^https?:\/\//,'')}</span></div>
-        <div><span class="key">端口</span><span>${c.port||443}</span></div>
-  <div><span class="key">剩余(天)</span><span><span class="badge ${cls}">${c.expire_days??'-'}</span></span></div>
-        <div><span class="key">到期</span><span>${dt.split(' ')[0]||dt}</span></div>
-      </div>
-    </div>`;
+function openDetail(key){
+  S.openDetailKey = key;
+  $('detailModal').style.display = 'flex';
+  refreshDetail();
+  document.addEventListener('keydown', escCloseOnce);
+}
+function findServer(key){ return S.servers.find(s => s._key === key); }
+function refreshDetail(){
+  const s = findServer(S.openDetailKey);
+  if(!s){ closeDetail(); return; }
+  const m = metrics(s);
+  const title = $('detailTitle');
+  title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}`;
+  const modalBox = document.querySelector('#detailModal .modal-box');
+  if(modalBox) modalBox.classList.toggle('high-load', m.highlight);
+  const loadSeries = [
+    { data: S.loadHist[s._key]?.l1 || [], color:'#8b5cf6', label:'load1' },
+    { data: S.loadHist[s._key]?.l5 || [], color:'#10b981', label:'load5' },
+    { data: S.loadHist[s._key]?.l15 || [], color:'#f59e0b', label:'load15' }
+  ];
+  const latencySeries = [
+    { data: S.hist[s._key]?.cu || [], color:'#3b82f6', label:'联通' },
+    { data: S.hist[s._key]?.ct || [], color:'#10b981', label:'电信' },
+    { data: S.hist[s._key]?.cm || [], color:'#f59e0b', label:'移动' }
+  ];
+  $('detailContent').innerHTML = `
+    <div class="detail-grid">
+      <section class="detail-section"><h4>身份</h4>
+        <div class="kv"><span>节点 / 位置</span><span class="mono">${esc(s.name || '-')} / ${esc(s.location || '-')}</span></div>
+        <div class="kv"><span>虚拟化 / 主机</span><span class="mono">${esc(s.type || '-')} / ${esc(s.host || '-')}</span></div>
+        <div class="kv"><span>协议 / 在线</span><span class="detail-inline">${protoPill(s)}<span class="mono">${esc(s.uptime || '-')}</span></span></div>
+      </section>
+      <section class="detail-section resource-section"><h4>资源</h4>
+        ${detailResourceHTML(s, m)}
+      </section>
+      <section class="detail-section"><h4>网络</h4>
+        <div class="kv"><span>当前 ↓|↑</span><span class="mono">${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}</span></div>
+        <div class="kv"><span>总流量 ↓|↑</span><span class="mono">${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}</span></div>
+        <div class="kv"><span>本月 ↓|↑</span><span>${trafficCaps(s, true)}</span></div>
+      </section>
+      <section class="detail-section"><h4>连接</h4>
+        <div class="kv"><span>TCP / UDP</span><span class="mono">${num(s.tcp_count)} / ${num(s.udp_count)}</span></div>
+        <div class="kv"><span>进程 / 线程</span><span class="mono">${num(s.process_count)} / ${num(s.thread_count)}</span></div>
+        <div class="kv"><span>联通|电信|移动</span><span class="mono">${packetLossLine(s)}</span></div>
+      </section>
+    </div>
+    <section class="detail-section chart-section"><div class="chart-head"><h4>负载趋势</h4>${chartLegend(loadSeries)}</div><canvas id="loadChart" class="detail-chart" height="130"></canvas></section>
+    <section class="detail-section chart-section"><div class="chart-head"><h4>三网延迟</h4>${chartLegend(latencySeries)}</div><canvas id="latChart" class="detail-chart" height="150"></canvas></section>`;
+  drawLineChart('loadChart', loadSeries, '暂无负载数据');
+  drawLineChart('latChart', latencySeries, '暂无延迟数据', 'ms');
+}
+function closeDetail(){
+  $('detailModal').style.display = 'none';
+  S.openDetailKey = null;
+  document.removeEventListener('keydown', escCloseOnce);
+}
+function escCloseOnce(e){ if(e.key === 'Escape') closeDetail(); }
+
+function drawLineChart(id, series, emptyText, unit = ''){
+  const canvas = $(id);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.clientWidth || canvas.width;
+  const H = canvas.height;
+  canvas.width = W;
+  ctx.clearRect(0,0,W,H);
+  const all = series.flatMap(s => s.data).filter(v => Number.isFinite(v));
+  if(all.length < 2){
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-dim') || '#7a899d';
+    ctx.font = '12px system-ui';
+    ctx.fillText(emptyText, Math.max(12, W / 2 - 42), H / 2);
+    return;
+  }
+  const padL = unit ? 50 : 42, padR = 10, padT = 12, padB = 20;
+  let min = Math.min(0, ...all), max = Math.max(...all);
+  if(max - min < 1) max = min + 1;
+  const range = max - min;
+  const n = Math.max(...series.map(s => s.data.length));
+  const xStep = (W - padL - padR) / Math.max(1, n - 1);
+  const light = document.body.classList.contains('light');
+  const axis = light ? 'rgba(0,0,0,.22)' : 'rgba(255,255,255,.18)';
+  const grid = light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.10)';
+  const text = light ? 'rgba(30,41,59,.7)' : 'rgba(226,232,240,.82)';
+  ctx.strokeStyle = axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
+  ctx.fillStyle = text; ctx.font = '10px system-ui';
+  for(let i=0;i<=4;i++){
+    const y = padT + (H-padT-padB) * i / 4;
+    const val = max - range * i / 4;
+    ctx.fillText(val.toFixed(max < 10 ? 1 : 0) + unit, 4, y + 3);
+    ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+  }
+  series.forEach(item => {
+    if(item.data.length < 2) return;
+    ctx.strokeStyle = item.color; ctx.lineWidth = 1.7; ctx.beginPath();
+    item.data.forEach((v, i) => {
+      const x = padL + xStep * i;
+      const y = padT + (H-padT-padB) * (1 - (v - min) / range);
+      if(i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
   });
-  wrap.innerHTML = html || '<div class="muted" style="font-size:.75rem;text-align:center;padding:1rem;">无证书数据</div>';
 }
 
 function updateTime(){
-  const el = els.last();
-  if(S.updated){ el.textContent = '最后更新: '+ humanAgo(S.updated); }
+  const last = $('lastUpdate');
+  if(last) last.textContent = '最后更新: ' + humanAgo(S.updated);
 }
 
 function bindTabs(){
-  document.getElementById('navTabs').addEventListener('click',e=>{
-    if(e.target.tagName!=='BUTTON') return; const tab=e.target.dataset.tab; 
-    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b===e.target));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+tab));
+  $('navTabs').addEventListener('click', e => {
+    if(e.target.tagName !== 'BUTTON') return;
+    const tab = e.target.dataset.tab;
+    S.activeTab = tab;
+    document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn === e.target));
+    document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === 'panel-' + tab));
+    $('serversToolbar').style.display = tab === 'servers' ? 'flex' : 'none';
+    if(tab === 'config') ensureAdminChecked();
   });
 }
 function bindTheme(){
-  const btn = document.getElementById('themeToggle');
+  const btn = $('themeToggle');
   const mql = window.matchMedia('(prefers-color-scheme: light)');
-  const saved = localStorage.getItem('theme'); // 'light' | 'dark' | null (auto)
-
-  const apply = (isLight)=>{ document.body.classList.toggle('light', isLight); document.documentElement.classList.toggle('light', isLight); };
-
-  if(!saved){
-    // 自动跟随系统
-    apply(mql.matches);
-    // 监听系统偏好变化（仅在未手动选择时）
-    mql.addEventListener('change', e=>{ if(!localStorage.getItem('theme')) apply(e.matches); });
-  } else {
-    apply(saved==='light');
-  }
-
-  btn.addEventListener('click',()=>{
-    // 用户手动切换后即固定，不再自动
+  const apply = (light) => { document.body.classList.toggle('light', light); document.documentElement.classList.toggle('light', light); };
+  const saved = localStorage.getItem('theme');
+  apply(saved ? saved === 'light' : mql.matches);
+  mql.addEventListener('change', e => { if(!localStorage.getItem('theme')) apply(e.matches); });
+  btn.addEventListener('click', () => {
     const toLight = !document.body.classList.contains('light');
     apply(toLight);
-    localStorage.setItem('theme', toLight?'light':'dark');
+    localStorage.setItem('theme', toLight ? 'light' : 'dark');
+    if(S.openDetailKey) refreshDetail();
   });
 }
+function bindFilters(){
+  $('serverSearch').addEventListener('input', e => { S.filters.query = e.target.value; renderServers(); renderServersCards(); });
+  $('statusFilter').addEventListener('click', e => {
+    if(e.target.tagName !== 'BUTTON') return;
+    S.filters.status = e.target.dataset.filter;
+    document.querySelectorAll('#statusFilter button').forEach(btn => btn.classList.toggle('active', btn === e.target));
+    renderServers(); renderServersCards();
+  });
+  $('osFilter').addEventListener('change', e => { S.filters.os = e.target.value; renderServers(); renderServersCards(); });
+  $('osFilter').addEventListener('blur', renderOsOptions);
+  $('sortSelect').addEventListener('change', e => { S.filters.sort = e.target.value; renderServers(); renderServersCards(); });
+  $('sortDirection').addEventListener('click', () => {
+    S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
+    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    renderServers(); renderServersCards();
+  });
+  document.querySelectorAll('#serversTable th[data-sort]').forEach(th => th.addEventListener('click', () => {
+    if(S.filters.sort === th.dataset.sort) S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
+    else S.filters.sort = th.dataset.sort;
+    $('sortSelect').value = S.filters.sort;
+    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    renderServers(); renderServersCards();
+  }));
+}
+
+function adminHeaders(){
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${S.admin.token}` };
+}
+async function api(path, options = {}){
+  const res = await fetch(path, { ...options, headers: { ...(options.headers || {}), ...(options.auth === false ? {} : adminHeaders()) } });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok || data.ok === false) throw new Error(data.error || res.statusText);
+  return data;
+}
+async function ensureAdminChecked(){
+  if(S.admin._checking) return;
+  S.admin._checking = true;
+  try{
+    const health = await api('/api/health', { auth:false });
+    S.admin.enabled = !!health.enabled;
+    setAdminStatus(health.enabled ? '管理 API 已启用，输入 token 后可编辑配置。' : '管理 API 未启用：请在容器环境变量设置 ADMIN_TOKEN。', health.enabled ? '' : 'err');
+    if(S.admin.enabled && S.admin.token) await loadConfig();
+  }catch(err){
+    setAdminStatus('无法连接管理 API：' + err.message, 'err');
+  }finally{
+    S.admin._checking = false;
+  }
+}
+function setAdminStatus(text, cls){
+  const el = $('adminStatus');
+  el.className = 'admin-status' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+}
+async function loadConfig(){
+  const data = await api('/api/config');
+  S.admin.config = normalizeAdminConfig(data.config);
+  S.admin.connected = true;
+  setAdminStatus('已连接管理 API，配置可编辑。', 'ok');
+  renderConfigList();
+  renderConfigEditor();
+}
+
+const CONFIG_TYPES = {
+  servers: {
+    label: '节点',
+    addLabel: '新增节点',
+    empty: '暂无节点配置',
+    hint: '客户端登录使用 username/password，保存后自动重载 sergate。',
+    fields: [
+      { name:'username', label:'用户名', required:true, max:120 },
+      { name:'name', label:'节点名', required:true, max:120 },
+      { name:'type', label:'虚拟化', required:true, max:120, placeholder:'kvm / xen / vmware' },
+      { name:'host', label:'主机名', required:true, max:120 },
+      { name:'location', label:'位置', required:true, max:120, placeholder:'🇨🇳 / 上海 / hk-01' },
+      { name:'password', label:'密码', required:true, max:120, keepRaw:true },
+      { name:'monthstart', label:'月初日', type:'number', min:1, max:28, default:1 },
+      { name:'disabled', label:'禁用节点', type:'checkbox' }
+    ],
+    title: item => item?.name || item?.username || '未命名节点',
+    meta: item => `${item?.location || '-'} / ${item?.type || '-'} / ${item?.host || '-'}`,
+    badge: item => ({ text: item?.disabled ? '禁用' : '启用', cls: item?.disabled ? 'warn' : 'ok' })
+  },
+  monitors: {
+    label: '监测',
+    addLabel: '新增监测',
+    empty: '暂无服务监测',
+    hint: '服务监测会写入 config.json 的 monitors 数组。',
+    fields: [
+      { name:'name', label:'名称', required:true, max:120 },
+      { name:'host', label:'地址', required:true, max:300, placeholder:'https://example.com' },
+      { name:'type', label:'类型', required:true, max:40, placeholder:'http / https / tcp' },
+      { name:'interval', label:'间隔秒', type:'number', min:1, default:600 }
+    ],
+    title: item => item?.name || item?.host || '未命名监测',
+    meta: item => `${item?.type || '-'} / ${item?.host || '-'} / ${item?.interval || '-'}s`,
+    badge: item => ({ text: item?.type || '监测', cls: 'ok' })
+  },
+  sslcerts: {
+    label: '证书',
+    addLabel: '新增证书',
+    empty: '暂无证书配置',
+    hint: '证书配置会写入 config.json 的 sslcerts 数组。',
+    fields: [
+      { name:'name', label:'名称', required:true, max:120 },
+      { name:'domain', label:'域名', required:true, max:300, placeholder:'https://example.com' },
+      { name:'port', label:'端口', type:'number', min:1, max:65535, default:443 },
+      { name:'interval', label:'间隔秒', type:'number', min:1, default:7200 },
+      { name:'callback', label:'回调地址', max:500, placeholder:'https://yourSMSurl' }
+    ],
+    title: item => item?.name || item?.domain || '未命名证书',
+    meta: item => `${item?.domain || '-'} / ${item?.port || 443} / ${item?.interval || '-'}s`,
+    badge: () => ({ text: 'SSL', cls: 'ok' })
+  },
+  watchdog: {
+    label: '告警',
+    addLabel: '新增告警',
+    empty: '暂无告警规则',
+    hint: '告警规则会写入 config.json 的 watchdog 数组。',
+    fields: [
+      { name:'name', label:'名称', required:true, max:160 },
+      { name:'rule', label:'规则表达式', type:'textarea', required:true, placeholder:"online4=0&online6=0" },
+      { name:'interval', label:'间隔秒', type:'number', min:1, default:600 },
+      { name:'callback', label:'回调地址', max:500, placeholder:'https://yourSMSurl' }
+    ],
+    title: item => item?.name || '未命名告警',
+    meta: item => item?.rule || '-',
+    badge: item => ({ text: `${item?.interval || '-'}s`, cls: 'warn' })
+  }
+};
+
+function normalizeAdminConfig(config){
+  const normalized = config && typeof config === 'object' ? config : {};
+  ['servers','monitors','sslcerts','watchdog'].forEach(key => {
+    if(!Array.isArray(normalized[key])) normalized[key] = [];
+  });
+  return normalized;
+}
+function activeConfigDef(){
+  return CONFIG_TYPES[S.admin.selectedType] || CONFIG_TYPES.servers;
+}
+function configItems(){
+  if(!S.admin.config) S.admin.config = normalizeAdminConfig({});
+  const key = S.admin.selectedType;
+  if(!Array.isArray(S.admin.config[key])) S.admin.config[key] = [];
+  return S.admin.config[key];
+}
+function renderConfigList(){
+  const list = $('configItemList');
+  const def = activeConfigDef();
+  const items = configItems();
+  if(S.admin.selectedIndex >= items.length) S.admin.selectedIndex = -1;
+  $('addConfigItemBtn').textContent = def.addLabel;
+  document.querySelectorAll('#configTypeTabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.type === S.admin.selectedType));
+  list.innerHTML = items.map((item, index) => {
+    const badge = def.badge(item, index);
+    return `<div class="config-row${S.admin.selectedIndex === index ? ' active' : ''}" data-index="${index}"><div><div class="name">${esc(def.title(item, index))}</div><div class="meta">${esc(def.meta(item, index))}</div></div><span class="badge ${badge.cls}">${esc(badge.text)}</span></div>`;
+  }).join('') || `<div class="empty-state">${def.empty}</div>`;
+  list.querySelectorAll('.config-row').forEach(row => row.addEventListener('click', () => selectConfigItem(Number(row.dataset.index))));
+}
+function selectConfigItem(index){
+  const item = configItems()[index];
+  if(!item) return;
+  S.admin.selectedIndex = index;
+  renderConfigList();
+  renderConfigEditor(item);
+}
+function renderConfigEditor(item){
+  const def = activeConfigDef();
+  const editing = S.admin.selectedIndex >= 0 && item;
+  const current = item || {};
+  $('configEditorTitle').textContent = `${editing ? '编辑' : '新增'}${def.label}`;
+  $('configEditorHint').textContent = def.hint;
+  $('configFields').innerHTML = def.fields.map(field => fieldHTML(field, current)).join('');
+  $('deleteConfigItemBtn').disabled = !editing;
+}
+function fieldHTML(field, item){
+  const value = item[field.name] ?? field.default ?? '';
+  if(field.type === 'checkbox'){
+    return `<label class="check-row"><input name="${esc(field.name)}" type="checkbox" ${value ? 'checked' : ''} /> <span>${esc(field.label)}</span></label>`;
+  }
+  const required = field.required ? ' required' : '';
+  const min = field.min != null ? ` min="${field.min}"` : '';
+  const max = field.max != null ? (field.type === 'number' ? ` max="${field.max}"` : ` maxlength="${field.max}"`) : '';
+  const placeholder = field.placeholder ? ` placeholder="${esc(field.placeholder)}"` : '';
+  if(field.type === 'textarea'){
+    return `<label class="wide"><span>${esc(field.label)}</span><textarea name="${esc(field.name)}"${required}${placeholder}>${esc(value)}</textarea></label>`;
+  }
+  return `<label><span>${esc(field.label)}</span><input name="${esc(field.name)}" type="${field.type || 'text'}" value="${esc(value)}"${required}${min}${max}${placeholder} /></label>`;
+}
+function clearConfigForm(){
+  S.admin.selectedIndex = -1;
+  renderConfigList();
+  renderConfigEditor();
+}
+function formConfigItem(){
+  const elements = $('configForm').elements;
+  const item = {};
+  activeConfigDef().fields.forEach(field => {
+    const el = elements[field.name];
+    if(!el) return;
+    if(field.type === 'checkbox'){
+      item[field.name] = el.checked;
+      return;
+    }
+    if(field.type === 'number'){
+      let value = el.value === '' ? (field.default ?? 0) : Number(el.value);
+      if(!Number.isFinite(value)) value = field.default ?? 0;
+      if(field.min != null) value = Math.max(field.min, value);
+      if(field.max != null) value = Math.min(field.max, value);
+      item[field.name] = value;
+      return;
+    }
+    item[field.name] = field.keepRaw ? el.value : el.value.trim();
+  });
+  return item;
+}
+function configItemPath(key, index){
+  if(index < 0) return `/api/${key}`;
+  const current = configItems()[index] || {};
+  const id = key === 'servers' ? current.username : String(index);
+  return `/api/${key}/${encodeURIComponent(id || String(index))}`;
+}
+async function saveConfigItem(key, index, item){
+  S.admin.saving = true;
+  S.suppressStatsReloadUntil = Date.now() + 8000;
+  try{
+    const data = await api(configItemPath(key, index), { method: index >= 0 ? 'PUT' : 'POST', body: JSON.stringify(item) });
+    if(data.config) S.admin.config = normalizeAdminConfig(data.config);
+    S.suppressStatsReloadUntil = Date.now() + 8000;
+    return data;
+  }finally{
+    S.admin.saving = false;
+  }
+}
+async function deleteConfigItem(key, index){
+  S.admin.saving = true;
+  S.suppressStatsReloadUntil = Date.now() + 8000;
+  try{
+    const data = await api(configItemPath(key, index), { method:'DELETE' });
+    if(data.config) S.admin.config = normalizeAdminConfig(data.config);
+    S.suppressStatsReloadUntil = Date.now() + 8000;
+    return data;
+  }finally{
+    S.admin.saving = false;
+  }
+}
+function bindAdmin(){
+  $('adminToken').value = S.admin.token;
+  $('adminTokenForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    S.admin.token = $('adminToken').value.trim();
+    localStorage.setItem('serverstatusAdminToken', S.admin.token);
+    try{ await loadConfig(); }catch(err){ setAdminStatus('认证失败：' + err.message, 'err'); }
+  });
+  $('refreshConfigBtn').addEventListener('click', async () => { try{ await loadConfig(); }catch(err){ setAdminStatus('刷新失败：' + err.message, 'err'); } });
+  $('configTypeTabs').addEventListener('click', e => {
+    if(e.target.tagName !== 'BUTTON') return;
+    S.admin.selectedType = e.target.dataset.type;
+    S.admin.selectedIndex = -1;
+    renderConfigList();
+    renderConfigEditor();
+  });
+  $('addConfigItemBtn').addEventListener('click', clearConfigForm);
+  $('resetConfigFormBtn').addEventListener('click', clearConfigForm);
+  $('adminReload').addEventListener('click', async () => {
+    try{ await api('/api/reload', { method:'POST' }); setAdminStatus('配置重载已触发。', 'ok'); }
+    catch(err){ setAdminStatus('重载失败：' + err.message, 'err'); }
+  });
+  $('adminRestart').addEventListener('click', async () => {
+    if(!confirm('重启 sergate 采集服务？客户端会短暂断开后自动重连。')) return;
+    try{ await api('/api/restart', { method:'POST' }); setAdminStatus('服务重启已触发，等待容器入口脚本拉起 sergate。', 'ok'); }
+    catch(err){ setAdminStatus('重启失败：' + err.message, 'err'); }
+  });
+  $('configForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const def = activeConfigDef();
+    const key = S.admin.selectedType;
+    const item = formConfigItem();
+    const index = S.admin.selectedIndex;
+    try{
+      await saveConfigItem(key, index, item);
+      S.admin.selectedIndex = index >= 0 ? index : configItems().length - 1;
+      renderConfigList();
+      renderConfigEditor(configItems()[S.admin.selectedIndex]);
+      setAdminStatus(`${def.label}配置已保存并重载。`, 'ok');
+    }catch(err){ setAdminStatus('保存失败：' + err.message, 'err'); }
+  });
+  $('deleteConfigItemBtn').addEventListener('click', async () => {
+    const def = activeConfigDef();
+    const key = S.admin.selectedType;
+    const index = S.admin.selectedIndex;
+    if(index < 0) return setAdminStatus(`请先选择要删除的${def.label}。`, 'err');
+    const item = configItems()[index];
+    if(!confirm(`删除${def.label} ${def.title(item, index)}？`)) return;
+    try{
+      await deleteConfigItem(key, index);
+      S.admin.selectedIndex = -1;
+      renderConfigList();
+      renderConfigEditor();
+      setAdminStatus(`${def.label}配置已删除并重载。`, 'ok');
+    }catch(err){ setAdminStatus('删除失败：' + err.message, 'err'); }
+  });
+}
+
+$('detailClose').addEventListener('click', closeDetail);
+$('detailModal').addEventListener('click', e => { if(e.target.id === 'detailModal') closeDetail(); });
+window.addEventListener('resize', () => { renderServersCards(); renderMonitorsCards(); renderSSLCards(); if(S.openDetailKey) refreshDetail(); });
 
 bindTabs();
 bindTheme();
+bindFilters();
+bindAdmin();
 fetchData();
 setInterval(fetchData, 1000);
 setInterval(updateTime, 60000);
-
-// 详情弹窗逻辑
-function openDetail(i){
-  const s = S.servers[i]; if(!s) return;
-  const box = document.getElementById('detailContent');
-  const modal = document.getElementById('detailModal');
-  const modalBox = modal.querySelector('.modal-box');
-  const osText = osLabel(s.os);
-  const titleEl = document.getElementById('detailTitle');
-  titleEl.textContent = s.name + ' 详情';
-  if(osText){
-    const chip = document.createElement('span');
-    chip.className = 'os-chip' + osClass(s.os);
-    chip.textContent = osText;
-    titleEl.appendChild(chip);
-  }
-  const offline = !(s.online4||s.online6);
-  const memPct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-  const swapPct = s.swap_total? (s.swap_used/s.swap_total*100):0;
-  const hddPct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-  const ioRead = (typeof s.io_read==='number')? s.io_read:0;
-  const ioWrite = (typeof s.io_write==='number')? s.io_write:0;
-  const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
-  // 保留延迟数据用于图表
-  const key = s._key || [s.name||'-', s.location||'-', s.type||'-'].join('|')+'#1';
-
-  let latencyBlock = '';
-  if(!offline){
-    latencyBlock = `
-    <div style="display:flex;flex-direction:column;gap:.4rem;">
-      <canvas id="latChart" height="150" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
-      <div class="mono" style="font-size:11px;display:flex;gap:1rem;flex-wrap:wrap;">
-        <span style="color:#3b82f6">● 联通 (<span id="lat-cu">${num(s.time_10010)}ms</span>)</span>
-        <span style="color:#10b981">● 电信 (<span id="lat-ct">${num(s.time_189)}ms</span>)</span>
-        <span style="color:#f59e0b">● 移动 (<span id="lat-cm">${num(s.time_10086)}ms</span>)</span>
-  <span style="opacity:.6"> (~<span id="lat-count">${(S.hist[key]?Math.max(S.hist[key].cu.length, S.hist[key].ct.length, S.hist[key].cm.length):0)}</span> 条)</span>
-      </div>
-    </div>`;
-  } else {
-    latencyBlock = `
-    <div style="display:flex;flex-direction:column;gap:.4rem;">
-      <canvas id="latChart" height="150" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
-      <div class="mono" style="font-size:11px;opacity:.6;">离线，无联通/电信/移动延迟数据</div>
-    </div>`;
-  }
-
-  // 旧进度条函数 barHTML/ioBar 已弃用
-  // 资源行（移除百分比显示，仅显示 已用 / 总量）
-  // 资源行（单独拆分 span 便于后续动态刷新）
-  // 单位来源：memory/swap: KB; hdd: MB; io: B (速率) -> 统一最小单位显示为 MB，并向上进位 (MB/GB/TB)
-  const memUsed = s.memory_total!=null? humanMinMBFromKB(s.memory_used||0):'-';
-  const memTotal = s.memory_total!=null? humanMinMBFromKB(s.memory_total):'-';
-  const swapUsed = s.swap_total!=null? humanMinMBFromKB(s.swap_used||0):'-';
-  const swapTotal = s.swap_total!=null? humanMinMBFromKB(s.swap_total):'-';
-  const hddUsed = s.hdd_total!=null? humanMinMBFromMB(s.hdd_used||0):'-';
-  const hddTotal = s.hdd_total!=null? humanMinMBFromMB(s.hdd_total):'-';
-  const ioReadLine = (ioRead!=null)? humanRateMinMBFromB(ioRead):'-';
-  const ioWriteLine = (ioWrite!=null)? humanRateMinMBFromB(ioWrite):'-';
-  const memColor = memPct>80? ' style="color:var(--danger)"':''; // 已用/总量显示为单一块，所以对已用着色
-  const swapColor = swapPct>80? ' style="color:var(--danger)"':'';
-  const hddColor = hddPct>80? ' style="color:var(--danger)"':'';
-  // IO 阈值：>100MB (原始单位 B) -> >100*1000*1000 B
-  const readColor = ioRead>100*1000*1000? ' style="color:var(--danger)"':'';
-  const writeColor = ioWrite>100*1000*1000? ' style="color:var(--danger)"':'';
-  box.innerHTML = `
-    <div class="kv"><span>TCP/UDP/进/线</span><span class="mono" id="detail-proc">${procLine}</span></div>
-  <div class="kv"><span>内存 / 虚存</span><span class="mono">
-    <span id="mem-line"${memColor}><span id="mem-used">${memUsed}</span> / <span id="mem-total">${memTotal}</span></span>
-    | <span id="swap-line"${swapColor}><span id="swap-used">${swapUsed}</span> / <span id="swap-total">${swapTotal}</span></span>
-  </span></div>
-  <div class="kv"><span>硬盘 / 读写</span><span class="mono">
-    <span id="disk-line"${hddColor}><span id="hdd-used">${hddUsed}</span> / <span id="hdd-total">${hddTotal}</span></span>
-    | <span id="io-read"${readColor}>${ioReadLine}</span> / <span id="io-write"${writeColor}>${ioWriteLine}</span>
-  </span></div>
-    <div style="display:flex;flex-direction:column;gap:.35rem;">
-      <canvas id="loadChart" height="120" style="width:100%;border:1px solid var(--border);border-radius:10px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));"></canvas>
-      <div class="mono" style="font-size:11px;display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;opacity:.8;">
-        <span style="color:#8b5cf6">● load1 (<span id="load1-val">${s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2)}</span>)</span>
-        <span style="color:#10b981">● load5 (<span id="load5-val">${s.load_5==-1?'–':Math.max(0,(s.load_5||0)).toFixed(2)}</span>)</span>
-        <span style="color:#f59e0b">● load15 (<span id="load15-val">${s.load_15==-1?'–':Math.max(0,(s.load_15||0)).toFixed(2)}</span>)</span>
-  <span style="opacity:.6">(~<span id="load-count">${(S.loadHist[key]?Math.max(S.loadHist[key].l1.length, S.loadHist[key].l5.length, S.loadHist[key].l15.length):0)}</span> 条)</span>
-      </div>
-    </div>
-  <!-- 进度条移除：读/写/虚存以文本形式显示于上方合并行 -->
-    ${latencyBlock}
-  `;
-  modal.style.display='flex';
-  // 根据高负载阈值（>=90% 任一项）给弹窗加高亮底色
-  const highLoad = (s.cpu||0) >= 90 || memPct >= 90 || hddPct >= 90;
-  if(modalBox){ modalBox.classList.toggle('high-load', highLoad); }
-  document.addEventListener('keydown', escCloseOnce);
-  if(!offline){
-    drawLatencyChart(key);
-    drawLoadChart(key);
-  S._openDetailKey = key; // 记录当前弹窗对应节点（唯一 key）
-    startDetailAutoUpdate();
-  } else {
-    S._openDetailKey = null;
-    stopDetailAutoUpdate();
-  }
-}
-function escCloseOnce(e){ if(e.key==='Escape'){ closeDetail(); } }
-function closeDetail(){
-  const m=document.getElementById('detailModal');
-  m.style.display='none';
-  const b = m.querySelector('.modal-box');
-  if(b) b.classList.remove('high-load');
-  document.removeEventListener('keydown', escCloseOnce);
-  stopDetailAutoUpdate();
-}
-document.getElementById('detailClose').addEventListener('click', closeDetail);
-document.getElementById('detailModal').addEventListener('click', e=>{ if(e.target.id==='detailModal') closeDetail(); });
-
-// 绘制三网延迟折线图 (简易实现)
-function drawLatencyChart(key){
-  const data = S.hist[key];
-  const canvas = document.getElementById('latChart');
-  if(!canvas || !data) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.clientWidth; const H = canvas.height; canvas.width = W; // 适配宽度
-  ctx.clearRect(0,0,W,H);
-  const padL=40, padR=10, padT=10, padB=18;
-  const isLight = document.body.classList.contains('light');
-  const axisColor = isLight? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)';
-  const gridColor = isLight? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.10)';
-  const textColor = isLight? 'var(--text-dim)' : 'rgba(226,232,240,0.85)';
-  const series = [ {arr:data.cu,color:'#3b82f6'}, {arr:data.ct,color:'#10b981'}, {arr:data.cm,color:'#f59e0b'} ];
-  const allVals = series.flatMap(s=>s.arr);
-  if(!allVals.length){ ctx.fillStyle='var(--text-dim)'; ctx.font='12px system-ui'; ctx.fillText('暂无数据', W/2-30, H/2); return; }
-  const max = Math.max(...allVals);
-  const min = Math.min(...allVals);
-  const range = Math.max(1, max-min);
-  const n = Math.max(...series.map(s=>s.arr.length));
-  const xStep = (W - padL - padR) / Math.max(1,n-1);
-  // 网格与轴 (增强暗色对比)
-  ctx.strokeStyle=axisColor; ctx.lineWidth=1.1;
-  ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
-  ctx.fillStyle=textColor; ctx.font='10px system-ui';
-  const yMarks=4; for(let i=0;i<=yMarks;i++){ const y = padT + (H-padT-padB)*i/yMarks; const val = (max - range*i/yMarks).toFixed(0)+'ms'; ctx.fillText(val,4,y+3); ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
-  // 绘制线
-  series.forEach(s=>{
-    if(s.arr.length<2) return;
-    ctx.strokeStyle = s.color; ctx.lineWidth=1.6; ctx.beginPath();
-    s.arr.forEach((v,i)=>{ const x = padL + xStep*i; const y = padT + (H-padT-padB)*(1-(v-min)/range); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
-    ctx.stroke();
-  });
-}
-
-// 在每次 render 后若弹窗打开则重绘最新图
-const _oldRender = render;
-render = function(){ _oldRender(); if(S._openDetailKey){ drawLatencyChart(S._openDetailKey); drawLoadChart(S._openDetailKey); } };
-window.addEventListener('resize', ()=>{ 
-  if(S._openDetailKey){ drawLatencyChart(S._openDetailKey); drawLoadChart(S._openDetailKey); }
-  renderServersCards();
-  renderMonitorsCards();
-  renderSSLCards();
-});
-
-// (清理) drawSparks 已移除
-
-// 负载折线图 (load1 历史)
-function drawLoadChart(key){
-  const L = S.loadHist[key];
-  const canvas = document.getElementById('loadChart');
-  if(!canvas) return; const ctx = canvas.getContext('2d');
-  if(!L){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
-  const l1=L.l1||[], l5=L.l5||[], l15=L.l15||[];
-  const canvasW = canvas.clientWidth; const H = canvas.height; canvas.width = canvasW; const W=canvasW;
-  ctx.clearRect(0,0,W,H);
-  if(l1.length<2){ ctx.fillStyle='var(--text-dim)'; ctx.font='12px system-ui'; ctx.fillText('暂无负载数据', W/2-42, H/2); return; }
-  const all = [...l1,...l5,...l15];
-  const padL=38,padR=8,padT=8,padB=16;
-  // 修正：纵轴下限不小于 0，且当真实 range <0.5 时向上扩展 max 而不是向下产生负刻度
-  const rawMax = all.length? Math.max(...all):0;
-  const rawMin = all.length? Math.min(...all):0;
-  const min = 0; // 我们只显示 >=0
-  let max = Math.max(rawMax,0);
-  let range = max - min;
-  const MIN_RANGE = 0.5;
-  if(range < MIN_RANGE){ max = MIN_RANGE; range = MIN_RANGE; }
-  const n = Math.max(l1.length,l5.length,l15.length); const xStep=(W-padL-padR)/Math.max(1,n-1);
-  const isLight = document.body.classList.contains('light');
-  const axisColor = isLight? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.18)';
-  const gridColor = isLight? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.10)';
-  const textColor = isLight? 'var(--text-dim)' : 'rgba(226,232,240,0.85)';
-  // 轴 & 网格 (增强暗色对比)
-  ctx.strokeStyle=axisColor; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
-  ctx.fillStyle=textColor; ctx.font='10px system-ui';
-  const yMarks=4; for(let i=0;i<=yMarks;i++){
-    const y=padT+(H-padT-padB)*i/yMarks;
-    const val=(max - range*i/yMarks); // top -> bottom
-    const labelVal = (Math.abs(val) < 0.005 ? 0 : val).toFixed(2);
-    ctx.fillText(labelVal,4,y+3);
-    ctx.strokeStyle=gridColor; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
-  }
-  const series=[{arr:l1,color:'#8b5cf6',fill:true},{arr:l5,color:'#10b981'},{arr:l15,color:'#f59e0b'}];
-  // 面积先画 load1
-  series.forEach(s=>{
-    if(s.arr.length<2) return;
-    ctx.beginPath(); ctx.lineWidth=1.5; ctx.strokeStyle=s.color;
-  s.arr.forEach((v,i)=>{ const vClamped = Math.max(0, v); const x=padL+xStep*i; const y=padT+(H-padT-padB)*(1-(vClamped-min)/range); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
-    ctx.stroke();
-    if(s.fill){
-      const lastX = padL + xStep*(s.arr.length-1);
-      ctx.lineTo(lastX,H-padB); ctx.lineTo(padL,H-padB); ctx.closePath();
-      const grd = ctx.createLinearGradient(0,padT,0,H-padB); grd.addColorStop(0,'rgba(139,92,246,0.25)'); grd.addColorStop(1,'rgba(139,92,246,0)');
-      ctx.fillStyle=grd; ctx.fill();
-    }
-  });
-}
-
-// source map 注释移除，避免 404 请求
-
-// ====== 详情动态刷新 ======
-function findServerByKey(key){ return S.servers.find(x=> (x._key)===key); }
-function updateDetailMetrics(key){
-  const s = findServerByKey(key); if(!s) return; if(!(s.online4||s.online6)) return; // 离线不更新
-    const procLine = `${num(s.tcp_count)} / ${num(s.udp_count)} / ${num(s.process_count)} / ${num(s.thread_count)}`;
-    const procEl = document.getElementById('detail-proc'); if(procEl) procEl.textContent = procLine;
-  // 延迟动态刷新 (若存在)
-  const cuEl=document.getElementById('lat-cu'); if(cuEl) cuEl.textContent = num(s.time_10010)+'ms';
-  const ctEl=document.getElementById('lat-ct'); if(ctEl) ctEl.textContent = num(s.time_189)+'ms';
-  const cmEl=document.getElementById('lat-cm'); if(cmEl) cmEl.textContent = num(s.time_10086)+'ms';
-  // 刷新联通/电信/移动历史计数（取三者最大长度）
-  const latCntEl = document.getElementById('lat-count');
-  if(latCntEl){
-    const H = S.hist[key];
-    const n = H ? Math.max(H.cu.length||0, H.ct.length||0, H.cm.length||0) : 0;
-    latCntEl.textContent = n;
-  }
-  // 资源动态刷新
-  const memLineEl = document.getElementById('mem-line');
-  if(memLineEl){
-    const pct = s.memory_total? (s.memory_used/s.memory_total*100):0;
-  document.getElementById('mem-used').textContent = s.memory_total!=null? humanMinMBFromKB(s.memory_used||0):'-';
-  document.getElementById('mem-total').textContent = s.memory_total!=null? humanMinMBFromKB(s.memory_total):'-';
-    if(pct>80) memLineEl.style.color='var(--danger)'; else memLineEl.style.color='';
-  }
-  const swapLineEl = document.getElementById('swap-line');
-  if(swapLineEl){
-    const pct = s.swap_total? (s.swap_used/s.swap_total*100):0;
-  document.getElementById('swap-used').textContent = s.swap_total!=null? humanMinMBFromKB(s.swap_used||0):'-';
-  document.getElementById('swap-total').textContent = s.swap_total!=null? humanMinMBFromKB(s.swap_total):'-';
-    if(pct>80) swapLineEl.style.color='var(--danger)'; else swapLineEl.style.color='';
-  }
-  const diskLineEl = document.getElementById('disk-line');
-  if(diskLineEl){
-    const pct = s.hdd_total? (s.hdd_used/s.hdd_total*100):0;
-  document.getElementById('hdd-used').textContent = s.hdd_total!=null? humanMinMBFromMB(s.hdd_used||0):'-';
-  document.getElementById('hdd-total').textContent = s.hdd_total!=null? humanMinMBFromMB(s.hdd_total):'-';
-    if(pct>80) diskLineEl.style.color='var(--danger)'; else diskLineEl.style.color='';
-  }
-  const ioReadEl = document.getElementById('io-read'); if(ioReadEl){ const v = (typeof s.io_read==='number')? s.io_read:0; ioReadEl.textContent = humanRateMinMBFromB(v); ioReadEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
-  const ioWriteEl = document.getElementById('io-write'); if(ioWriteEl){ const v = (typeof s.io_write==='number')? s.io_write:0; ioWriteEl.textContent = humanRateMinMBFromB(v); ioWriteEl.style.color = v>100*1000*1000? 'var(--danger)':''; }
-  // 动态刷新负载标签与条数
-  const l1El = document.getElementById('load1-val'); if(l1El) l1El.textContent = s.load_1==-1?'–':Math.max(0,(s.load_1||0)).toFixed(2);
-  const l5El = document.getElementById('load5-val'); if(l5El) l5El.textContent = s.load_5==-1?'–':Math.max(0,(s.load_5||0)).toFixed(2);
-  const l15El = document.getElementById('load15-val'); if(l15El) l15El.textContent = s.load_15==-1?'–':Math.max(0,(s.load_15||0)).toFixed(2);
-  const cntEl = document.getElementById('load-count');
-  if(cntEl){ const L=S.loadHist[key]; const n = L? Math.max(L.l1.length, L.l5.length, L.l15.length):0; cntEl.textContent = n; }
-}
-function startDetailAutoUpdate(){ stopDetailAutoUpdate(); S._detailTimer = setInterval(()=>{ if(S._openDetailKey) updateDetailMetrics(S._openDetailKey); }, 1000); }
-function stopDetailAutoUpdate(){ if(S._detailTimer){ clearInterval(S._detailTimer); S._detailTimer=null; } }

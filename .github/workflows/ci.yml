@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc g++ make libcurl4-openssl-dev python3
+
+      - name: Build server
+        run: make -C server -j2
+
+      - name: Check scripts
+        run: |
+          python3 -m py_compile server/manage_api.py clients/client-linux.py clients/client-psutil.py plugin/bot-telegram.py
+          sh -n server/entrypoint-server.sh clients/entrypoint.sh status.sh
+          node --check web/js/app.js
+
+      - name: Validate compose files
+        run: |
+          docker compose -f docker-compose-server.yml config
+          docker compose -f docker-compose-client.yml config
+
+      - name: Build Docker images
+        run: |
+          docker build -f Dockerfile.server -t serverstatus-server:test .
+          docker build -f Dockerfile.client -t serverstatus-client:test .

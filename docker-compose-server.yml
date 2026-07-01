@@ -5,12 +5,14 @@ services:
       dockerfile: Dockerfile.server
     image: cppla/serverstatus:server
     healthcheck:
-      test: curl --fail http://localhost:80 || bash -c 'kill -s 15 -1 && (sleep 10; kill -s 9 -1)'
+      test: ["CMD-SHELL", "python3 -c \"import os,urllib.request; pid=int(open('/tmp/serverstatus-sergate.pid').read().strip()); os.kill(pid,0); urllib.request.urlopen('http://127.0.0.1/',timeout=2).read(1)\""]
       interval: 30s
       timeout: 10s
       retries: 5
     container_name: serverstatus-server
     restart: unless-stopped
+    environment:
+      ADMIN_TOKEN: "${ADMIN_TOKEN:-}"
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.2

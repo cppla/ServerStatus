@@ -1,4 +1,5 @@
 OUT = sergate
+.DEFAULT_GOAL := $(OUT)
 
 #CC = clang
 CC = gcc
@@ -19,10 +20,13 @@ C_OBJS := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o,$(C_SRCS))
 CXX_OBJS := $(patsubst $(SDIR)/%.cpp,$(ODIR)/%.o,$(CXX_SRCS))
 OBJS := $(C_OBJS) $(CXX_OBJS)
 
-$(ODIR)/%.o: $(SDIR)/%.c
+$(ODIR):
+	mkdir -p $(ODIR)
+
+$(ODIR)/%.o: $(SDIR)/%.c | $(ODIR)
 	$(CC) -c $(INC) $(CFLAGS) $< -o $@
 
-$(ODIR)/%.o: $(SDIR)/%.cpp
+$(ODIR)/%.o: $(SDIR)/%.cpp | $(ODIR)
 	$(CXX) -c $(INC) $(CXXFLAGS) $< -o $@
 
 $(OUT): $(OBJS)

@@ -19,14 +19,14 @@
 			"monthstart": 1
 		},
 		{
-			"disabled": true,
 			"username": "s03",
 			"name": "node3",
 			"type": "hyper",
 			"host": "host3",
 			"location": "🇫🇷",
 			"password": "USER_DEFAULT_PASSWORD",
-			"monthstart": 1
+			"monthstart": 1,
+			"disabled": false
 		},
 		{
 			"username": "s04",
@@ -58,14 +58,14 @@
 			"domain": "https://my.cloudcpp.com",
 			"port": 443,
 			"interval": 7200,
-			"callback": "https://yourSMSurl" 
+			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "tz.cloudcpp.com",
 			"domain": "https://tz.cloudcpp.com",
 			"port": 443,
 			"interval": 7200,
-			"callback": "https://yourSMSurl" 
+			"callback": "https://yourSMSurl"
 		},
 		{
 			"name": "3.0.2.1",

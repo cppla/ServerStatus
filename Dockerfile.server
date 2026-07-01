@@ -1,29 +1,42 @@
-# The Dockerfile for build localhost source, not git repo
-FROM debian:bookworm AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 LABEL maintainer="cppla <https://cpp.la>"
 
-RUN apt-get update -y && apt-get -y install gcc g++ make libcurl4-openssl-dev
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Retries=3 update -y \
+    && apt-get install -y --no-install-recommends gcc g++ make libcurl4-openssl-dev ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+COPY server/ /server/
 
 WORKDIR /server
 
-RUN make -j
-RUN pwd && ls -a
+RUN make -j && strip /server/sergate
 
-# glibc env run
-FROM nginx:latest
+FROM debian:bookworm-slim
 
-RUN mkdir -p /ServerStatus/server/ && ln -sf /dev/null /var/log/nginx/access.log && ln -sf /dev/null /var/log/nginx/error.log
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Retries=3 update -y \
+    && apt-get install -y --no-install-recommends nginx-light python3 openssl libcurl4 libstdc++6 tzdata \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /ServerStatus/server/ \
+    && ln -sf /dev/null /var/log/nginx/access.log \
+    && ln -sf /dev/null /var/log/nginx/error.log \
+    && rm -f /etc/nginx/sites-enabled/default
 
-COPY --from=builder server /ServerStatus/server/
-COPY --from=builder web /usr/share/nginx/html/
+COPY --from=builder /server/sergate /ServerStatus/server/sergate
+COPY server/config.json /ServerStatus/server/config.json
+COPY server/manage_api.py /ServerStatus/server/manage_api.py
+COPY server/entrypoint-server.sh /ServerStatus/server/entrypoint-server.sh
+COPY web /usr/share/nginx/html/
+COPY server/nginx-serverstatus.conf /etc/nginx/conf.d/default.conf
 
-# china time 
+RUN chmod +x /ServerStatus/server/entrypoint-server.sh
+
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 80 35601
-HEALTHCHECK --interval=5s --timeout=3s --retries=3 CMD curl --fail http://localhost:80 || bash -c 'kill -s 15 -1 && (sleep 10; kill -s 9 -1)'
-CMD ["sh", "-c", "/etc/init.d/nginx start && /ServerStatus/server/sergate --config=/ServerStatus/server/config.json --web-dir=/usr/share/nginx/html"]
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 CMD python3 -c "import os,urllib.request; pid=int(open('/tmp/serverstatus-sergate.pid').read().strip()); os.kill(pid,0); urllib.request.urlopen('http://127.0.0.1/',timeout=2).read(1)"
+CMD ["/ServerStatus/server/entrypoint-server.sh"]
