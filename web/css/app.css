@@ -61,13 +61,13 @@ table.data th,table.data td{font-variant-numeric:tabular-nums}
 .caps-traffic .sep{opacity:.4;font-size:11px;display:none;}
 .caps-traffic.sm{padding:2px 8px 2px 7px;font-size:11px;gap:5px;}
 .caps-traffic.sm .io{font-size:11px;}
-/* 双色胶囊：左红右黄 */
+/* 双色胶囊 */
 .caps-traffic.duo{background:none;border:0;gap:0;padding:0;box-shadow:none;position:relative;border-radius:999px;overflow:hidden;font-size:12px;}
 /* 宽度按内容自适应（不再拉伸占满列），每半边仅为其文本 + padding，可容纳最大 111.1MB */
 .caps-traffic.duo .half{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:2px 4px;font-variant-numeric:tabular-nums;font-weight:600;line-height:1.25; /* 与 .pill 保持一致高度 */ letter-spacing:.25px;color:#fff;font-size:12px;white-space:nowrap;}
 /* 双色胶囊配色：
-	normal (默认): 左白(#fff) 右蓝(accent)
-	heavy (>=500GB 任一方向): 左黄(warn) 右红(danger)
+	normal (默认): 左绿右蓝
+	heavy (>=500GB 总量): 黄色提醒，不再使用故障红
 */
 /* normal 初始：淡绿色(入) + 淡蓝色(出) */
 .caps-traffic.duo.normal .half.in{background:#d1fae5;color:#065f46;} /* emerald-100 / text-emerald-800 */
@@ -75,10 +75,10 @@ body.light .caps-traffic.duo.normal .half.in{background:#d1fae5;color:#065f46;}
 .caps-traffic.duo.normal .half.out{background:#bfdbfe;color:#1e3a8a;} /* blue-200 / text-blue-900 */
 body.light .caps-traffic.duo.normal .half.out{background:#bfdbfe;color:#1e3a8a;}
 
-.caps-traffic.duo.heavy .half.in{background:var(--warn);color:#111;}
-body.light .caps-traffic.duo.heavy .half.in{background:var(--warn);color:#111;}
-.caps-traffic.duo.heavy .half.out{background:var(--danger);color:#fff;}
-body.light .caps-traffic.duo.heavy .half.out{color:#fff;}
+.caps-traffic.duo.heavy .half.in{background:#fde68a;color:#78350f;}
+body.light .caps-traffic.duo.heavy .half.in{background:#fde68a;color:#78350f;}
+.caps-traffic.duo.heavy .half.out{background:#fbbf24;color:#111827;}
+body.light .caps-traffic.duo.heavy .half.out{background:#fbbf24;color:#111827;}
 
 /* 半之间分隔线 */
 .caps-traffic.duo .half + .half{border-left:1px solid rgba(0,0,0,.18);} 
@@ -130,7 +130,7 @@ body:not(.light) .modal-box.high-load{background:linear-gradient(180deg, rgba(23
 .gauge-half path.arc{stroke:var(--gauge-base,#3b82f6);stroke-width:8;stroke-dasharray:126;stroke-dashoffset:calc(126*(1 - var(--p)));transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1),stroke .35s;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
 .gauge-half[data-type=mem] path.arc{--gauge-base:#10b981}
 .gauge-half[data-type=hdd] path.arc{--gauge-base:#06b6d4}
-/* 阈值颜色：>=50% 警告黄，>=90% 危险红 */
+/* 阈值颜色：CPU>=75%、内存>=80%、硬盘>=85% 警告黄，>=90% 危险红 */
 .gauge-half[data-warn] path.arc{stroke:var(--warn)}
 .gauge-half[data-bad] path.arc{stroke:var(--danger)}
 /* 指针：以中心(50,50)为原点旋转；半圆角度范围 180deg -> 从 180deg (左) 到 0deg(右) */
@@ -231,9 +231,15 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 }
 .cards .card{border:1px solid var(--border);border-radius:12px;padding:.75rem .85rem;background:linear-gradient(145deg,var(--bg),var(--bg-alt));display:flex;flex-direction:column;gap:.45rem;position:relative;}
 .cards .card.offline{filter:saturate(.92);}
-.cards .card.high-load{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.22), rgba(239,68,68,.12)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.48),0 6px 18px -6px rgba(239,68,68,.28);} 
-table.data tbody tr.high-load{background:rgba(239,68,68,.18) !important;} 
-table.data tbody tr.high-load:hover{background:rgba(239,68,68,.26) !important;} 
+.cards .card.high-load,
+.cards .card.alert-critical{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.22), rgba(239,68,68,.12)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.48),0 6px 18px -6px rgba(239,68,68,.28);}
+.cards .card.alert-warning{border-color:rgba(245,158,11,.55);background:linear-gradient(180deg, rgba(245,158,11,.16), rgba(245,158,11,.08)), var(--bg-alt);box-shadow:0 0 0 1px rgba(245,158,11,.32),0 6px 18px -8px rgba(245,158,11,.22);}
+table.data tbody tr.high-load,
+table.data tbody tr.alert-critical{background:rgba(239,68,68,.18) !important;}
+table.data tbody tr.high-load:hover,
+table.data tbody tr.alert-critical:hover{background:rgba(239,68,68,.26) !important;}
+table.data tbody tr.alert-warning{background:rgba(245,158,11,.12) !important;}
+table.data tbody tr.alert-warning:hover{background:rgba(245,158,11,.18) !important;}
 
 /* SSL 域名告警底色：与高负载相同 */
 #sslTable td.alert-domain{background:rgba(239,68,68,.18) !important;}
@@ -353,7 +359,9 @@ th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 
 /* 右侧详情抽屉 */
 .drawer-backdrop{align-items:stretch;justify-content:flex-end;padding:0;background:rgba(0,0,0,.48)}
-.detail-drawer{height:100vh;max-height:100vh;width:min(620px,100vw);max-width:min(620px,100vw);border-radius:0;border-top:0;border-right:0;border-bottom:0;padding:1.1rem;overflow:auto;animation:slideIn .24s ease}
+.detail-drawer{height:100dvh;max-height:100dvh;width:min(620px,100vw);max-width:min(620px,100vw);border-radius:0;border-top:0;border-right:0;border-bottom:0;padding:1.1rem;overflow:auto;animation:slideIn .24s ease}
+.detail-drawer.alert-critical{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.16), rgba(239,68,68,.08)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.38),0 10px 28px -10px rgba(239,68,68,.28)}
+.detail-drawer.alert-warning{border-color:rgba(245,158,11,.55);background:linear-gradient(180deg, rgba(245,158,11,.14), rgba(245,158,11,.06)), var(--bg-alt);box-shadow:0 0 0 1px rgba(245,158,11,.28),0 10px 28px -10px rgba(245,158,11,.2)}
 .modal-title{padding-right:2.2rem}
 .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
 .detail-section{border:1px solid var(--border);border-radius:8px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));padding:.75rem;display:flex;flex-direction:column;gap:.65rem}
@@ -428,5 +436,6 @@ th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 	.section-head{flex-direction:column}
 	.section-actions{width:100%;justify-content:stretch}
 	.detail-grid,.config-fields{grid-template-columns:1fr}
-	.detail-drawer{width:100vw}
+	.detail-drawer{width:100vw;height:100dvh;max-height:100dvh;padding:calc(.95rem + env(safe-area-inset-top)) .95rem calc(.95rem + env(safe-area-inset-bottom));}
+	.detail-drawer .modal-content{max-height:none;overflow:visible;}
 }

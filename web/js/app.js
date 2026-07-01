@@ -94,8 +94,12 @@ function osLabel(os){
   return String(os).charAt(0).toUpperCase() + String(os).slice(1);
 }
 
+function lossValues(s){
+  return [s.ping_10010, s.ping_189, s.ping_10086].map(p => clamp(num(p), 0, 100));
+}
+
 function isBlocked(s){
-  return [s.ping_10010, s.ping_189, s.ping_10086].every(p => clamp(num(p), 0, 100) >= 100);
+  return lossValues(s).every(p => p >= 100);
 }
 
 function metrics(s){
@@ -105,11 +109,20 @@ function metrics(s){
   const monthIn = Math.max(0, num(s.network_in) - num(s.last_network_in));
   const monthOut = Math.max(0, num(s.network_out) - num(s.last_network_out));
   const traffic = monthIn + monthOut;
-  const loss = Math.max(num(s.ping_10010), num(s.ping_189), num(s.ping_10086));
-  const blocked = online && isBlocked(s);
-  const critical = online && (num(s.cpu) >= 90 || memPct >= 90 || hddPct >= 90 || loss >= 20);
-  const warning = online && (traffic >= 500 * 1000 * 1000 * 1000 || loss >= 10 || num(s.cpu) >= 75 || memPct >= 80 || hddPct >= 85);
-  return { online, memPct, hddPct, monthIn, monthOut, traffic, loss, blocked, critical, warning, alert: critical || warning, highlight: !online || critical || warning };
+  const losses = lossValues(s);
+  const loss = Math.max(...losses);
+  const lossBadCount = losses.filter(p => p >= 40).length;
+  const lossWarnCount = losses.filter(p => p >= 30).length;
+  const blocked = online && losses.every(p => p >= 100);
+  const resourceCritical = online && (num(s.cpu) >= 90 || memPct >= 90 || hddPct >= 90);
+  const resourceWarning = online && (num(s.cpu) >= 75 || memPct >= 80 || hddPct >= 85);
+  const trafficWarning = online && traffic >= 500 * 1000 * 1000 * 1000;
+  const lossCritical = online && loss >= 40;
+  const lossWarning = online && !lossCritical && loss >= 30;
+  const critical = online && (resourceCritical || blocked || lossCritical);
+  const warning = online && (resourceWarning || lossWarning);
+  const rowLevel = !online || critical ? 'critical' : (resourceWarning || lossWarning ? 'warning' : '');
+  return { online, memPct, hddPct, monthIn, monthOut, traffic, loss, lossBadCount, lossWarnCount, blocked, resourceCritical, resourceWarning, trafficWarning, lossCritical, lossWarning, critical, warning, alert: critical || warning, highlight: !!rowLevel, rowLevel };
 }
 
 async function fetchData(){
@@ -255,7 +268,12 @@ function trafficCaps(s, small){
 }
 function gaugeHTML(type, value){
   const pct = clamp(num(value), 0, 100);
-  const warnAttr = pct >= 90 ? 'data-bad' : (pct >= 50 ? 'data-warn' : '');
+  const thresholds = {
+    cpu: { warn: 75, bad: 90 },
+    mem: { warn: 80, bad: 90 },
+    hdd: { warn: 85, bad: 90 }
+  }[type] || { warn: 75, bad: 90 };
+  const warnAttr = pct >= thresholds.bad ? 'data-bad' : (pct >= thresholds.warn ? 'data-warn' : '');
   const label = type === 'cpu' ? 'CPU' : type === 'mem' ? '内存' : '硬盘';
   return `<div class="gauge-half" data-type="${type}" ${warnAttr} style="--p:${(pct / 100).toFixed(3)}" title="${label} ${pct.toFixed(0)}%">
     <svg viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path class="track" d="M10 50 A40 40 0 0 1 90 50" /><path class="arc" d="M10 50 A40 40 0 0 1 90 50" /></svg>
@@ -264,7 +282,13 @@ function gaugeHTML(type, value){
 }
 function resourceMeter(label, value, pct, kind){
   const safePct = clamp(num(pct), 0, 100);
-  const level = safePct >= 90 ? 'bad' : (safePct >= 75 ? 'warn' : 'ok');
+  const thresholds = {
+    cpu: { warn: 75, bad: 90 },
+    mem: { warn: 80, bad: 90 },
+    swap: { warn: 80, bad: 90 },
+    hdd: { warn: 85, bad: 90 }
+  }[kind] || { warn: 75, bad: 90 };
+  const level = safePct >= thresholds.bad ? 'bad' : (safePct >= thresholds.warn ? 'warn' : 'ok');
   return `<div class="resource-meter" data-kind="${esc(kind)}" data-level="${level}" style="--p:${safePct.toFixed(1)}%">
     <div class="resource-meter-head"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>
     <div class="resource-track"><i></i></div>
@@ -288,7 +312,7 @@ function chartLegend(series){
 function buckets(s){
   return `<div class="buckets" title="联通 / 电信 / 移动">${[s.ping_10010, s.ping_189, s.ping_10086].map(p => {
     const v = clamp(num(p), 0, 100);
-    const level = v >= 20 ? 'bad' : (v >= 10 ? 'warn' : 'ok');
+    const level = v >= 40 ? 'bad' : (v >= 30 ? 'warn' : 'ok');
     return `<div class="bucket" data-lv="${level}"><span style="--h:${v}%"></span><label>${v.toFixed(0)}%</label></div>`;
   }).join('')}</div>`;
 }
@@ -303,7 +327,8 @@ function renderServers(){
     const m = metrics(s);
     const netNow = `${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}`;
     const netTotal = `${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}`;
-    return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" class="row-server${m.highlight ? ' high-load' : ''}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
+    const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
+    return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" class="row-server${alertClass}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
       <td>${protoPill(s)}</td>
       <td>${trafficCaps(s)}</td>
       <td>${esc(s.name || '-')}</td>
@@ -330,7 +355,8 @@ function renderServersCards(){
   if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = visibleServers().map(s => {
     const m = metrics(s);
-    return `<div class="card${m.online ? '' : ' offline'}${m.highlight ? ' high-load' : ''}${osClass(s.os)}" data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}">
+    const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
+    return `<div class="card${m.online ? '' : ' offline'}${alertClass}${osClass(s.os)}" data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}">
       <div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div>
       <div class="kvlist">
         <div><span class="key">负载</span><span>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</span></div>
@@ -379,7 +405,8 @@ function renderSSL(){
     const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
     const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
     const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().replace('T',' ').replace(/\.\d+Z/,'') : '-';
-    return `<tr class="${cls !== 'ok' ? 'high-load' : ''}"><td>${esc(c.name || '-')}</td><td>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</td><td>${esc(c.port || 443)}</td><td><span class="badge ${cls}">${esc(c.expire_days ?? '-')}</span></td><td>${dt}</td><td><span class="badge ${cls}">${status}</span></td></tr>`;
+    const alertClass = cls === 'err' ? 'alert-critical' : cls === 'warn' ? 'alert-warning' : '';
+    return `<tr class="${alertClass}"><td>${esc(c.name || '-')}</td><td>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</td><td>${esc(c.port || 443)}</td><td><span class="badge ${cls}">${esc(c.expire_days ?? '-')}</span></td><td>${dt}</td><td><span class="badge ${cls}">${status}</span></td></tr>`;
   }).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:1rem;">无证书数据</td></tr>`;
 }
 function renderSSLCards(){
@@ -389,7 +416,8 @@ function renderSSLCards(){
     const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
     const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
     const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().slice(0,10) : '-';
-    return `<div class="card${cls !== 'ok' ? ' high-load' : ''}"><div class="card-header"><div class="card-title">${esc(c.name || '-')}</div><span class="status-pill ${cls === 'err' ? 'off' : 'on'}">${status}</span></div><div class="kvlist"><div><span class="key">域名</span><span>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</span></div><div><span class="key">端口</span><span>${esc(c.port || 443)}</span></div><div><span class="key">剩余</span><span>${esc(c.expire_days ?? '-')} 天</span></div><div><span class="key">到期</span><span>${dt}</span></div></div></div>`;
+    const alertClass = cls === 'err' ? ' alert-critical' : cls === 'warn' ? ' alert-warning' : '';
+    return `<div class="card${alertClass}"><div class="card-header"><div class="card-title">${esc(c.name || '-')}</div><span class="status-pill ${cls === 'err' ? 'off' : 'on'}">${status}</span></div><div class="kvlist"><div><span class="key">域名</span><span>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</span></div><div><span class="key">端口</span><span>${esc(c.port || 443)}</span></div><div><span class="key">剩余</span><span>${esc(c.expire_days ?? '-')} 天</span></div><div><span class="key">到期</span><span>${dt}</span></div></div></div>`;
   }).join('') || '<div class="empty-state">无证书数据</div>';
 }
 
@@ -407,7 +435,11 @@ function refreshDetail(){
   const title = $('detailTitle');
   title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}`;
   const modalBox = document.querySelector('#detailModal .modal-box');
-  if(modalBox) modalBox.classList.toggle('high-load', m.highlight);
+  if(modalBox){
+    modalBox.classList.remove('high-load');
+    modalBox.classList.toggle('alert-critical', m.rowLevel === 'critical');
+    modalBox.classList.toggle('alert-warning', m.rowLevel === 'warning');
+  }
   const loadSeries = [
     { data: S.loadHist[s._key]?.l1 || [], color:'#8b5cf6', label:'load1' },
     { data: S.loadHist[s._key]?.l5 || [], color:'#10b981', label:'load5' },
