@@ -116,7 +116,7 @@ function metrics(s){
   const blocked = online && losses.every(p => p >= 100);
   const resourceCritical = online && (num(s.cpu) >= 90 || memPct >= 90 || hddPct >= 90);
   const resourceWarning = online && (num(s.cpu) >= 75 || memPct >= 80 || hddPct >= 85);
-  const trafficWarning = online && traffic >= 500 * 1000 * 1000 * 1000;
+  const trafficWarning = online && traffic >= 1000 * 1000 * 1000 * 1000;
   const lossCritical = online && loss >= 40;
   const lossWarning = online && !lossCritical && loss >= 30;
   const critical = online && (resourceCritical || blocked || lossCritical);
@@ -263,7 +263,7 @@ function protoPill(s){
 }
 function trafficCaps(s, small){
   const m = metrics(s);
-  const heavy = m.traffic >= 500 * 1000 * 1000 * 1000;
+  const heavy = m.traffic >= 1000 * 1000 * 1000 * 1000;
   return `<span class="caps-traffic duo ${heavy ? 'heavy' : 'normal'}${small ? ' sm' : ''}" title="本月下行 | 上行"><span class="half in">${humanMinMBFromB(m.monthIn)}</span><span class="half out">${humanMinMBFromB(m.monthOut)}</span></span>`;
 }
 function gaugeHTML(type, value){

@@ -67,7 +67,7 @@ table.data th,table.data td{font-variant-numeric:tabular-nums}
 .caps-traffic.duo .half{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:2px 4px;font-variant-numeric:tabular-nums;font-weight:600;line-height:1.25; /* 与 .pill 保持一致高度 */ letter-spacing:.25px;color:#fff;font-size:12px;white-space:nowrap;}
 /* 双色胶囊配色：
 	normal (默认): 左绿右蓝
-	heavy (>=500GB 总量): 黄色提醒，不再使用故障红
+	heavy (>=1000GB 总量): 黄色提醒，不再使用故障红
 */
 /* normal 初始：淡绿色(入) + 淡蓝色(出) */
 .caps-traffic.duo.normal .half.in{background:#d1fae5;color:#065f46;} /* emerald-100 / text-emerald-800 */
