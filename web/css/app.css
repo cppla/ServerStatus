@@ -332,6 +332,8 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .overview-card.ok{border-color:rgba(16,185,129,.35)}
 .overview-card.warn{border-color:rgba(245,158,11,.45)}
 .overview-card.err{border-color:rgba(239,68,68,.5)}
+.overview-card.traffic-down{border-color:rgba(16,185,129,.38)}
+.overview-card.traffic-up{border-color:rgba(59,130,246,.38)}
 .ops-toolbar{display:flex;align-items:end;gap:.75rem;flex-wrap:wrap;border:1px solid var(--border);background:var(--bg-alt);border-radius:8px;padding:.75rem}
 .search-field,.select-field{display:flex;flex-direction:column;gap:.3rem;color:var(--text-dim);font-size:12px}
 .search-field input,.select-field select,.config-form input,.config-form textarea{border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:6px;padding:0 .65rem;outline:none;transition:var(--trans)}

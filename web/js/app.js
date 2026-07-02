@@ -224,8 +224,8 @@ function renderOverview(){
   $('overviewCards').innerHTML = [
     card('在线主机', `${online}/${total}`, '当前在线节点', online === total ? 'ok' : 'warn'),
     card('证书风险', sslWarn, sslWarn ? '过期或域名不匹配' : '证书正常', sslWarn ? 'warn' : 'ok'),
-    card('本月上行', humanMinMBFromB(monthUp), '上传累计', ''),
-    card('本月下行', humanMinMBFromB(monthDown), '下载累计', ''),
+    card('本月下行', humanMinMBFromB(monthDown), '下载累计', 'traffic-down'),
+    card('本月上行', humanMinMBFromB(monthUp), '上传累计', 'traffic-up'),
     card('活跃告警', alerts.total, `离线 ${alerts.offline} / 异常 ${alerts.abnormal} / 被墙 ${alerts.blocked}`, alerts.total ? (alerts.offline || alerts.blocked ? 'err' : 'warn') : 'ok')
   ].join('');
 }
