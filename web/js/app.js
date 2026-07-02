@@ -201,6 +201,7 @@ function visibleServers(){
 
 function render(){
   $('notice').style.display = 'none';
+  normalizeServersToolbarState();
   renderOverview();
   renderOsOptions();
   renderServers();
@@ -240,6 +241,11 @@ function alertStats(){
   });
   stats.total = stats.offline + stats.abnormal + stats.blocked;
   return stats;
+}
+
+function normalizeServersToolbarState(){
+  const show = S.activeTab === 'servers' && S.servers.length > 10;
+  $('serversToolbar').style.display = show ? 'flex' : 'none';
 }
 
 function renderOsOptions(){
@@ -540,7 +546,7 @@ function bindTabs(){
     S.activeTab = tab;
     document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn === e.target));
     document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === 'panel-' + tab));
-    $('serversToolbar').style.display = tab === 'servers' ? 'flex' : 'none';
+    normalizeServersToolbarState();
     if(tab === 'config') ensureAdminChecked();
   });
 }
