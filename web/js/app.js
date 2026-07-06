@@ -737,6 +737,10 @@ function renderConfigEditor(item){
   $('configEditorTitle').textContent = `${editing ? '编辑' : '新增'}${def.label}`;
   $('configEditorHint').textContent = def.hint;
   $('configFields').innerHTML = def.fields.map(field => fieldHTML(field, current)).join('');
+  const resetTrafficBtn = $('resetTrafficBtn');
+  const canResetTraffic = editing && S.admin.selectedType === 'servers';
+  resetTrafficBtn.style.display = canResetTraffic ? '' : 'none';
+  resetTrafficBtn.disabled = !canResetTraffic || S.admin.saving;
   $('deleteConfigItemBtn').disabled = !editing;
 }
 function fieldHTML(field, item){
@@ -810,6 +814,28 @@ async function deleteConfigItem(key, index){
     S.admin.saving = false;
   }
 }
+async function resetServerTraffic(index){
+  const server = configItems()[index];
+  if(!server) return setAdminStatus('请先选择要重置月流量的节点。', 'err');
+  const title = server.name || server.username || '未命名节点';
+  if(!confirm(`将节点 ${title} 的月流量重置为 0？该操作会重启采集服务以写入当前流量基准。`)) return;
+  S.admin.saving = true;
+  S.suppressStatsReloadUntil = Date.now() + 10000;
+  renderConfigEditor(server);
+  try{
+    const data = await api(`/api/servers/${encodeURIComponent(server.username)}/reset-traffic`, { method:'POST' });
+    const beforeIn = humanMinMBFromB(data.stats?.month_in_before || 0);
+    const beforeOut = humanMinMBFromB(data.stats?.month_out_before || 0);
+    setAdminStatus(`${title} 月流量已重置为 0（重置前 ↓${beforeIn} / ↑${beforeOut}）。`, 'ok');
+    setTimeout(fetchData, 1500);
+  }catch(err){
+    setAdminStatus('重置月流量失败：' + err.message, 'err');
+  }finally{
+    S.admin.saving = false;
+    S.suppressStatsReloadUntil = Date.now() + 8000;
+    renderConfigEditor(configItems()[S.admin.selectedIndex]);
+  }
+}
 function bindAdmin(){
   $('adminToken').value = S.admin.token;
   $('adminTokenForm').addEventListener('submit', async e => {
@@ -828,6 +854,7 @@ function bindAdmin(){
   });
   $('addConfigItemBtn').addEventListener('click', clearConfigForm);
   $('resetConfigFormBtn').addEventListener('click', clearConfigForm);
+  $('resetTrafficBtn').addEventListener('click', () => resetServerTraffic(S.admin.selectedIndex));
   $('adminReload').addEventListener('click', async () => {
     try{ await api('/api/reload', { method:'POST' }); setAdminStatus('配置重载已触发。', 'ok'); }
     catch(err){ setAdminStatus('重载失败：' + err.message, 'err'); }

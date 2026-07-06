@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlparse
 
 
 CONFIG_PATH = os.environ.get("CONFIG_PATH", "/ServerStatus/server/config.json")
+STATS_PATH = os.environ.get("STATS_PATH", "/usr/share/nginx/html/json/stats.json")
 SERGATE_PID_FILE = os.environ.get("SERGATE_PID_FILE", "/tmp/serverstatus-sergate.pid")
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 API_BIND = os.environ.get("ADMIN_API_BIND", "127.0.0.1")
@@ -29,6 +30,36 @@ class ApiError(Exception):
 def load_config():
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_json_file(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_stats_file():
+    try:
+        return load_json_file(STATS_PATH)
+    except FileNotFoundError:
+        return load_json_file(f"{STATS_PATH}~")
+
+
+def write_json_file(path, data):
+    directory = os.path.dirname(path) or "."
+    os.makedirs(directory, exist_ok=True)
+    mode = os.stat(path).st_mode if os.path.exists(path) else 0o644
+    payload = json.dumps(data, ensure_ascii=False, indent="\t") + "\n"
+    fd, tmp_path = tempfile.mkstemp(prefix=".json.", suffix=".tmp", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(payload)
+            f.flush()
+            os.fsync(f.fileno())
+        os.chmod(tmp_path, mode)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 def normalize_required_strings(item, required, kind, index=None):
@@ -238,6 +269,27 @@ def signal_sergate(sig):
     return pid
 
 
+def wait_for_pid_exit(pid, timeout=2.5):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def wait_for_sergate_pid(previous_pid=None, timeout=4.0):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        pid = get_sergate_pid()
+        if pid and pid != previous_pid:
+            return pid
+        time.sleep(0.1)
+    return get_sergate_pid()
+
+
 def find_server(config, username):
     servers = config.get("servers", [])
     for index, server in enumerate(servers):
@@ -260,6 +312,81 @@ def find_collection_item(config, key, item_id):
     if matches:
         return matches[0]
     return -1, None
+
+
+def stats_server_matches(config_server, stats_server):
+    return all(str(stats_server.get(field, "")) == str(config_server.get(field, "")) for field in ["name", "type", "host", "location"])
+
+
+def find_stats_server(stats, config_server):
+    servers = stats.get("servers", [])
+    if not isinstance(servers, list):
+        raise ApiError(500, "stats.json has invalid servers data")
+    for index, stats_server in enumerate(servers):
+        if isinstance(stats_server, dict) and stats_server_matches(config_server, stats_server):
+            return index, stats_server
+    return -1, None
+
+
+def as_counter(value, field):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise ApiError(409, f"{field} is missing or invalid in stats.json")
+
+
+def require_resettable_stats(stats, server, username):
+    stats_index, stats_server = find_stats_server(stats, server)
+    if stats_index < 0:
+        raise ApiError(404, "server stats were not found", {"username": username})
+    if "network_in" not in stats_server or "network_out" not in stats_server:
+        raise ApiError(409, "server has no current traffic counters; it may be offline", {"username": username})
+    return stats_index, stats_server
+
+
+def reset_server_month_traffic(username):
+    config = load_config()
+    _, server = find_server(config, username)
+    if server is None:
+        raise ApiError(404, "server was not found", {"username": username})
+
+    require_resettable_stats(load_stats_file(), server, username)
+
+    old_pid = signal_sergate(signal.SIGTERM)
+    wait_for_pid_exit(old_pid)
+
+    stats = load_stats_file()
+    stats_index, stats_server = require_resettable_stats(stats, server, username)
+
+    network_in = as_counter(stats_server.get("network_in"), "network_in")
+    network_out = as_counter(stats_server.get("network_out"), "network_out")
+    previous_last_in = as_counter(stats_server.get("last_network_in", 0), "last_network_in")
+    previous_last_out = as_counter(stats_server.get("last_network_out", 0), "last_network_out")
+
+    stats["servers"][stats_index]["last_network_in"] = network_in
+    stats["servers"][stats_index]["last_network_out"] = network_out
+    stats["updated"] = str(int(time.time()))
+    write_json_file(STATS_PATH, stats)
+
+    new_pid = wait_for_sergate_pid(previous_pid=old_pid)
+    if new_pid:
+        os.kill(new_pid, signal.SIGHUP)
+
+    return {
+        "server": server,
+        "stats": {
+            "network_in": network_in,
+            "network_out": network_out,
+            "previous_last_network_in": previous_last_in,
+            "previous_last_network_out": previous_last_out,
+            "last_network_in": network_in,
+            "last_network_out": network_out,
+            "month_in_before": max(0, network_in - previous_last_in),
+            "month_out_before": max(0, network_out - previous_last_out),
+        },
+        "oldPid": old_pid,
+        "pid": new_pid,
+    }
 
 
 def collection_routes():
@@ -290,6 +417,7 @@ def api_schema():
             {"method": "POST", "path": "/api/servers", "auth": True, "body": "server JSON"},
             {"method": "PUT", "path": "/api/servers/{username}", "auth": True, "body": "server JSON"},
             {"method": "DELETE", "path": "/api/servers/{username}", "auth": True},
+            {"method": "POST", "path": "/api/servers/{username}/reset-traffic", "auth": True},
             *collection_routes(),
             {"method": "POST", "path": "/api/reload", "auth": True},
             {"method": "POST", "path": "/api/restart", "auth": True},
@@ -378,6 +506,14 @@ class Handler(BaseHTTPRequestHandler):
                     config.setdefault("servers", []).append(server)
                     config, pid = write_and_reload(config)
                     self.send_json(201, {"ok": True, "server": server, "reloaded": True, "pid": pid, "config": config})
+                    return
+            if path.startswith("/api/servers/") and path.endswith("/reset-traffic"):
+                username = unquote(path[len("/api/servers/"):-len("/reset-traffic")].rstrip("/"))
+                if not username:
+                    raise ApiError(400, "username is required")
+                if method == "POST":
+                    result = reset_server_month_traffic(username)
+                    self.send_json(200, {"ok": True, "operation": "reset-traffic", **result})
                     return
             if path.startswith("/api/servers/"):
                 username = unquote(path[len("/api/servers/"):])

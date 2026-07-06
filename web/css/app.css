@@ -346,10 +346,12 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 .segmented button{height:36px;border:0;border-right:1px solid var(--border);background:transparent;color:var(--text-dim);padding:0 .8rem;cursor:pointer}
 .segmented button:last-child{border-right:0}
 .segmented button.active,.segmented button:hover{background:var(--accent);color:#fff}
-.icon-text,.primary-btn,.danger-btn{height:36px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);padding:0 .75rem;cursor:pointer;transition:var(--trans);font-weight:600}
+.icon-text,.primary-btn,.warn-btn,.danger-btn{height:36px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);padding:0 .75rem;cursor:pointer;transition:var(--trans);font-weight:600}
 .icon-text:hover{border-color:var(--accent);color:var(--accent)}
 .primary-btn{background:var(--accent);border-color:var(--accent);color:#fff}
 .primary-btn:hover{filter:brightness(1.08)}
+.warn-btn{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.42);color:var(--warn)}
+.warn-btn:hover{background:var(--warn);border-color:var(--warn);color:#111827}
 .danger-btn{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.38);color:var(--danger)}
 .danger-btn:hover{background:var(--danger);color:#fff}
 th[data-sort]{cursor:pointer;user-select:none}
@@ -434,7 +436,7 @@ th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 }
 @media (max-width:640px){
 	.ops-toolbar{align-items:stretch}
-	.search-field,.select-field,.search-field input,.select-field select,.segmented,.icon-text,.primary-btn,.danger-btn{width:100%}
+	.search-field,.select-field,.search-field input,.select-field select,.segmented,.icon-text,.primary-btn,.warn-btn,.danger-btn{width:100%}
 	.segmented button{flex:1;padding:0 .35rem}
 	.section-head{flex-direction:column}
 	.section-actions{width:100%;justify-content:stretch}
