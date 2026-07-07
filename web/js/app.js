@@ -267,6 +267,11 @@ function protoPill(s){
   const proto = m.online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
   return `<span class="pill ${m.online ? 'on' : 'off'}">${proto}</span>`;
 }
+function virtPill(type){
+  const text = String(type || '-');
+  const key = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unknown';
+  return `<span class="virt-pill virt-${esc(key)}" title="虚拟化：${esc(text)}">${esc(text)}</span>`;
+}
 function trafficCaps(s, small){
   const m = metrics(s);
   const heavy = m.traffic >= 1000 * 1000 * 1000 * 1000;
@@ -338,7 +343,7 @@ function renderServers(){
       <td>${protoPill(s)}</td>
       <td>${trafficCaps(s)}</td>
       <td>${esc(s.name || '-')}</td>
-      <td>${esc(s.type || '-')}</td>
+      <td>${virtPill(s.type)}</td>
       <td>${esc(s.location || '-')}</td>
       <td>${esc(s.uptime || '-')}</td>
       <td>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</td>
