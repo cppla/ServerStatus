@@ -342,7 +342,7 @@ function renderServers(){
     return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" class="row-server${alertClass}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
       <td>${protoPill(s)}</td>
       <td>${trafficCaps(s)}</td>
-      <td>${esc(s.name || '-')}</td>
+      <td><span class="node-name" title="${esc(s.name || '-')}">${esc(s.name || '-')}</span></td>
       <td>${virtPill(s.type)}</td>
       <td>${esc(s.location || '-')}</td>
       <td>${esc(s.uptime || '-')}</td>

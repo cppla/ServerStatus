@@ -85,7 +85,7 @@ body.light .caps-traffic.duo.heavy .half.out{background:#fbbf24;color:#111827;}
 body.light .caps-traffic.duo .half + .half{border-left:1px solid rgba(0,0,0,.08);} 
 .caps-traffic.duo.sm .half{padding:1px 4px;font-size:10px;min-width:0;}
 table.data tbody tr:last-child td{border-bottom:none}
-table.data tbody tr:hover{background:rgba(255,255,255,.07)}
+table.data tbody tr:hover{background:rgba(59,130,246,.045)}
 .badge{display:inline-block;padding:2px 6px;font-size:11px;border-radius:12px;font-weight:500;line-height:1.2;background:var(--bg);border:1px solid var(--border);color:var(--text-dim)}
 .badge.ok{background:rgba(16,185,129,.15);color:var(--ok);border-color:rgba(16,185,129,.3)}
 .badge.warn{background:rgba(245,158,11,.15);color:var(--warn);border-color:rgba(245,158,11,.4)}
@@ -152,6 +152,9 @@ body.light .virt-pill{background:color-mix(in srgb,var(--virt) 12%,#fff);color:c
 .virt-xen{--virt:#8b5cf6}
 .virt-vmware{--virt:#f59e0b}
 .virt-hyper,.virt-hyper-v{--virt:#10b981}
+.node-name{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:750;letter-spacing:.15px;color:var(--text)}
+.row-server[data-online="0"] .node-name{color:color-mix(in srgb,var(--text) 72%,var(--text-dim));font-weight:650}
+.row-server:hover .node-name{color:var(--accent)}
 
 /* buckets CU/CT/CM (simple version) */
 .buckets{display:flex;align-items:flex-end;gap:8px;min-width:140px}
@@ -243,9 +246,9 @@ body.light .virt-pill{background:color-mix(in srgb,var(--virt) 12%,#fff);color:c
 table.data tbody tr.high-load,
 table.data tbody tr.alert-critical{background:rgba(239,68,68,.18) !important;}
 table.data tbody tr.high-load:hover,
-table.data tbody tr.alert-critical:hover{background:rgba(239,68,68,.26) !important;}
+table.data tbody tr.alert-critical:hover{background:rgba(239,68,68,.21) !important;}
 table.data tbody tr.alert-warning{background:rgba(245,158,11,.12) !important;}
-table.data tbody tr.alert-warning:hover{background:rgba(245,158,11,.18) !important;}
+table.data tbody tr.alert-warning:hover{background:rgba(245,158,11,.14) !important;}
 
 /* SSL 域名告警底色：与高负载相同 */
 #sslTable td.alert-domain{background:rgba(239,68,68,.18) !important;}
@@ -257,7 +260,7 @@ table.data tbody tr.alert-warning:hover{background:rgba(245,158,11,.18) !importa
 	3) 行背景叠加轻度渐变以提示 OS
 */
 table.data tbody tr[class*="os-"]{box-shadow:inset 4px 0 0 0 var(--os-color, transparent);background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 10%, transparent), transparent 60%);} 
-table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 16%, transparent), transparent 65%);} 
+table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color-mix(in srgb, var(--os-color, transparent) 12%, transparent), transparent 65%);}
 .cards .card[class*="os-"]{border-color:color-mix(in srgb, var(--os-color, var(--accent)) 60%, transparent);box-shadow:0 0 0 1px color-mix(in srgb, var(--os-color, var(--accent)) 40%, transparent),0 4px 16px -6px color-mix(in srgb, var(--os-color, #000) 35%, transparent);} 
 /* 弹窗 OS 着色：左侧彩条 + 渐变与卡片一致 */
 /* 取消弹窗背景着色，改为仅在标题展示系统胶囊 */
