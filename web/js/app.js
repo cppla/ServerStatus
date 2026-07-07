@@ -267,10 +267,24 @@ function protoPill(s){
   const proto = m.online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
   return `<span class="pill ${m.online ? 'on' : 'off'}">${proto}</span>`;
 }
+const VIRT_PALETTE = ['#06b6d4','#8b5cf6','#10b981','#f59e0b','#3b82f6','#14b8a6','#6366f1','#a855f7','#22c55e','#eab308'];
+function stableHash(value){
+  let hash = 2166136261;
+  const text = String(value || '').trim().toLowerCase();
+  for(let i = 0; i < text.length; i++){
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+function virtColor(type){
+  const key = String(type || 'unknown').trim().toLowerCase() || 'unknown';
+  return VIRT_PALETTE[stableHash(key) % VIRT_PALETTE.length];
+}
 function virtPill(type){
-  const text = String(type || '-');
-  const key = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unknown';
-  return `<span class="virt-pill virt-${esc(key)}" title="虚拟化：${esc(text)}">${esc(text)}</span>`;
+  const raw = String(type ?? '').trim();
+  const text = raw || '-';
+  return `<span class="virt-pill" style="--virt:${virtColor(raw)}" title="虚拟化：${esc(text)}">${esc(text)}</span>`;
 }
 function trafficCaps(s, small){
   const m = metrics(s);

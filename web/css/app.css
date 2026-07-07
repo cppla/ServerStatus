@@ -148,10 +148,6 @@ body.light .gauge-half .needle{background:linear-gradient(var(--text),var(--text
 .pill.off:hover{filter:brightness(1.1)}
 .virt-pill{--virt:var(--accent);display:inline-flex;align-items:center;justify-content:center;min-width:50px;padding:2px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--virt) 42%,var(--border));background:color-mix(in srgb,var(--virt) 14%,var(--bg-alt));color:color-mix(in srgb,var(--virt) 72%,#fff);font-size:12px;font-weight:650;line-height:1.2;letter-spacing:.25px;white-space:nowrap}
 body.light .virt-pill{background:color-mix(in srgb,var(--virt) 12%,#fff);color:color-mix(in srgb,var(--virt) 68%,#111827)}
-.virt-kvm{--virt:#06b6d4}
-.virt-xen{--virt:#8b5cf6}
-.virt-vmware{--virt:#f59e0b}
-.virt-hyper,.virt-hyper-v{--virt:#10b981}
 .node-name{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:750;letter-spacing:.15px;color:var(--text)}
 .row-server[data-online="0"] .node-name{color:color-mix(in srgb,var(--text) 72%,var(--text-dim));font-weight:650}
 .row-server:hover .node-name{color:var(--accent)}
