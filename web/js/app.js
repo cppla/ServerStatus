@@ -146,10 +146,6 @@ function lossValues(s){
   return [s.ping_10010, s.ping_189, s.ping_10086].map(p => clamp(num(p), 0, 100));
 }
 
-function isBlocked(s){
-  return lossValues(s).every(p => p >= 100);
-}
-
 function metrics(s){
   const online = !!(s.online4 || s.online6);
   const memPct = s.memory_total ? s.memory_used / s.memory_total * 100 : 0;
@@ -591,7 +587,6 @@ function refreshDetail(){
   title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}${spec ? `<span class="spec-chip" title="CPU 核心 / 总内存">${esc(spec)}</span>` : ''}${cpuModel ? `<span class="cpu-model-chip" title="${esc(cpuModel)}">${esc(cpuModel)}</span>` : ''}`;
   const modalBox = document.querySelector('#detailModal .modal-box');
   if(modalBox){
-    modalBox.classList.remove('high-load');
     modalBox.classList.toggle('alert-critical', m.rowLevel === 'critical');
     modalBox.classList.toggle('alert-warning', m.rowLevel === 'warning');
   }
