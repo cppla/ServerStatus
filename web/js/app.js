@@ -357,6 +357,14 @@ function protoPill(s){
   const proto = m.online ? (s.online4 && s.online6 ? '双栈' : (s.online4 ? 'IPv4' : 'IPv6')) : '离线';
   return `<span class="pill ${m.online ? 'on' : 'off'}">${proto}</span>`;
 }
+function protoSignal(s){
+  const m = metrics(s);
+  const v4 = m.online && !!s.online4;
+  const v6 = m.online && !!s.online6;
+  const state = !m.online ? 'offline' : (v4 && v6 ? 'dual' : (v4 ? 'ipv4' : 'ipv6'));
+  const label = !m.online ? '离线' : (v4 && v6 ? '双栈在线' : (v4 ? 'IPv4 在线' : 'IPv6 在线'));
+  return `<span class="proto-signal" data-state="${state}" data-v4="${v4 ? 1 : 0}" data-v6="${v6 ? 1 : 0}" aria-label="${esc(label)}"><i class="v4"></i><i class="v6"></i></span>`;
+}
 const VIRT_PALETTE = ['#06b6d4','#8b5cf6','#10b981','#f59e0b','#3b82f6','#14b8a6','#6366f1','#a855f7','#22c55e','#eab308'];
 function stableHash(value){
   let hash = 2166136261;
@@ -454,7 +462,7 @@ function serverRowHTML(s, m, signature){
   const netTotal = `${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}`;
   const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
   return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" data-sig="${esc(signature)}" class="row-server${alertClass}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
-    <td>${protoPill(s)}</td>
+    <td>${protoSignal(s)}</td>
     <td>${trafficCaps(s)}</td>
     <td><span class="node-name" title="${esc(s.name || '-')}">${esc(s.name || '-')}</span></td>
     <td>${virtPill(s.type)}</td>
