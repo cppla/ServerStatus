@@ -87,6 +87,20 @@ function serverSpecLabel(s){
 function cpuModelLabel(s){
   return String(s?.cpu_model || '').trim();
 }
+function shortCpuModel(model){
+  const raw = String(model || '').trim();
+  if(!raw) return '';
+  const text = raw
+    .replace(/\((?:R|TM|C)\)/gi, '')
+    .replace(/\s+@.*$/g, '')
+    .replace(/\b(?:CPU|Processor)\b/gi, '')
+    .replace(/\b\d+\s*-?\s*Core\b/gi, '')
+    .replace(/\b\d+\s*-?\s*Thread\b/gi, '')
+    .replace(/\b(?:Intel|AMD)\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text || raw;
+}
 function humanAgo(ts){
   if(!ts) return '-';
   const sec = Math.max(0, Math.floor(Date.now() / 1000 - Number(ts)));
@@ -592,7 +606,8 @@ function refreshDetail(){
   const title = $('detailTitle');
   const spec = serverSpecLabel(s);
   const cpuModel = cpuModelLabel(s);
-  title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}${spec ? `<span class="spec-chip" title="CPU 核心 / 总内存">${esc(spec)}</span>` : ''}${cpuModel ? `<span class="cpu-model-chip" title="${esc(cpuModel)}">${esc(cpuModel)}</span>` : ''}`;
+  const shortModel = shortCpuModel(cpuModel);
+  title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}${spec ? `<span class="spec-chip" title="CPU 核心 / 总内存">${esc(spec)}</span>` : ''}${cpuModel ? `<span class="cpu-model-chip" title="${esc(cpuModel)}">${esc(shortModel)}</span>` : ''}`;
   const modalBox = document.querySelector('#detailModal .modal-box');
   if(modalBox){
     modalBox.classList.toggle('alert-critical', m.rowLevel === 'critical');
