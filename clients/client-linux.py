@@ -150,9 +150,25 @@ def is_generic_cpu_model(value):
     v = normalize_cpu_model(value).lower().replace('-', '').replace('_', '').replace(' ', '')
     return v in ('', 'unknown', 'x8664', 'amd64', 'i386', 'i686', 'aarch64', 'arm64') or v.startswith('armv')
 
-def get_cpu_model():
+def get_lscpu_info():
+    result = {}
     try:
-        fallback = ""
+        output = subprocess.check_output(['lscpu'], stderr=subprocess.DEVNULL, timeout=2).decode(errors='ignore')
+        for line in output.splitlines():
+            if ':' not in line:
+                continue
+            key, value = line.split(':', 1)
+            key = key.strip().lower()
+            value = normalize_cpu_model(value)
+            if value and key not in result:
+                result[key] = value
+    except Exception:
+        pass
+    return result
+
+def get_cpuinfo_values():
+    result = {}
+    try:
         with open('/proc/cpuinfo') as f:
             for line in f:
                 if ':' not in line:
@@ -160,26 +176,29 @@ def get_cpu_model():
                 key, value = line.split(':', 1)
                 key = key.strip().lower()
                 value = normalize_cpu_model(value)
-                if not value:
-                    continue
-                if key == 'model name':
-                    return value
-                if key in ('hardware', 'processor') and not value.isdigit() and not fallback:
-                    fallback = value
-        if fallback:
-            return fallback
+                if value and key not in result:
+                    result[key] = value
     except Exception:
         pass
-    for cmd in ('sysctl -n machdep.cpu.brand_string', 'sysctl -n hw.model'):
-        try:
-            value = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL, timeout=2).decode().strip()
-            value = normalize_cpu_model(value)
-            if value:
-                return value
-        except Exception:
-            pass
-    value = normalize_cpu_model(platform.processor())
-    return "" if is_generic_cpu_model(value) else value
+    return result
+
+def get_cpu_model():
+    cpuinfo = get_cpuinfo_values()
+    lscpu = get_lscpu_info()
+    for value in (
+        cpuinfo.get('model name'),
+        lscpu.get('model name'),
+        cpuinfo.get('hardware'),
+        cpuinfo.get('processor'),
+        platform.processor(),
+    ):
+        value = normalize_cpu_model(value)
+        if value and not value.isdigit() and not is_generic_cpu_model(value):
+            return value
+    vendor = normalize_cpu_model(lscpu.get('vendor id') or cpuinfo.get('vendor_id'))
+    if vendor:
+        return vendor
+    return normalize_cpu_model(lscpu.get('architecture') or platform.machine() or platform.processor())
 
 def liuliang():
     NET_IN = 0

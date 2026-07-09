@@ -28,7 +28,6 @@ import sys
 import json
 import errno
 import psutil
-import subprocess
 import threading
 import platform
 from queue import Queue
@@ -103,36 +102,41 @@ def is_generic_cpu_model(value):
     v = normalize_cpu_model(value).lower().replace('-', '').replace('_', '').replace(' ', '')
     return v in ('', 'unknown', 'x8664', 'amd64', 'i386', 'i686', 'aarch64', 'arm64') or v.startswith('armv')
 
+def get_platform_cpu_vendor():
+    values = [
+        platform.processor(),
+        getattr(platform.uname(), 'processor', ''),
+        platform.machine(),
+        getattr(platform.uname(), 'machine', ''),
+        platform.platform(),
+    ]
+    text = " ".join(normalize_cpu_model(v).lower() for v in values)
+    if 'genuineintel' in text:
+        return 'GenuineIntel'
+    if 'authenticamd' in text:
+        return 'AuthenticAMD'
+    if 'intel' in text:
+        return 'Intel'
+    if 'amd' in text:
+        return 'AMD'
+    if sys.platform.startswith('darwin') and platform.machine().lower() in ('arm64', 'aarch64'):
+        return 'Apple'
+    if any(token in text for token in ('aarch64', 'arm64', 'armv7', 'armv8', ' arm ')):
+        return 'ARM'
+    return ''
+
+def get_platform_cpu_arch():
+    return normalize_cpu_model(platform.machine() or platform.processor() or platform.architecture()[0])
+
 def get_cpu_model():
-    try:
-        fallback = ""
-        with open('/proc/cpuinfo') as f:
-            for line in f:
-                if ':' not in line:
-                    continue
-                key, value = line.split(':', 1)
-                key = key.strip().lower()
-                value = normalize_cpu_model(value)
-                if not value:
-                    continue
-                if key == 'model name':
-                    return value
-                if key in ('hardware', 'processor') and not value.isdigit() and not fallback:
-                    fallback = value
-        if fallback:
-            return fallback
-    except Exception:
-        pass
-    for cmd in ('sysctl -n machdep.cpu.brand_string', 'sysctl -n hw.model'):
-        try:
-            value = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL, timeout=2).decode().strip()
-            value = normalize_cpu_model(value)
-            if value:
-                return value
-        except Exception:
-            pass
-    value = normalize_cpu_model(platform.processor())
-    return "" if is_generic_cpu_model(value) else value
+    for value in (platform.processor(), getattr(platform.uname(), 'processor', '')):
+        value = normalize_cpu_model(value)
+        if value and not is_generic_cpu_model(value):
+            return value
+    vendor = normalize_cpu_model(get_platform_cpu_vendor())
+    if vendor:
+        return vendor
+    return get_platform_cpu_arch()
 
 def liuliang():
     NET_IN = 0
