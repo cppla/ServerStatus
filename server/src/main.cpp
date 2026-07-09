@@ -17,6 +17,48 @@
 static volatile int gs_Running = 1;
 static volatile int gs_ReloadConfig = 0;
 
+static void JsonEscape(const char *pSrc, char *pDst, int DstSize)
+{
+	if(!pDst || DstSize <= 0)
+		return;
+	int Out = 0;
+	if(!pSrc)
+	{
+		pDst[0] = 0;
+		return;
+	}
+	for(const unsigned char *p = (const unsigned char *)pSrc; *p && Out < DstSize - 1; ++p)
+	{
+		const char *pEsc = 0;
+		switch(*p)
+		{
+		case '"': pEsc = "\\\""; break;
+		case '\\': pEsc = "\\\\"; break;
+		case '\b': pEsc = "\\b"; break;
+		case '\f': pEsc = "\\f"; break;
+		case '\n': pEsc = "\\n"; break;
+		case '\r': pEsc = "\\r"; break;
+		case '\t': pEsc = "\\t"; break;
+		default: break;
+		}
+		if(pEsc)
+		{
+			for(const char *q = pEsc; *q && Out < DstSize - 1; ++q)
+				pDst[Out++] = *q;
+		}
+		else if(*p < 0x20)
+		{
+			if(Out < DstSize - 6)
+				Out += snprintf(pDst + Out, DstSize - Out, "\\u%04x", *p);
+			else
+				break;
+		}
+		else
+			pDst[Out++] = *p;
+	}
+	pDst[Out] = 0;
+}
+
 static int64_t ParseOpenSSLEnddate(const char *line)
 {
 	// line format: notAfter=Aug 12 23:59:59 2025 GMT
@@ -380,6 +422,10 @@ int CMain::HandleMessage(int ClientNetID, char *pMessage)
 			pClient->m_Stats.m_IOWrite = rStart["io_write"].u.integer;
 		if(rStart["cpu"].type)
 			pClient->m_Stats.m_CPU = rStart["cpu"].u.dbl;
+		if(rStart["cpu_cores"].type)
+			pClient->m_Stats.m_CPUCores = rStart["cpu_cores"].u.integer;
+		if(rStart["cpu_model"].type == json_string)
+			str_copy(pClient->m_Stats.m_aCPUModel, rStart["cpu_model"].u.string.ptr, sizeof(pClient->m_Stats.m_aCPUModel));
 		if(rStart["online4"].type && pClient->m_ClientNetType == NETTYPE_IPV6)
 			pClient->m_Stats.m_Online4 = rStart["online4"].u.boolean;
 		if(rStart["online6"].type && pClient->m_ClientNetType == NETTYPE_IPV4)
@@ -635,28 +681,38 @@ void CMain::JSONUpdateThread(void *pUser)
                     pClients[i].m_LastNetworkOUT = pClients[i].m_Stats.m_NetworkOUT;
                 }
 
+				char aCustomEsc[2048] = { 0 };
+				char aOSEsc[128] = { 0 };
+				char aCPUModelEsc[384] = { 0 };
+				JsonEscape(pClients[i].m_Stats.m_aCustom, aCustomEsc, sizeof(aCustomEsc));
+				JsonEscape(pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "", aOSEsc, sizeof(aOSEsc));
+				JsonEscape(pClients[i].m_Stats.m_aCPUModel[0] ? pClients[i].m_Stats.m_aCPUModel : "", aCPUModelEsc, sizeof(aCPUModelEsc));
 				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf),
-                 "{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\", \"os\": \"%s\" },\n",
+                 "{ \"name\": \"%s\",\"type\": \"%s\",\"host\": \"%s\",\"location\": \"%s\",\"online4\": %s, \"online6\": %s, \"uptime\": \"%s\",\"load_1\": %.2f, \"load_5\": %.2f, \"load_15\": %.2f,\"ping_10010\": %.2f, \"ping_189\": %.2f, \"ping_10086\": %.2f,\"time_10010\": %" PRId64 ", \"time_189\": %" PRId64 ", \"time_10086\": %" PRId64 ", \"tcp_count\": %" PRId64 ", \"udp_count\": %" PRId64 ", \"process_count\": %" PRId64 ", \"thread_count\": %" PRId64 ", \"network_rx\": %" PRId64 ", \"network_tx\": %" PRId64 ", \"network_in\": %" PRId64 ", \"network_out\": %" PRId64 ", \"cpu\": %d, \"cpu_cores\": %" PRId64 ", \"cpu_model\": \"%s\", \"memory_total\": %" PRId64 ", \"memory_used\": %" PRId64 ", \"swap_total\": %" PRId64 ", \"swap_used\": %" PRId64 ", \"hdd_total\": %" PRId64 ", \"hdd_used\": %" PRId64 ", \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ",\"io_read\": %" PRId64 ", \"io_write\": %" PRId64 ",\"custom\": \"%s\", \"os\": \"%s\" },\n",
 					pClients[i].m_aName,pClients[i].m_aType,pClients[i].m_aHost,pClients[i].m_aLocation,
 					pClients[i].m_Stats.m_Online4 ? "true" : "false",pClients[i].m_Stats.m_Online6 ? "true" : "false",
 					aUptime, pClients[i].m_Stats.m_Load_1, pClients[i].m_Stats.m_Load_5, pClients[i].m_Stats.m_Load_15, pClients[i].m_Stats.m_ping_10010, pClients[i].m_Stats.m_ping_189, pClients[i].m_Stats.m_ping_10086,
 					pClients[i].m_Stats.m_time_10010, pClients[i].m_Stats.m_time_189, pClients[i].m_Stats.m_time_10086,pClients[i].m_Stats.m_tcpCount,pClients[i].m_Stats.m_udpCount,pClients[i].m_Stats.m_processCount,pClients[i].m_Stats.m_threadCount,
-					pClients[i].m_Stats.m_NetworkRx, pClients[i].m_Stats.m_NetworkTx, pClients[i].m_Stats.m_NetworkIN, pClients[i].m_Stats.m_NetworkOUT, (int)pClients[i].m_Stats.m_CPU, pClients[i].m_Stats.m_MemTotal, pClients[i].m_Stats.m_MemUsed,
+					pClients[i].m_Stats.m_NetworkRx, pClients[i].m_Stats.m_NetworkTx, pClients[i].m_Stats.m_NetworkIN, pClients[i].m_Stats.m_NetworkOUT, (int)pClients[i].m_Stats.m_CPU, pClients[i].m_Stats.m_CPUCores, aCPUModelEsc, pClients[i].m_Stats.m_MemTotal, pClients[i].m_Stats.m_MemUsed,
 					pClients[i].m_Stats.m_SwapTotal, pClients[i].m_Stats.m_SwapUsed, pClients[i].m_Stats.m_HDDTotal, pClients[i].m_Stats.m_HDDUsed,
 					pClients[i].m_Stats.m_NetworkIN == 0 || pClients[i].m_LastNetworkIN == 0 ? pClients[i].m_Stats.m_NetworkIN : pClients[i].m_LastNetworkIN,
 					pClients[i].m_Stats.m_NetworkOUT == 0 || pClients[i].m_LastNetworkOUT == 0 ? pClients[i].m_Stats.m_NetworkOUT : pClients[i].m_LastNetworkOUT,
 					pClients[i].m_Stats.m_IORead, pClients[i].m_Stats.m_IOWrite,
-					pClients[i].m_Stats.m_aCustom,
-					pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "");
+					aCustomEsc,
+					aOSEsc);
 				pBuf += strlen(pBuf);
 			}
 			else
 			{
 			    // sava network traffic record to json when close client
 			    // last_network_in == last network in record, last_network_out == last network out record
-				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ", \"os\": \"%s\" },\n",
+				char aOSEsc[128] = { 0 };
+				char aCPUModelEsc[384] = { 0 };
+				JsonEscape(pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "", aOSEsc, sizeof(aOSEsc));
+				JsonEscape(pClients[i].m_Stats.m_aCPUModel[0] ? pClients[i].m_Stats.m_aCPUModel : "", aCPUModelEsc, sizeof(aCPUModelEsc));
+				str_format(pBuf, sizeof(aFileBuf) - (pBuf - aFileBuf), "{ \"name\": \"%s\", \"type\": \"%s\", \"host\": \"%s\", \"location\": \"%s\", \"online4\": false, \"online6\": false, \"last_network_in\": %" PRId64 ", \"last_network_out\": %" PRId64 ", \"os\": \"%s\", \"cpu_model\": \"%s\" },\n",
 					pClients[i].m_aName, pClients[i].m_aType, pClients[i].m_aHost, pClients[i].m_aLocation, pClients[i].m_LastNetworkIN, pClients[i].m_LastNetworkOUT,
-					pClients[i].m_Stats.m_aOS[0] ? pClients[i].m_Stats.m_aOS : "");
+					aOSEsc, aCPUModelEsc);
 				pBuf += strlen(pBuf);
 			}
 		}
@@ -1118,4 +1174,3 @@ int main(int argc, const char *argv[])
 
 	return RetVal;
 }
-

@@ -151,6 +151,10 @@ body.light .virt-pill{background:color-mix(in srgb,var(--virt) 12%,#fff);color:c
 .node-name{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:750;letter-spacing:.15px;color:var(--text)}
 .row-server[data-online="0"] .node-name{color:color-mix(in srgb,var(--text) 72%,var(--text-dim));font-weight:650}
 .row-server:hover .node-name{color:var(--accent)}
+.load-with-cores{display:inline-flex;align-items:flex-start;gap:.28rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700;line-height:1;white-space:nowrap}
+.load-value{display:inline-block;min-width:2.55rem}
+.load-core-bubble{display:inline-flex;align-items:center;justify-content:center;height:14px;min-width:24px;padding:0 5px;margin-top:-6px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--border));background:color-mix(in srgb,var(--accent) 13%,var(--bg-alt));color:color-mix(in srgb,var(--accent) 74%,#fff);font-size:9px;font-weight:800;line-height:1;letter-spacing:0;box-shadow:0 1px 3px rgba(0,0,0,.22)}
+body.light .load-core-bubble{background:color-mix(in srgb,var(--accent) 8%,#fff);color:color-mix(in srgb,var(--accent) 78%,#111827);box-shadow:0 1px 2px rgba(15,23,42,.08)}
 
 /* buckets CU/CT/CM (simple version) */
 .buckets{display:flex;align-items:flex-end;gap:8px;min-width:140px}
@@ -261,6 +265,10 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 /* 弹窗 OS 着色：左侧彩条 + 渐变与卡片一致 */
 /* 取消弹窗背景着色，改为仅在标题展示系统胶囊 */
 .os-chip{display:inline-flex;align-items:center;padding:2px 8px;margin-left:.5rem;border-radius:999px;font-size:12px;font-weight:600;line-height:1.2;background:var(--os-color, var(--border));color:#fff;border:0;white-space:nowrap;}
+.spec-chip{display:inline-flex;align-items:center;padding:2px 8px;margin-left:.4rem;border-radius:999px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:750;line-height:1.2;background:color-mix(in srgb,var(--accent) 16%,var(--bg-alt));color:color-mix(in srgb,var(--accent) 72%,#fff);border:1px solid color-mix(in srgb,var(--accent) 38%,var(--border));white-space:nowrap;}
+body.light .spec-chip{background:color-mix(in srgb,var(--accent) 10%,#fff);color:color-mix(in srgb,var(--accent) 78%,#111827)}
+.cpu-model-chip{display:inline-block;max-width:min(240px,58vw);overflow:hidden;text-overflow:ellipsis;vertical-align:middle;padding:2px 8px;margin-left:.4rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--text-dim) 34%,var(--border));background:color-mix(in srgb,var(--text-dim) 12%,var(--bg-alt));color:color-mix(in srgb,var(--text) 84%,var(--text-dim));font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:700;line-height:1.2;white-space:nowrap;}
+body.light .cpu-model-chip{background:color-mix(in srgb,var(--text-dim) 9%,#fff);color:color-mix(in srgb,var(--text) 82%,#111827)}
 
 /* 为常见系统赋色 */
 .os-linux{--os-color: rgba(16,185,129,.85);}   /* 绿色 (通用 Linux，保持不变) */
@@ -285,7 +293,9 @@ table.data tbody tr[class*="os-"]:hover{background:linear-gradient(180deg, color
 
 /* 旧进度条相关样式已清理 */
 .cards .card-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
-.cards .card-title{font-weight:600;font-size:.95rem;}
+.cards .card-title{display:flex;align-items:center;flex-wrap:wrap;gap:.24rem .34rem;min-width:0;font-weight:600;font-size:.95rem;}
+.cards .card-spec-chip{display:inline-flex;align-items:center;justify-content:center;height:16px;padding:0 6px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--border));background:color-mix(in srgb,var(--accent) 13%,var(--bg-alt));color:color-mix(in srgb,var(--accent) 74%,#fff);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;font-weight:800;line-height:1;letter-spacing:0;white-space:nowrap}
+body.light .cards .card-spec-chip{background:color-mix(in srgb,var(--accent) 8%,#fff);color:color-mix(in srgb,var(--accent) 78%,#111827)}
 .cards .tag{font-size:.65rem;padding:.15rem .4rem;border-radius:4px;background:var(--surface);color:var(--text);letter-spacing:.5px;}
 .cards .status-pill{font-size:.6rem;padding:.2rem .45rem;border-radius:999px;font-weight:500;}
 .cards .status-pill.on{background:var(--ok);color:#fff;}
@@ -372,7 +382,8 @@ th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 .detail-drawer{height:100dvh;max-height:100dvh;width:min(620px,100vw);max-width:min(620px,100vw);border-radius:0;border-top:0;border-right:0;border-bottom:0;padding:1.1rem;overflow:auto;animation:slideIn .24s ease}
 .detail-drawer.alert-critical{border-color:rgba(239,68,68,.6);background:linear-gradient(180deg, rgba(239,68,68,.16), rgba(239,68,68,.08)), var(--bg-alt);box-shadow:0 0 0 1px rgba(239,68,68,.38),0 10px 28px -10px rgba(239,68,68,.28)}
 .detail-drawer.alert-warning{border-color:rgba(245,158,11,.55);background:linear-gradient(180deg, rgba(245,158,11,.14), rgba(245,158,11,.06)), var(--bg-alt);box-shadow:0 0 0 1px rgba(245,158,11,.28),0 10px 28px -10px rgba(245,158,11,.2)}
-.modal-title{padding-right:2.2rem}
+.modal-title{padding-right:2.2rem;display:flex;align-items:center;flex-wrap:wrap;gap:.32rem .4rem}
+.modal-title .os-chip,.modal-title .spec-chip,.modal-title .cpu-model-chip{margin-left:0}
 .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
 .detail-section{border:1px solid var(--border);border-radius:8px;background:linear-gradient(145deg,var(--bg),var(--bg-alt));padding:.75rem;display:flex;flex-direction:column;gap:.65rem}
 .detail-section h4{margin:0;font-size:13px;color:var(--text-dim);font-weight:700;letter-spacing:.4px}

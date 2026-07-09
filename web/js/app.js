@@ -6,6 +6,7 @@ const S = {
   loadHist: {},
   openDetailKey: null,
   activeTab: 'servers',
+  layoutCompact: null,
   osOptionsSignature: '',
   suppressStatsReloadUntil: 0,
   filters: { query: '', status: 'all', os: 'all', sort: 'name', dir: 'desc' },
@@ -25,6 +26,32 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const num = (v) => typeof v === 'number' && Number.isFinite(v) ? v : 0;
 
+function debounce(fn, wait){
+  let timer = 0;
+  const wrapped = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = 0;
+      fn(...args);
+    }, wait);
+  };
+  wrapped.cancel = () => {
+    clearTimeout(timer);
+    timer = 0;
+  };
+  return wrapped;
+}
+function isCompactLayout(){ return window.innerWidth <= 700; }
+function clearHTML(id){
+  const el = $(id);
+  if(el && el.innerHTML) el.innerHTML = '';
+}
+function htmlElement(html){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html.trim();
+  return tpl.content.firstElementChild;
+}
+
 function humanMinMBFromKB(kb){ return humanBytes(num(kb) * 1000, 1000 * 1000); }
 function humanMinMBFromMB(mb){ return humanBytes(num(mb) * 1000 * 1000, 1000 * 1000); }
 function humanMinMBFromB(bytes){ return humanBytes(num(bytes), 1000 * 1000); }
@@ -38,6 +65,27 @@ function humanBytes(bytes, minUnit){
   while(value >= 1000 && index < units.length - 1){ value /= 1000; index++; }
   const out = value >= 100 ? value.toFixed(0) : value.toFixed(1);
   return out + units[index];
+}
+function cpuCores(s){
+  const value = Number(s?.cpu_cores ?? s?.cpu_core ?? s?.cpu_count ?? s?.cores ?? 0);
+  return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+}
+function cpuCoreLabel(s){
+  const cores = cpuCores(s);
+  return cores > 0 ? `${cores}C` : '';
+}
+function memoryGbLabel(s){
+  const kb = Number(s?.memory_total ?? 0);
+  if(!Number.isFinite(kb) || kb <= 0) return '';
+  return `${Math.max(1, Math.round(kb / 1024 / 1024))}G`;
+}
+function serverSpecLabel(s){
+  const cores = cpuCoreLabel(s);
+  if(!cores) return '';
+  return `${cores}${memoryGbLabel(s)}`;
+}
+function cpuModelLabel(s){
+  return String(s?.cpu_model || '').trim();
 }
 function humanAgo(ts){
   if(!ts) return '-';
@@ -201,17 +249,63 @@ function visibleServers(){
 
 function render(){
   $('notice').style.display = 'none';
-  normalizeServersToolbarState();
   renderOverview();
-  renderOsOptions();
-  renderServers();
-  renderServersCards();
-  renderMonitors();
-  renderMonitorsCards();
-  renderSSL();
-  renderSSLCards();
+  renderActivePanel();
   updateTime();
   if(S.openDetailKey) refreshDetail();
+}
+
+function renderActivePanel(){
+  normalizeServersToolbarState();
+  if(S.activeTab === 'servers') renderServersView();
+  else if(S.activeTab === 'monitors') renderMonitorsView();
+  else if(S.activeTab === 'ssl') renderSSLView();
+}
+
+function renderServersView(){
+  const compact = isCompactLayout();
+  S.layoutCompact = compact;
+  normalizeServersToolbarState();
+  renderOsOptions();
+  if(compact){
+    clearHTML('serversBody');
+    renderServersCards();
+  }else{
+    clearHTML('serversCards');
+    renderServers();
+  }
+}
+
+function renderMonitorsView(){
+  const compact = isCompactLayout();
+  S.layoutCompact = compact;
+  if(compact){
+    clearHTML('monitorsBody');
+    renderMonitorsCards();
+  }else{
+    clearHTML('monitorsCards');
+    renderMonitors();
+  }
+}
+
+function renderSSLView(){
+  const compact = isCompactLayout();
+  S.layoutCompact = compact;
+  if(compact){
+    clearHTML('sslBody');
+    renderSSLCards();
+  }else{
+    clearHTML('sslCards');
+    renderSSL();
+  }
+}
+
+const scheduleServersRender = debounce(() => {
+  if(S.activeTab === 'servers') renderServersView();
+}, 160);
+function renderServersViewNow(){
+  scheduleServersRender.cancel();
+  if(S.activeTab === 'servers') renderServersView();
 }
 
 function renderOverview(){
@@ -291,6 +385,12 @@ function trafficCaps(s, small){
   const heavy = m.traffic >= 1000 * 1000 * 1000 * 1000;
   return `<span class="caps-traffic duo ${heavy ? 'heavy' : 'normal'}${small ? ' sm' : ''}" title="本月下行 | 上行"><span class="half in">${humanMinMBFromB(m.monthIn)}</span><span class="half out">${humanMinMBFromB(m.monthOut)}</span></span>`;
 }
+function loadCellHTML(s){
+  const load = s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2);
+  const cores = cpuCoreLabel(s);
+  if(!cores) return esc(load);
+  return `<span class="load-with-cores" title="负载 ${esc(load)} / CPU ${esc(cores)}"><span class="load-value">${esc(load)}</span><span class="load-core-bubble">${esc(cores)}</span></span>`;
+}
 function gaugeHTML(type, value){
   const pct = clamp(num(value), 0, 100);
   const thresholds = {
@@ -342,47 +442,79 @@ function buckets(s){
   }).join('')}</div>`;
 }
 
+function serverRowSignature(s, m){
+  const text = [
+    m.online ? 1 : 0, m.rowLevel, s.online4, s.online6, s.os,
+    s.name, s.type, s.location, s.uptime, s.load_1, cpuCores(s),
+    s.network_rx, s.network_tx, s.network_in, s.network_out, s.last_network_in, s.last_network_out,
+    s.cpu, s.memory_used, s.memory_total, s.hdd_used, s.hdd_total,
+    s.ping_10010, s.ping_189, s.ping_10086
+  ].map(v => String(v ?? '')).join('\u001f');
+  return `${stableHash(text).toString(36)}:${text.length}`;
+}
+
+function serverRowHTML(s, m, signature){
+  const netNow = `${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}`;
+  const netTotal = `${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}`;
+  const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
+  return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" data-sig="${esc(signature)}" class="row-server${alertClass}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
+    <td>${protoPill(s)}</td>
+    <td>${trafficCaps(s)}</td>
+    <td><span class="node-name" title="${esc(s.name || '-')}">${esc(s.name || '-')}</span></td>
+    <td>${virtPill(s.type)}</td>
+    <td>${esc(s.location || '-')}</td>
+    <td>${esc(s.uptime || '-')}</td>
+    <td>${loadCellHTML(s)}</td>
+    <td>${netNow}</td>
+    <td>${netTotal}</td>
+    <td>${m.online ? gaugeHTML('cpu', s.cpu) : '-'}</td>
+    <td>${m.online ? gaugeHTML('mem', m.memPct) : '-'}</td>
+    <td>${m.online ? gaugeHTML('hdd', m.hddPct) : '-'}</td>
+    <td>${buckets(s)}</td>
+  </tr>`;
+}
+
 function renderServers(){
   const rows = visibleServers();
+  const tbody = $('serversBody');
   document.querySelectorAll('#serversTable th[data-sort]').forEach(th => {
     th.classList.toggle('sorted-asc', th.dataset.sort === S.filters.sort && S.filters.dir === 'asc');
     th.classList.toggle('sorted-desc', th.dataset.sort === S.filters.sort && S.filters.dir === 'desc');
   });
-  $('serversBody').innerHTML = rows.map(s => {
+  if(!rows.length){
+    if(tbody.dataset.empty !== 'servers'){
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="13" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
+      tbody.dataset.empty = 'servers';
+    }
+    return;
+  }
+  delete tbody.dataset.empty;
+  tbody.querySelector('.empty-row')?.remove();
+  const existing = new Map([...tbody.querySelectorAll('tr.row-server')].map(row => [row.dataset.key, row]));
+  const desiredKeys = new Set(rows.map(s => s._key));
+  existing.forEach((row, key) => { if(!desiredKeys.has(key)) row.remove(); });
+  rows.forEach(s => {
+    const key = String(s._key);
     const m = metrics(s);
-    const netNow = `${humanMinKBFromB(s.network_rx)} | ${humanMinKBFromB(s.network_tx)}`;
-    const netTotal = `${humanMinMBFromB(s.network_in)} | ${humanMinMBFromB(s.network_out)}`;
-    const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
-    return `<tr data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}" class="row-server${alertClass}${osClass(s.os)}" style="cursor:${m.online ? 'pointer' : 'default'};">
-      <td>${protoPill(s)}</td>
-      <td>${trafficCaps(s)}</td>
-      <td><span class="node-name" title="${esc(s.name || '-')}">${esc(s.name || '-')}</span></td>
-      <td>${virtPill(s.type)}</td>
-      <td>${esc(s.location || '-')}</td>
-      <td>${esc(s.uptime || '-')}</td>
-      <td>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</td>
-      <td>${netNow}</td>
-      <td>${netTotal}</td>
-      <td>${m.online ? gaugeHTML('cpu', s.cpu) : '-'}</td>
-      <td>${m.online ? gaugeHTML('mem', m.memPct) : '-'}</td>
-      <td>${m.online ? gaugeHTML('hdd', m.hddPct) : '-'}</td>
-      <td>${buckets(s)}</td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="13" class="muted" style="text-align:center;padding:1rem;">无数据</td></tr>`;
-  document.querySelectorAll('#serversBody .row-server').forEach(row => row.addEventListener('click', () => {
-    if(row.dataset.online !== '1') return;
-    openDetail(row.dataset.key);
-  }));
+    const signature = serverRowSignature(s, m);
+    const current = existing.get(key);
+    let row = current;
+    if(!row || row.dataset.sig !== signature){
+      row = htmlElement(serverRowHTML(s, m, signature));
+      if(current) current.replaceWith(row);
+    }
+    tbody.appendChild(row);
+  });
 }
 
 function renderServersCards(){
   const wrap = $('serversCards');
-  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = visibleServers().map(s => {
     const m = metrics(s);
     const alertClass = m.rowLevel ? ` alert-${m.rowLevel}` : '';
+    const spec = serverSpecLabel(s);
     return `<div class="card${m.online ? '' : ' offline'}${alertClass}${osClass(s.os)}" data-key="${esc(s._key)}" data-online="${m.online ? 1 : 0}">
-      <div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div>
+      <div class="card-header"><div class="card-title">${esc(s.name || '-')}${spec ? `<span class="card-spec-chip" title="CPU 核心 / 总内存">${esc(spec)}</span>` : ''} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div>
       <div class="kvlist">
         <div><span class="key">负载</span><span>${s.load_1 === -1 ? '–' : num(s.load_1).toFixed(2)}</span></div>
         <div><span class="key">在线</span><span>${esc(s.uptime || '-')}</span></div>
@@ -394,10 +526,6 @@ function renderServersCards(){
       ${buckets(s)}
     </div>`;
   }).join('') || '<div class="empty-state">无数据</div>';
-  wrap.querySelectorAll('.card').forEach(card => card.addEventListener('click', () => {
-    if(card.dataset.online !== '1') return;
-    openDetail(card.dataset.key);
-  }));
 }
 
 function parseCustom(str){
@@ -458,7 +586,9 @@ function refreshDetail(){
   if(!s){ closeDetail(); return; }
   const m = metrics(s);
   const title = $('detailTitle');
-  title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}`;
+  const spec = serverSpecLabel(s);
+  const cpuModel = cpuModelLabel(s);
+  title.innerHTML = `${esc(s.name || '-')} 详情${s.os ? `<span class="os-chip${osClass(s.os)}">${esc(osLabel(s.os))}</span>` : ''}${spec ? `<span class="spec-chip" title="CPU 核心 / 总内存">${esc(spec)}</span>` : ''}${cpuModel ? `<span class="cpu-model-chip" title="${esc(cpuModel)}">${esc(cpuModel)}</span>` : ''}`;
   const modalBox = document.querySelector('#detailModal .modal-box');
   if(modalBox){
     modalBox.classList.remove('high-load');
@@ -563,9 +693,10 @@ function bindTabs(){
     if(e.target.tagName !== 'BUTTON') return;
     const tab = e.target.dataset.tab;
     S.activeTab = tab;
+    scheduleServersRender.cancel();
     document.querySelectorAll('.nav button').forEach(btn => btn.classList.toggle('active', btn === e.target));
     document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === 'panel-' + tab));
-    normalizeServersToolbarState();
+    renderActivePanel();
     if(tab === 'config') ensureAdminChecked();
   });
 }
@@ -584,28 +715,41 @@ function bindTheme(){
   });
 }
 function bindFilters(){
-  $('serverSearch').addEventListener('input', e => { S.filters.query = e.target.value; renderServers(); renderServersCards(); });
+  $('serverSearch').addEventListener('input', e => { S.filters.query = e.target.value; scheduleServersRender(); });
   $('statusFilter').addEventListener('click', e => {
     if(e.target.tagName !== 'BUTTON') return;
     S.filters.status = e.target.dataset.filter;
     document.querySelectorAll('#statusFilter button').forEach(btn => btn.classList.toggle('active', btn === e.target));
-    renderServers(); renderServersCards();
+    renderServersViewNow();
   });
-  $('osFilter').addEventListener('change', e => { S.filters.os = e.target.value; renderServers(); renderServersCards(); });
+  $('osFilter').addEventListener('change', e => { S.filters.os = e.target.value; renderServersViewNow(); });
   $('osFilter').addEventListener('blur', renderOsOptions);
-  $('sortSelect').addEventListener('change', e => { S.filters.sort = e.target.value; renderServers(); renderServersCards(); });
+  $('sortSelect').addEventListener('change', e => { S.filters.sort = e.target.value; renderServersViewNow(); });
   $('sortDirection').addEventListener('click', () => {
     S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
     $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
-    renderServers(); renderServersCards();
+    renderServersViewNow();
   });
   document.querySelectorAll('#serversTable th[data-sort]').forEach(th => th.addEventListener('click', () => {
     if(S.filters.sort === th.dataset.sort) S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
     else S.filters.sort = th.dataset.sort;
     $('sortSelect').value = S.filters.sort;
     $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
-    renderServers(); renderServersCards();
+    renderServersViewNow();
   }));
+}
+
+function bindServerInteractions(){
+  $('serversBody').addEventListener('click', e => {
+    const row = e.target.closest('.row-server');
+    if(!row || row.dataset.online !== '1') return;
+    openDetail(row.dataset.key);
+  });
+  $('serversCards').addEventListener('click', e => {
+    const card = e.target.closest('.card[data-key]');
+    if(!card || card.dataset.online !== '1') return;
+    openDetail(card.dataset.key);
+  });
 }
 
 function adminHeaders(){
@@ -916,11 +1060,19 @@ function bindAdmin(){
 
 $('detailClose').addEventListener('click', closeDetail);
 $('detailModal').addEventListener('click', e => { if(e.target.id === 'detailModal') closeDetail(); });
-window.addEventListener('resize', () => { renderServersCards(); renderMonitorsCards(); renderSSLCards(); if(S.openDetailKey) refreshDetail(); });
+window.addEventListener('resize', debounce(() => {
+  const compact = isCompactLayout();
+  if(S.layoutCompact !== compact){
+    S.layoutCompact = compact;
+    renderActivePanel();
+  }
+  if(S.openDetailKey) refreshDetail();
+}, 120));
 
 bindTabs();
 bindTheme();
 bindFilters();
+bindServerInteractions();
 bindAdmin();
 fetchData();
 setInterval(fetchData, 1000);

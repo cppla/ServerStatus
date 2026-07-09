@@ -76,8 +76,10 @@ class CMain
 			int64_t m_threadCount;
 			int64_t m_IORead;
 			int64_t m_IOWrite;
+			int64_t m_CPUCores;
 			double m_CPU;
 			char m_aCustom[1024];
+			char m_aCPUModel[192];
 			// OS name reported by client (e.g. linux/windows/darwin/freebsd)
 			char m_aOS[64];
 			// Options

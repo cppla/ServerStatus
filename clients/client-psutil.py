@@ -28,6 +28,7 @@ import sys
 import json
 import errno
 import psutil
+import subprocess
 import threading
 import platform
 from queue import Queue
@@ -91,6 +92,47 @@ def get_hdd():
 
 def get_cpu():
     return psutil.cpu_percent(interval=INTERVAL)
+
+def get_cpu_cores():
+    return psutil.cpu_count(logical=True) or 0
+
+def normalize_cpu_model(value):
+    return " ".join(str(value or "").split())[:160]
+
+def is_generic_cpu_model(value):
+    v = normalize_cpu_model(value).lower().replace('-', '').replace('_', '').replace(' ', '')
+    return v in ('', 'unknown', 'x8664', 'amd64', 'i386', 'i686', 'aarch64', 'arm64') or v.startswith('armv')
+
+def get_cpu_model():
+    try:
+        fallback = ""
+        with open('/proc/cpuinfo') as f:
+            for line in f:
+                if ':' not in line:
+                    continue
+                key, value = line.split(':', 1)
+                key = key.strip().lower()
+                value = normalize_cpu_model(value)
+                if not value:
+                    continue
+                if key == 'model name':
+                    return value
+                if key in ('hardware', 'processor') and not value.isdigit() and not fallback:
+                    fallback = value
+        if fallback:
+            return fallback
+    except Exception:
+        pass
+    for cmd in ('sysctl -n machdep.cpu.brand_string', 'sysctl -n hw.model'):
+        try:
+            value = subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL, timeout=2).decode().strip()
+            value = normalize_cpu_model(value)
+            if value:
+                return value
+        except Exception:
+            pass
+    value = normalize_cpu_model(platform.processor())
+    return "" if is_generic_cpu_model(value) else value
 
 def liuliang():
     NET_IN = 0
@@ -472,6 +514,8 @@ if __name__ == '__main__':
                 print(data)
                 raise socket.error
 
+            CPUCores = get_cpu_cores()
+            CPUModel = get_cpu_model()
             while 1:
                 CPU = get_cpu()
                 NET_IN, NET_OUT = liuliang()
@@ -498,6 +542,8 @@ if __name__ == '__main__':
                 array['hdd_total'] = HDDTotal
                 array['hdd_used'] = HDDUsed
                 array['cpu'] = CPU
+                array['cpu_cores'] = CPUCores
+                array['cpu_model'] = CPUModel
                 array['network_rx'] = netSpeed.get("netrx")
                 array['network_tx'] = netSpeed.get("nettx")
                 array['network_in'] = NET_IN
