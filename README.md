@@ -23,8 +23,9 @@ ADMIN_TOKEN='your-strong-token' docker compose -f docker-compose-server.yml up -
 
 ```bash
 # Docker Run
-wget --no-check-certificate -qO ~/serverstatus-config.json \
-  https://raw.githubusercontent.com/cppla/ServerStatus/master/server/config.json
+wget -qO ~/serverstatus-config.json \
+  --header='Accept: application/vnd.github.raw' \
+  'https://api.github.com/repos/cppla/ServerStatus/contents/server/config.json?ref=master'
 mkdir -p ~/serverstatus-monthtraffic
 
 docker run -d --restart=always --name=serverstatus-server \
@@ -61,7 +62,7 @@ docker run -d --restart=always --name=serverstatus-client \
 
 ```bash
 # Shell Run
-wget --no-check-certificate -qO client-linux.py 'https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py' && (nohup python3 client-linux.py SERVER=127.0.0.1 USER=s01  >/dev/null 2>&1 &)
+wget -qO client-linux.py --header='Accept: application/vnd.github.raw' 'https://api.github.com/repos/cppla/ServerStatus/contents/clients/client-linux.py?ref=master' && (nohup python3 client-linux.py SERVER=127.0.0.1 USER=s01  >/dev/null 2>&1 &)
 ```
 
 客户端环境变量和注意事项：
@@ -295,8 +296,9 @@ server {
 `client-linux.py`：
 
 ```bash
-wget --no-check-certificate -qO client-linux.py \
-  https://raw.githubusercontent.com/cppla/ServerStatus/master/clients/client-linux.py
+wget -qO client-linux.py \
+  --header='Accept: application/vnd.github.raw' \
+  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/client-linux.py?ref=master'
 
 nohup python3 client-linux.py SERVER=127.0.0.1 USER=s01 PASSWORD=USER_DEFAULT_PASSWORD \
   >/dev/null 2>&1 &
