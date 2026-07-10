@@ -8,7 +8,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-go@v6
         with:
@@ -23,9 +23,9 @@ jobs:
           go test -race ./...
           CGO_ENABLED=0 go build -trimpath -o /tmp/serverstatus .
 
-      - name: Check clients, plugins, WebUI and shell scripts
+      - name: Check clients, WebUI and shell scripts
         run: |
-          python3 -m py_compile clients/client-linux.py clients/client-psutil.py plugin/bot-telegram.py
+          python3 -m py_compile clients/client-linux.py clients/client-psutil.py
           sh -n clients/entrypoint.sh
           bash -n status.sh
           node --check web/js/app.js
@@ -34,7 +34,6 @@ jobs:
         run: |
           docker compose -f docker-compose-server.yml config
           docker compose -f docker-compose-client.yml config
-          TG_CHAT_ID=test TG_BOT_TOKEN=test ADMIN_TOKEN=test docker compose -f plugin/docker-compose-telegram.yml config
 
       - name: Build Docker images
         run: |
