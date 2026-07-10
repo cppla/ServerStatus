@@ -103,7 +103,7 @@ body.light .virt-pill{background:color-mix(in srgb,var(--virt) 12%,#fff);color:c
 .node-name{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:750;letter-spacing:.15px;color:var(--text)}
 .row-server[data-online="0"] .node-name{color:color-mix(in srgb,var(--text) 72%,var(--text-dim));font-weight:650}
 .row-server:hover .node-name{color:var(--accent)}
-.load-with-cores{display:inline-flex;align-items:flex-start;gap:.28rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:400;line-height:1;white-space:nowrap}
+.load-with-cores{display:inline-flex;align-items:flex-start;gap:.28rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1;white-space:nowrap}
 .load-value{display:inline-block;min-width:2.55rem}
 .load-core-bubble{display:inline-flex;align-items:center;justify-content:center;height:14px;min-width:24px;padding:0 5px;margin-top:-6px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--border));background:color-mix(in srgb,var(--accent) 13%,var(--bg-alt));color:color-mix(in srgb,var(--accent) 74%,#fff);font-size:9px;font-weight:800;line-height:1;letter-spacing:0;box-shadow:0 1px 3px rgba(0,0,0,.22)}
 body.light .load-core-bubble{background:color-mix(in srgb,var(--accent) 8%,#fff);color:color-mix(in srgb,var(--accent) 78%,#111827);box-shadow:0 1px 2px rgba(15,23,42,.08)}
