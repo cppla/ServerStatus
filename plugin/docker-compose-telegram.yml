@@ -1,21 +1,29 @@
-version: "3"
 services:
   serverstatus:
     build:
       context: ..
-      dockerfile: Dockerfile
-    image: serverstatus_server
+      dockerfile: Dockerfile.server
+    image: cppla/serverstatus:server
     container_name: serverstatus
     restart: unless-stopped
+    environment:
+      ADMIN_TOKEN: "${ADMIN_TOKEN:-}"
+      HTTP_ADDR: ":80"
+      AGENT_ADDR: ":35601"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.2
     volumes:
-      - ../server/config.json:/ServerStatus/server/config.json 
-      - ../web/json:/usr/share/nginx/html/json
+      - ../server/config.json:/app/config/config.json
+      - ../web/json:/app/data
     ports:
-      - 35601:35601
-      - 8080:80
+      - "35601:35601"
+      - "8080:80"
   bot:
     build:
       context: .
@@ -23,6 +31,9 @@ services:
     image: serverstatus_bot
     container_name: bot4sss
     restart: unless-stopped
+    depends_on:
+      serverstatus:
+        condition: service_healthy
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.3

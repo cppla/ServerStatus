@@ -10,22 +10,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y gcc g++ make libcurl4-openssl-dev python3
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
 
-      - name: Build server
-        run: make -C server -j2
-
-      - name: Check scripts
+      - name: Test Go server
+        working-directory: server
         run: |
-          python3 -m py_compile server/manage_api.py clients/client-linux.py clients/client-psutil.py plugin/bot-telegram.py
-          sh -n server/entrypoint-server.sh clients/entrypoint.sh status.sh
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race ./...
+          CGO_ENABLED=0 go build -trimpath -o /tmp/serverstatus .
+
+      - name: Check clients, plugins, WebUI and shell scripts
+        run: |
+          python3 -m py_compile clients/client-linux.py clients/client-psutil.py plugin/bot-telegram.py
+          sh -n clients/entrypoint.sh
+          bash -n status.sh
           node --check web/js/app.js
 
       - name: Validate compose files
         run: |
           docker compose -f docker-compose-server.yml config
           docker compose -f docker-compose-client.yml config
+          TG_CHAT_ID=test TG_BOT_TOKEN=test ADMIN_TOKEN=test docker compose -f plugin/docker-compose-telegram.yml config
 
       - name: Build Docker images
         run: |

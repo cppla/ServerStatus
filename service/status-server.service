@@ -1,9 +1,20 @@
 [Unit]
-Description=ServerStatus-Server
-After=network.target
+Description=ServerStatus Go Server
+After=network-online.target
+Wants=network-online.target
+
 [Service]
-ExecStart=/usr/local/ServerStatus/server/sergate --config=/usr/local/ServerStatus/server/config.json --web-dir=/usr/local/ServerStatus/web
+Type=simple
+WorkingDirectory=/usr/local/ServerStatus/server
+EnvironmentFile=-/usr/local/ServerStatus/server/config.conf
+ExecStart=/usr/local/ServerStatus/server/serverstatus --config=/usr/local/ServerStatus/server/config.json --web-dir=/usr/local/ServerStatus/web
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/usr/local/ServerStatus/server /usr/local/ServerStatus/web/json
+
 [Install]
 WantedBy=multi-user.target

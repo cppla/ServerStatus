@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile.server
     image: cppla/serverstatus:server
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import os,urllib.request; pid=int(open('/tmp/serverstatus-sergate.pid').read().strip()); os.kill(pid,0); urllib.request.urlopen('http://127.0.0.1/',timeout=2).read(1)\""]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -13,12 +13,14 @@ services:
     restart: unless-stopped
     environment:
       ADMIN_TOKEN: "${ADMIN_TOKEN:-}"
+      HTTP_ADDR: ":80"
+      AGENT_ADDR: ":35601"
     networks:
       serverstatus-network:
         ipv4_address: 172.23.0.2
     volumes:
-      - ./server/config.json:/ServerStatus/server/config.json 
-      - ./web/json:/usr/share/nginx/html/json
+      - ./server/config.json:/app/config/config.json
+      - ./web/json:/app/data
     ports:
       - 35601:35601
       - 8080:80

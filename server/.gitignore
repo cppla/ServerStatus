@@ -1,2 +1,4 @@
-sergate
+serverstatus
+*.test
+coverage.out
 .tags*

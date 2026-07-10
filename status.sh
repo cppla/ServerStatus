@@ -2,7 +2,7 @@
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
-sh_ver="1.0.0"
+sh_ver="2.0.0"
 
 filepath=$(
   cd "$(dirname "$0")" || exit
@@ -49,7 +49,7 @@ check_sys() {
 }
 
 check_installed_server_status() {
-  [[ ! -e "${server_file}/sergate" ]] && echo -e "${Error} $NAME 服务端没有安装，请检查 !" && exit 1
+  [[ ! -x "${server_file}/serverstatus" ]] && echo -e "${Error} $NAME Go 服务端没有安装，请检查 !" && exit 1
 }
 
 check_installed_client_status() {
@@ -58,27 +58,24 @@ check_installed_client_status() {
 
 Download_Server_Status_server() {
   cd "/tmp" || exit 1
+  rm -rf "/tmp/ServerStatus-master" "/tmp/master.zip"
   wget -N --no-check-certificate https://github.com/cppla/ServerStatus/archive/refs/heads/master.zip
-    [[ ! -e "master.zip" ]] && echo -e "${Error} ServerStatus 服务端下载失败 !" && exit 1
+  [[ ! -e "master.zip" ]] && echo -e "${Error} ServerStatus 服务端下载失败 !" && exit 1
   unzip master.zip
   rm -rf master.zip
   [[ ! -d "/tmp/ServerStatus-master" ]] && echo -e "${Error} ServerStatus 服务端解压失败 !" && exit 1
   cd "/tmp/ServerStatus-master/server" || exit 1
-  make
-  [[ ! -e "sergate" ]] && echo -e "${Error} ServerStatus 服务端编译失败 !" && cd "${file_1}" && rm -rf "/tmp//ServerStatus-master" && exit 1
+  go build -trimpath -ldflags="-s -w -X main.version=${sh_ver}" -o /tmp/serverstatus .
+  [[ ! -x "/tmp/serverstatus" ]] && echo -e "${Error} ServerStatus Go 服务端编译失败，请确认 Go 版本满足 go.mod !" && cd "${file_1}" && rm -rf "/tmp/ServerStatus-master" && exit 1
   cd "${file_1}" || exit 1
-  mkdir -p "${server_file}"
-  mv "/tmp/ServerStatus-master/server" "${file}"
-  mv "/tmp/ServerStatus-master/web" "${file}"
-  mv "/tmp/ServerStatus-master/plugin" "${file}"
+  mkdir -p "${server_file}" "${web_file}/json" "${plugin_file}"
+  install -m 0755 /tmp/serverstatus "${server_file}/serverstatus"
+  [[ ! -e "${server_conf}" ]] && install -m 0644 "/tmp/ServerStatus-master/server/config.json" "${server_conf}"
+  cp -a "/tmp/ServerStatus-master/web/." "${web_file}/"
+  cp -a "/tmp/ServerStatus-master/plugin/." "${plugin_file}/"
+  rm -f /tmp/serverstatus
   rm -rf "/tmp/ServerStatus-master"
-  if [[ ! -e "${server_file}/sergate" ]]; then
-    echo -e "${Error} ServerStatus 服务端移动重命名失败 !"
-    [[ -e "${server_file}/sergate1" ]] && mv "${server_file}/sergate1" "${server_file}/sergate"
-    exit 1
-  else
-    [[ -e "${server_file}/sergate1" ]] && rm -rf "${server_file}/sergate1"
-  fi
+  [[ ! -x "${server_file}/serverstatus" ]] && echo -e "${Error} ServerStatus Go 服务端安装失败 !" && exit 1
 }
 
 Download_Server_Status_client() {
@@ -113,18 +110,27 @@ Installation_dependency() {
   if [[ ${release} == "centos" ]]; then
     yum makecache
     yum -y install unzip
-    yum -y install python3 >/dev/null 2>&1 || yum -y install python
-    [[ ${mode} == "server" ]] && yum -y groupinstall "Development Tools"
+    if [[ ${mode} == "server" ]]; then
+      yum -y install golang
+    else
+      yum -y install python3 >/dev/null 2>&1 || yum -y install python
+    fi
   elif [[ ${release} == "debian" ]]; then
     apt -y update
     apt -y install unzip
-    apt -y install python3 >/dev/null 2>&1 || apt -y install python
-    [[ ${mode} == "server" ]] && apt -y install build-essential
+    if [[ ${mode} == "server" ]]; then
+      apt -y install golang-go
+    else
+      apt -y install python3 >/dev/null 2>&1 || apt -y install python
+    fi
   elif [[ ${release} == "archlinux" ]]; then
-    pacman -Sy python python-pip unzip --noconfirm
-    [[ ${mode} == "server" ]] && pacman -Sy base-devel --noconfirm
+    if [[ ${mode} == "server" ]]; then
+      pacman -Sy go unzip --noconfirm
+    else
+      pacman -Sy python python-pip unzip --noconfirm
+    fi
   fi
-  [[ ! -e /usr/bin/python ]] && ln -s /usr/bin/python3 /usr/bin/python
+  [[ ${mode} == "client" && ! -e /usr/bin/python ]] && ln -s /usr/bin/python3 /usr/bin/python
 }
 
 Write_server_config() {
@@ -147,7 +153,9 @@ EOF
 
 Write_server_config_conf() {
   cat >${server_conf_1} <<-EOF
-PORT = ${server_port_s}
+AGENT_ADDR=:${server_port_s}
+HTTP_ADDR=:${server_http_port_s}
+ADMIN_TOKEN=${admin_token_s}
 EOF
 }
 
@@ -162,10 +170,19 @@ Read_config_client() {
 Read_config_server() {
   if [[ ! -e "${server_conf_1}" ]]; then
     server_port_s="35601"
+    server_http_port_s="8080"
+    admin_token_s=""
     Write_server_config_conf
     server_port="35601"
+    server_http_port="8080"
   else
-    server_port="$(grep "PORT = " ${server_conf_1} | awk '{print $3}')"
+    agent_addr="$(grep '^AGENT_ADDR=' "${server_conf_1}" | head -1 | cut -d= -f2-)"
+    http_addr="$(grep '^HTTP_ADDR=' "${server_conf_1}" | head -1 | cut -d= -f2-)"
+    admin_token_s="$(grep '^ADMIN_TOKEN=' "${server_conf_1}" | head -1 | cut -d= -f2-)"
+    server_port="${agent_addr##*:}"
+    server_http_port="${http_addr##*:}"
+    server_port_s="${server_port:-35601}"
+    server_http_port_s="${server_http_port:-8080}"
   fi
 }
 
@@ -191,8 +208,8 @@ Set_server() {
 Set_server_http_port() {
   while true; do
     echo -e "请输入 $NAME 服务端中网站要设置的 域名/IP的端口[1-65535]（如果是域名的话，一般用 80 端口）"
-    read -erp "(默认: 8888):" server_http_port_s
-    [[ -z "$server_http_port_s" ]] && server_http_port_s="8888"
+    read -erp "(默认: 8080):" server_http_port_s
+    [[ -z "$server_http_port_s" ]] && server_http_port_s="8080"
     if [[ "$server_http_port_s" =~ ^[0-9]*$ ]]; then
       if [[ ${server_http_port_s} -ge 1 ]] && [[ ${server_http_port_s} -le 65535 ]]; then
         echo && echo "	================================================"
@@ -623,54 +640,16 @@ Install_jq() {
   fi
 }
 
-Install_caddy() {
-  echo
-  echo -e "${Info} 是否由脚本自动配置HTTP服务(服务端的在线监控网站)，如果选择 N，则请在其他HTTP服务中配置网站根目录为：${Green_font_prefix}${web_file}${Font_color_suffix} [Y/n]"
-  read -erp "(默认: Y 自动部署):" caddy_yn
-  [[ -z "$caddy_yn" ]] && caddy_yn="y"
-  if [[ "${caddy_yn}" == [Yy] ]]; then
-    caddy_file="/etc/caddy/Caddyfile" # Where is the default Caddyfile specified in Archlinux?
-    [[ ! -e /usr/bin/caddy ]] && {
-      if [[ ${release} == "debian" ]]; then
-        apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-        curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/gpg.key" | tee /etc/apt/trusted.gpg.d/caddy-stable.asc
-        curl -1sLf "https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt" | tee /etc/apt/sources.list.d/caddy-stable.list
-        apt update && apt install caddy
-      elif [[ ${release} == "centos" ]]; then
-        yum install yum-plugin-copr -y
-        yum copr enable @caddy/caddy -y
-        yum install caddy -y
-      elif [[ ${release} == "archlinux" ]]; then
-        pacman -Sy caddy --noconfirm
-      fi
-      [[ ! -e "/usr/bin/caddy" ]] && echo -e "${Error} Caddy安装失败，请手动部署，Web网页文件位置：${web_file}" && exit 1
-      systemctl enable caddy
-      echo "" >${caddy_file}
-    }
-    Set_server "server"
-    Set_server_http_port
-    cat >>${caddy_file} <<-EOF
-http://${server_s}:${server_http_port_s} {
-  root * ${web_file}
-  encode gzip
-  file_server
-}
-EOF
-    systemctl restart caddy
-  else
-    echo -e "${Info} 跳过 HTTP服务部署，请手动部署，Web网页文件位置：${web_file} ，如果位置改变，请注意修改服务脚本文件 /etc/init.d/status-server 中的 WEB_BIN 变量 !"
-  fi
-}
-
 Install_ServerStatus_server() {
-  [[ -e "${server_file}/sergate" ]] && echo -e "${Error} 检测到 $NAME 服务端已安装 !" && exit 1
+  [[ -x "${server_file}/serverstatus" ]] && echo -e "${Error} 检测到 $NAME 服务端已安装 !" && exit 1
   Set_server_port
+  Set_server_http_port
+  admin_token_s="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
   echo -e "${Info} 开始安装/配置 依赖..."
   Installation_dependency "server"
-  Install_caddy
   echo -e "${Info} 开始下载/安装..."
   Download_Server_Status_server
-Install_jq
+	Install_jq
   echo -e "${Info} 开始下载/安装 服务脚本..."
   Service_Server_Status_server
   echo -e "${Info} 开始写入 配置文件..."
@@ -678,6 +657,8 @@ Install_jq
   Write_server_config_conf
   echo -e "${Info} 所有步骤 安装完毕，开始启动..."
   Start_ServerStatus_server
+  echo -e "${Info} WebUI: http://127.0.0.1:${server_http_port_s}/"
+  echo -e "${Info} ADMIN_TOKEN: ${admin_token_s}"
 }
 
 Install_ServerStatus_client() {
@@ -700,8 +681,9 @@ Install_ServerStatus_client() {
 
 Update_ServerStatus_server() {
   check_installed_server_status
+  systemctl stop status-server 2>/dev/null || true
   Download_Server_Status_server
-  rm -rf /etc/init.d/status-server
+  rm -f "${service}/status-server.service"
   Service_Server_Status_server
   Start_ServerStatus_server
 }
@@ -723,12 +705,12 @@ Update_ServerStatus_client() {
 }
 
 Start_ServerStatus_server() {
-  port="$(grep "m_Port = " ${server_file}/src/main.cpp | awk '{print $3}' | sed '{s/;$//}')"
   check_installed_server_status
+  Read_config_server
   systemctl -q is-active status-server && echo -e "${Error} $NAME 正在运行，请检查 !" && exit 1
   systemctl start status-server
 		if (systemctl -q is-active status-server) then
-			echo -e "${Info} $NAME 服务端启动成功[监听端口：${port}] !"
+				echo -e "${Info} $NAME Go 服务端启动成功[Agent：${server_port}，Web：${server_http_port}] !"
 		else
 			echo -e "${Error} $NAME 服务端启动失败 !"
 		fi
@@ -776,13 +758,6 @@ Uninstall_ServerStatus_server() {
       rm -rf "${plugin_file}"
     else
       rm -rf "${file}"
-    fi
-    if [[ -e "/usr/bin/caddy" ]]; then
-      systemctl stop caddy
-      systemctl disable caddy
-      [[ ${release} == "debian" ]] && apt purge -y caddy
-      [[ ${release} == "centos" ]] && yum -y remove caddy
-      [[ ${release} == "archlinux" ]] && pacman -R caddy --noconfirm
     fi
     systemctl daemon-reload
     systemctl reset-failed
@@ -977,7 +952,7 @@ menu_server() {
  ${Green_font_prefix} 9.${Font_color_suffix} 查看 服务端日志
 ————————————
  ${Green_font_prefix}10.${Font_color_suffix} 切换为 客户端菜单" && echo
-  if [[ -e "${server_file}/sergate" ]]; then
+  if [[ -x "${server_file}/serverstatus" ]]; then
     if (systemctl -q is-active status-server) then
       echo -e " 当前状态: 服务端 ${Green_font_prefix}已安装${Font_color_suffix} 并 ${Green_font_prefix}已启动${Font_color_suffix}"
     else

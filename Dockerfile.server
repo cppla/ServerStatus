@@ -1,42 +1,42 @@
-FROM python:3.12-slim-bookworm AS builder
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /src/server
+
+COPY server/go.mod server/go.sum ./
+RUN go mod download
+
+COPY server/*.go ./
+
+ARG VERSION=2.0.0
+ARG COMMIT=none
+ARG BUILD_TIME=unknown
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.buildTime=${BUILD_TIME}" \
+    -o /out/serverstatus .
+
+FROM alpine:3.22
 
 LABEL maintainer="cppla <https://cpp.la>"
 
-RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Retries=3 update -y \
-    && apt-get install -y --no-install-recommends gcc g++ make libcurl4-openssl-dev ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates tzdata \
+    && mkdir -p /app/config /app/data /app/web
 
-COPY server/ /server/
+COPY --from=builder /out/serverstatus /usr/local/bin/serverstatus
+COPY server/config.json /app/config/config.json
+COPY web /app/web/
 
-WORKDIR /server
-
-RUN make -j && strip /server/sergate
-
-FROM debian:bookworm-slim
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Retries=3 update -y \
-    && apt-get install -y --no-install-recommends nginx-light python3 openssl libcurl4 libstdc++6 tzdata \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /ServerStatus/server/ \
-    && ln -sf /dev/null /var/log/nginx/access.log \
-    && ln -sf /dev/null /var/log/nginx/error.log \
-    && rm -f /etc/nginx/sites-enabled/default
-
-COPY --from=builder /server/sergate /ServerStatus/server/sergate
-COPY server/config.json /ServerStatus/server/config.json
-COPY server/manage_api.py /ServerStatus/server/manage_api.py
-COPY server/entrypoint-server.sh /ServerStatus/server/entrypoint-server.sh
-COPY web /usr/share/nginx/html/
-COPY server/nginx-serverstatus.conf /etc/nginx/conf.d/default.conf
-
-RUN chmod +x /ServerStatus/server/entrypoint-server.sh
-
-ENV TZ=Asia/Shanghai
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Asia/Shanghai \
+    CONFIG_PATH=/app/config/config.json \
+    STATS_PATH=/app/data/stats.json \
+    WEB_DIR=/app/web \
+    HTTP_ADDR=:80 \
+    AGENT_ADDR=:35601
 
 EXPOSE 80 35601
-HEALTHCHECK --interval=10s --timeout=3s --retries=3 CMD python3 -c "import os,urllib.request; pid=int(open('/tmp/serverstatus-sergate.pid').read().strip()); os.kill(pid,0); urllib.request.urlopen('http://127.0.0.1/',timeout=2).read(1)"
-CMD ["/ServerStatus/server/entrypoint-server.sh"]
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1/api/health || exit 1
+
+ENTRYPOINT ["/usr/local/bin/serverstatus"]

@@ -328,8 +328,8 @@ function renderOverview(){
   $('overviewCards').innerHTML = [
     card('在线主机', `${online}/${total}`, '当前在线节点', online === total ? 'ok' : 'warn'),
     card('证书风险', sslWarn, sslWarn ? '过期或域名不匹配' : '证书正常', sslWarn ? 'warn' : 'ok'),
-    card('本月下行', humanMinMBFromB(monthDown), '下载累计', 'traffic-down'),
     card('本月上行', humanMinMBFromB(monthUp), '上传累计', 'traffic-up'),
+    card('本月下行', humanMinMBFromB(monthDown), '下载累计', 'traffic-down'),
     card('活跃告警', alerts.total, `离线 ${alerts.offline} / 异常 ${alerts.abnormal} / 被墙 ${alerts.blocked}`, alerts.total ? (alerts.offline || alerts.blocked ? 'err' : 'warn') : 'ok')
   ].join('');
 }
@@ -812,7 +812,7 @@ const CONFIG_TYPES = {
     label: '节点',
     addLabel: '新增节点',
     empty: '暂无节点配置',
-    hint: '客户端登录使用 username/password，保存后自动重载 sergate。',
+    hint: '客户端登录使用 username/password，保存后 Go 服务会热重载并让客户端自动重连。',
     fields: [
       { name:'username', label:'用户名', required:true, max:120 },
       { name:'name', label:'节点名', required:true, max:120 },
@@ -1041,8 +1041,8 @@ function bindAdmin(){
     catch(err){ setAdminStatus('重载失败：' + err.message, 'err'); }
   });
   $('adminRestart').addEventListener('click', async () => {
-    if(!confirm('重启 sergate 采集服务？客户端会短暂断开后自动重连。')) return;
-    try{ await api('/api/restart', { method:'POST' }); setAdminStatus('服务重启已触发，等待容器入口脚本拉起 sergate。', 'ok'); }
+    if(!confirm('重启采集运行时？客户端会短暂断开后自动重连。')) return;
+    try{ await api('/api/restart', { method:'POST' }); setAdminStatus('采集运行时已在进程内重启，客户端正在自动重连。', 'ok'); }
     catch(err){ setAdminStatus('重启失败：' + err.message, 'err'); }
   });
   $('configForm').addEventListener('submit', async e => {
