@@ -40,7 +40,9 @@ docker run -d --restart=always --name=serverstatus-server \
 - 健康检查：http://127.0.0.1:8080/api/health
 - API 描述：http://127.0.0.1:8080/api/schema
 - OpenAPI 3.1：http://127.0.0.1:8080/api/openapi.json
-- 客户端上报端口：`35601/tcp`,`ADMIN_TOKEN` 不设置时，监控页面仍可读取，管理 API 返回 `503`，WebUI 的“配置”页不能修改数据。
+- 客户端上报端口：`35601/tcp`
+
+`ADMIN_TOKEN` 不设置时，监控页面仍可读取，管理 API 返回 `503`，WebUI 的“配置”页不能修改数据。
 
 ## 二、客户端
 
@@ -319,7 +321,7 @@ docker compose -f docker-compose-server.yml config
 docker compose -f docker-compose-client.yml config
 ```
 
-CI 还会检查 Go 格式、Python 客户端、Shell 脚本、WebUI JavaScript、主服务/客户端/Telegram Compose 文件和两个 Docker 镜像。
+CI 还会检查 Go 格式、Python 客户端、Shell 脚本、WebUI JavaScript、服务端/客户端 Compose 文件和两个 Docker 镜像。
 
 ## 从旧服务端迁移
 

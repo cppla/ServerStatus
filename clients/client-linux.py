@@ -60,6 +60,14 @@ CU = _env_str("CU", CU)
 CT = _env_str("CT", CT)
 CM = _env_str("CM", CM)
 
+def parse_cli_args(arguments):
+    overrides = {}
+    for argument in arguments:
+        key, separator, value = argument.partition('=')
+        if separator and key in {'SERVER', 'PORT', 'USER', 'PASSWORD', 'INTERVAL'}:
+            overrides[key] = value
+    return overrides
+
 def get_uptime():
     with open('/proc/uptime', 'r') as f:
         uptime = f.readline().split('.', 2)
@@ -509,17 +517,12 @@ def byte_str(object):
         print(type(object))
 
 if __name__ == '__main__':
-    for argc in sys.argv:
-        if 'SERVER' in argc:
-            SERVER = argc.split('SERVER=')[-1]
-        elif 'PORT' in argc:
-            PORT = int(argc.split('PORT=')[-1])
-        elif 'USER' in argc:
-            USER = argc.split('USER=')[-1]
-        elif 'PASSWORD' in argc:
-            PASSWORD = argc.split('PASSWORD=')[-1]
-        elif 'INTERVAL' in argc:
-            INTERVAL = int(argc.split('INTERVAL=')[-1])
+    cli_args = parse_cli_args(sys.argv[1:])
+    SERVER = cli_args.get('SERVER', SERVER)
+    PORT = int(cli_args.get('PORT', PORT))
+    USER = cli_args.get('USER', USER)
+    PASSWORD = cli_args.get('PASSWORD', PASSWORD)
+    INTERVAL = int(cli_args.get('INTERVAL', INTERVAL))
     socket.setdefaulttimeout(30)
     get_realtime_data()
     while True:

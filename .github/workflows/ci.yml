@@ -26,6 +26,7 @@ jobs:
       - name: Check clients, WebUI and shell scripts
         run: |
           python3 -m py_compile clients/client-linux.py clients/client-psutil.py
+          python3 -m unittest clients/test_client_args.py
           sh -n clients/entrypoint.sh
           bash -n status.sh
           node --check web/js/app.js
