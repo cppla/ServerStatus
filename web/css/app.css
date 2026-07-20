@@ -1,7 +1,9 @@
 :root{color-scheme:dark;--bg:#0d1117;--bg-alt:#171d27;--surface:#1d2530;--surface-soft:#151b24;--border:#334155;--text:#f1f5f9;--text-dim:#a7b4c8;--accent:#3b82f6;--accent-glow:#7db5ff;--danger:#f05252;--warn:#fbbf24;--ok:#10b981;--radius:10px;--radius-sm:4px;--shadow:0 8px 22px -10px rgba(0,0,0,.75);--font:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Noto Sans SC',sans-serif;--trans:.25s cubic-bezier(.4,0,.2,1);--logo-start:#3b82f6;--logo-end:#2563eb;--logo-accent-grad-start:#8bc1ff;--logo-accent-grad-end:#d4e8ff}
-body.light{color-scheme:light;--bg:#f6f7f9;--bg-alt:#ffffff;--surface:#ffffff;--surface-soft:#f8fafc;--border:#e2e8f0;--text:#1e293b;--text-dim:#64748b;--accent:#2563eb;--accent-glow:#3b82f6;--shadow:0 4px 20px -4px rgba(0,0,0,.08);--logo-start:#2563eb;--logo-end:#1d4ed8;--logo-accent-grad-start:#1d4ed8;--logo-accent-grad-end:#60a5fa}
+html.light,body.light{color-scheme:light;--bg:#f6f7f9;--bg-alt:#ffffff;--surface:#ffffff;--surface-soft:#f8fafc;--border:#e2e8f0;--text:#1e293b;--text-dim:#64748b;--accent:#2563eb;--accent-glow:#3b82f6;--shadow:0 4px 20px -4px rgba(0,0,0,.08);--logo-start:#2563eb;--logo-end:#1d4ed8;--logo-accent-grad-start:#1d4ed8;--logo-accent-grad-end:#60a5fa}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;padding:0;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+html,body{margin:0;padding:0;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+html{min-height:100%}
+body{min-height:100vh}
 html.light{background:var(--bg);color-scheme:light}
 body,button{font-size:14px;line-height:1.35}
 a{color:var(--accent);text-decoration:none}
