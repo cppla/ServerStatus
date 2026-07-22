@@ -55,6 +55,7 @@
             <label class="select-field">
                 <span>排序</span>
                 <select id="sortSelect">
+                    <option value="config">配置顺序</option>
                     <option value="name">节点</option>
                     <option value="status">在线状态</option>
                     <option value="load">负载</option>
@@ -65,7 +66,7 @@
                     <option value="loss">丢包</option>
                 </select>
             </label>
-            <button id="sortDirection" class="icon-text" title="切换排序方向">降序</button>
+            <button id="sortDirection" class="icon-text" title="切换排序方向">升序</button>
         </section>
 
         <section id="panel-servers" class="panel active" aria-labelledby="主机">
@@ -200,6 +201,6 @@
         <a href="https://github.com/cppla/ServerStatus" target="_blank" rel="noopener">ServerStatus中文版</a>
     </footer>
 
-    <script src="js/app.js?v=20260710-1" defer></script>
+    <script src="js/app.js?v=20260722-1" defer></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ const S = {
   layoutCompact: null,
   osOptionsSignature: '',
   suppressStatsReloadUntil: 0,
-  filters: { query: '', status: 'all', os: 'all', sort: 'name', dir: 'desc' },
+  filters: { query: '', status: 'all', os: 'all', sort: 'config', dir: 'asc' },
   admin: {
     token: localStorage.getItem('serverstatusAdminToken') || '',
     enabled: false,
@@ -197,6 +197,7 @@ async function fetchData(){
       const base = [server.name || '-', server.location || '-', server.type || '-'].join('|');
       const key = `${base}#${index + 1}`;
       server._key = key;
+      server._order = index;
       if(!S.hist[key]) S.hist[key] = { cu: [], ct: [], cm: [] };
       if(!S.loadHist[key]) S.loadHist[key] = { l1: [], l5: [], l15: [] };
       pushHistory(S.hist[key].cu, server.time_10010);
@@ -239,6 +240,7 @@ function visibleServers(){
     const dir = S.filters.dir === 'asc' ? 1 : -1;
     const ma = metrics(a), mb = metrics(b);
     const value = (server, m) => ({
+      config: num(server._order),
       name: String(server.name || ''),
       type: String(server.type || ''),
       location: String(server.location || ''),
@@ -742,7 +744,12 @@ function bindFilters(){
   });
   $('osFilter').addEventListener('change', e => { S.filters.os = e.target.value; renderServersViewNow(); });
   $('osFilter').addEventListener('blur', renderOsOptions);
-  $('sortSelect').addEventListener('change', e => { S.filters.sort = e.target.value; renderServersViewNow(); });
+  $('sortSelect').addEventListener('change', e => {
+    S.filters.sort = e.target.value;
+    if(S.filters.sort === 'config') S.filters.dir = 'asc';
+    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    renderServersViewNow();
+  });
   $('sortDirection').addEventListener('click', () => {
     S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
     $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
