@@ -1,3 +1,16 @@
+const SORT_PREFERENCE_KEY = 'serverstatusSortPreference';
+const SORT_FIELDS = new Set(['config','name','status','load','cpu','memory','hdd','traffic','loss']);
+
+function loadSortPreference(){
+  const fallback = { sort: 'config', dir: 'asc' };
+  try{
+    const saved = JSON.parse(localStorage.getItem(SORT_PREFERENCE_KEY) || 'null');
+    if(saved && SORT_FIELDS.has(saved.sort) && (saved.dir === 'asc' || saved.dir === 'desc')) return saved;
+  }catch(_err){}
+  return fallback;
+}
+
+const initialSortPreference = loadSortPreference();
 const S = {
   updated: 0,
   servers: [],
@@ -9,7 +22,7 @@ const S = {
   layoutCompact: null,
   osOptionsSignature: '',
   suppressStatsReloadUntil: 0,
-  filters: { query: '', status: 'all', os: 'all', sort: 'config', dir: 'asc' },
+  filters: { query: '', status: 'all', os: 'all', ...initialSortPreference },
   admin: {
     token: localStorage.getItem('serverstatusAdminToken') || '',
     enabled: false,
@@ -734,7 +747,17 @@ function bindTheme(){
     if(S.openDetailKey) refreshDetail();
   });
 }
+function syncSortControls(){
+  $('sortSelect').value = S.filters.sort;
+  $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+}
+function saveSortPreference(){
+  try{
+    localStorage.setItem(SORT_PREFERENCE_KEY, JSON.stringify({ sort: S.filters.sort, dir: S.filters.dir }));
+  }catch(_err){}
+}
 function bindFilters(){
+  syncSortControls();
   $('serverSearch').addEventListener('input', e => { S.filters.query = e.target.value; scheduleServersRender(); });
   $('statusFilter').addEventListener('click', e => {
     if(e.target.tagName !== 'BUTTON') return;
@@ -747,19 +770,21 @@ function bindFilters(){
   $('sortSelect').addEventListener('change', e => {
     S.filters.sort = e.target.value;
     if(S.filters.sort === 'config') S.filters.dir = 'asc';
-    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    syncSortControls();
+    saveSortPreference();
     renderServersViewNow();
   });
   $('sortDirection').addEventListener('click', () => {
     S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
-    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    syncSortControls();
+    saveSortPreference();
     renderServersViewNow();
   });
   document.querySelectorAll('#serversTable th[data-sort]').forEach(th => th.addEventListener('click', () => {
     if(S.filters.sort === th.dataset.sort) S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
     else S.filters.sort = th.dataset.sort;
-    $('sortSelect').value = S.filters.sort;
-    $('sortDirection').textContent = S.filters.dir === 'desc' ? '降序' : '升序';
+    syncSortControls();
+    saveSortPreference();
     renderServersViewNow();
   }));
 }
