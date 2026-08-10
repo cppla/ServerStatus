@@ -16,7 +16,7 @@ ServerStatus 是一个轻量的服务器探针和云监控面板，支持多节�
 
 ```bash
 # Docker Compose，本地构建加：--build
-ADMIN_TOKEN='your-strong-token' docker compose -f docker-compose-server.yml up -d --build
+ADMIN_TOKEN='your-strong-token' docker compose -f docker-compose-server.yml up -d    
 ```
 
 ```bash
