@@ -55,20 +55,21 @@ type App struct {
 	document   ConfigDocument
 	runtime    RuntimeConfig
 
-	nodeMu       sync.RWMutex
-	nodes        map[string]*NodeState
-	connectionID atomic.Uint64
-	generation   atomic.Uint64
-	agentRunning atomic.Bool
-	reloadWrites atomic.Int32
+	nodeMu        sync.RWMutex
+	nodes         map[string]*NodeState
+	connectionID  atomic.Uint64
+	generation    atomic.Uint64
+	agentRunning  atomic.Bool
+	reloadPending atomic.Bool
 
 	certMu sync.RWMutex
 	certs  map[string]*CertState
 
-	statsWake chan struct{}
 	persistMu sync.Mutex
 	logger    *log.Logger
 }
+
+const statsFlushInterval = time.Minute
 
 func NewApp(opts Options) (*App, error) {
 	doc, runtime, err := readConfig(opts.ConfigPath)
@@ -83,7 +84,6 @@ func NewApp(opts Options) (*App, error) {
 		cancel:    cancel,
 		nodes:     make(map[string]*NodeState),
 		certs:     make(map[string]*CertState),
-		statsWake: make(chan struct{}, 1),
 		logger:    log.New(os.Stdout, "serverstatus ", log.LstdFlags|log.Lmicroseconds),
 	}
 	app.applyValidatedConfig(doc, runtime, false)
@@ -94,7 +94,6 @@ func NewApp(opts Options) (*App, error) {
 func (a *App) StartBackground() {
 	go a.statsLoop()
 	go a.sslLoop()
-	a.wakeStatsWriter()
 }
 
 func (a *App) Close() {
@@ -216,8 +215,12 @@ func (a *App) applyValidatedConfig(doc ConfigDocument, runtime RuntimeConfig, di
 			_ = conn.Close()
 		}
 	}
-	a.reloadWrites.Store(2)
-	a.wakeStatsWriter()
+	if disconnect {
+		a.reloadPending.Store(true)
+		if err := a.PersistStats(); err != nil {
+			a.logger.Printf("write stats after config change: %v", err)
+		}
+	}
 }
 
 func sameServerIdentity(left, right ServerConfig) bool {
@@ -246,14 +249,13 @@ func (a *App) disconnectAll(reason string) {
 }
 
 func (a *App) statsLoop() {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(statsFlushInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-a.ctx.Done():
 			return
 		case <-ticker.C:
-		case <-a.statsWake:
 		}
 		if err := a.PersistStats(); err != nil {
 			a.logger.Printf("write stats: %v", err)
@@ -261,18 +263,15 @@ func (a *App) statsLoop() {
 	}
 }
 
-func (a *App) wakeStatsWriter() {
-	select {
-	case a.statsWake <- struct{}{}:
-	default:
-	}
-}
-
 func (a *App) SnapshotStats() map[string]any {
-	return a.snapshotStats(false)
+	result := a.snapshotStats()
+	if a.reloadPending.Swap(false) {
+		result["reload"] = true
+	}
+	return result
 }
 
-func (a *App) snapshotStats(consumeReload bool) map[string]any {
+func (a *App) snapshotStats() map[string]any {
 	runtime := a.RuntimeSnapshot()
 	now := time.Now()
 	servers := make([]any, 0, len(runtime.Servers))
@@ -325,19 +324,13 @@ func (a *App) snapshotStats(consumeReload bool) map[string]any {
 		"sslcerts": a.sslSnapshot(runtime.SSLCerts, now),
 		"updated":  strconv.FormatInt(now.Unix(), 10),
 	}
-	if a.reloadWrites.Load() > 0 {
-		result["reload"] = true
-		if consumeReload {
-			a.reloadWrites.Add(-1)
-		}
-	}
 	return result
 }
 
 func (a *App) PersistStats() error {
 	a.persistMu.Lock()
 	defer a.persistMu.Unlock()
-	return writeStatsFile(a.opts.StatsPath, a.snapshotStats(true))
+	return writeStatsFile(a.opts.StatsPath, a.snapshotStats())
 }
 
 func monthResetWindow(now time.Time, monthStart int) bool {
@@ -452,7 +445,9 @@ func (a *App) ResetTraffic(username string) (map[string]any, *APIError) {
 	node.LastNetworkIn, node.LastNetworkOut = networkIn, networkOut
 	server := node.Config
 	a.nodeMu.Unlock()
-	a.wakeStatsWriter()
+	if err := a.PersistStats(); err != nil {
+		a.logger.Printf("write stats after traffic reset for %q: %v", username, err)
+	}
 	return map[string]any{
 		"server": server,
 		"stats": map[string]any{

@@ -98,7 +98,6 @@ func (a *App) executeSSLCheck(key string, config SSLCertConfig) {
 	if err != nil {
 		state.LastError = err.Error()
 		a.certMu.Unlock()
-		a.wakeStatsWriter()
 		return
 	}
 	state.ExpireTS = expireTS
@@ -126,7 +125,6 @@ func (a *App) executeSSLCheck(key string, config SSLCertConfig) {
 		}
 	}
 	a.certMu.Unlock()
-	a.wakeStatsWriter()
 
 	for _, alert := range alerts {
 		if err := a.sendCallback(config.Callback, alert.message, "ServerStatusSSL"); err != nil {

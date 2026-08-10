@@ -176,7 +176,6 @@ func (a *App) connectAgent(username, password string, conn net.Conn, family int)
 	node.Pong = false
 	node.Online4 = family == 4
 	node.Online6 = family == 6
-	a.wakeStatsWriter()
 	return id, append([]MonitorConfig(nil), a.runtime.Monitors...), nil
 }
 
@@ -194,7 +193,6 @@ func (a *App) disconnectAgent(username string, conn net.Conn, connectionID uint6
 	node.HasUpdate = false
 	node.Pong = false
 	a.nodeMu.Unlock()
-	a.wakeStatsWriter()
 	time.AfterFunc(25*time.Second, func() {
 		if a.ctx.Err() != nil {
 			return
@@ -226,7 +224,6 @@ func (a *App) updateAgent(username string, connectionID uint64, update AgentStat
 	node.HasUpdate = true
 	node.LastUpdate = time.Now()
 	a.nodeMu.Unlock()
-	a.wakeStatsWriter()
 	a.evaluateWatchdogs(username, false)
 	return true
 }
