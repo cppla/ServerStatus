@@ -30,6 +30,8 @@ const S = {
     config: null,
     selectedType: 'servers',
     selectedIndex: -1,
+    queries: { servers:'', monitors:'', sslcerts:'', watchdog:'' },
+    queryHeights: { servers:0, monitors:0, sslcerts:0, watchdog:0 },
     saving: false
   }
 };
@@ -182,18 +184,15 @@ function metrics(s){
   const traffic = monthIn + monthOut;
   const losses = lossValues(s);
   const loss = Math.max(...losses);
-  const lossBadCount = losses.filter(p => p >= 40).length;
-  const lossWarnCount = losses.filter(p => p >= 30).length;
   const blocked = online && losses.every(p => p >= 100);
   const resourceCritical = online && (num(s.cpu) >= 90 || memPct >= 90 || hddPct >= 90);
   const resourceWarning = online && (num(s.cpu) >= 75 || memPct >= 80 || hddPct >= 85);
-  const trafficWarning = online && traffic >= 1000 * 1000 * 1000 * 1000;
   const lossCritical = online && loss >= 40;
   const lossWarning = online && !lossCritical && loss >= 30;
   const critical = online && (resourceCritical || blocked || lossCritical);
   const warning = online && (resourceWarning || lossWarning);
   const rowLevel = !online || critical ? 'critical' : (resourceWarning || lossWarning ? 'warning' : '');
-  return { online, memPct, hddPct, monthIn, monthOut, traffic, loss, lossBadCount, lossWarnCount, blocked, resourceCritical, resourceWarning, trafficWarning, lossCritical, lossWarning, critical, warning, alert: critical || warning, highlight: !!rowLevel, rowLevel };
+  return { online, memPct, hddPct, monthIn, monthOut, traffic, loss, blocked, alert: critical || warning, rowLevel };
 }
 
 async function fetchData(){
@@ -583,7 +582,6 @@ function renderMonitors(){
 }
 function renderMonitorsCards(){
   const wrap = $('monitorsCards');
-  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = S.servers.map(s => `<div class="card"><div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div><div class="kvlist"><div><span class="key">监测内容</span><span class="mon-items">${monitorItems(s)}</span></div></div></div>`).join('') || '<div class="empty-state">无数据</div>';
 }
 function renderSSL(){
@@ -597,7 +595,6 @@ function renderSSL(){
 }
 function renderSSLCards(){
   const wrap = $('sslCards');
-  if(window.innerWidth > 700){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = S.ssl.map(c => {
     const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
     const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
@@ -844,7 +841,9 @@ const CONFIG_TYPES = {
     label: '节点',
     addLabel: '新增节点',
     empty: '暂无节点配置',
-    hint: '客户端登录使用 username/password，保存后 Go 服务会热重载并让客户端自动重连。',
+    searchPlaceholder: '节点名 / 用户名 / 位置 / 主机名',
+    searchFields: ['name','username','location','type','host'],
+    hint: '客户端登录使用 username/password，保存后服务会热重载并让客户端自动重连。',
     fields: [
       { name:'username', label:'用户名', required:true, max:120 },
       { name:'name', label:'节点名', required:true, max:120 },
@@ -863,6 +862,8 @@ const CONFIG_TYPES = {
     label: '监测',
     addLabel: '新增监测',
     empty: '暂无服务监测',
+    searchPlaceholder: '名称 / 地址 / 类型',
+    searchFields: ['name','host','type'],
     hint: '服务监测会写入 config.json 的 monitors 数组。',
     fields: [
       { name:'name', label:'名称', required:true, max:120 },
@@ -878,6 +879,8 @@ const CONFIG_TYPES = {
     label: '证书',
     addLabel: '新增证书',
     empty: '暂无证书配置',
+    searchPlaceholder: '名称 / 域名',
+    searchFields: ['name','domain'],
     hint: '证书配置会写入 config.json 的 sslcerts 数组。',
     fields: [
       { name:'name', label:'名称', required:true, max:120 },
@@ -894,6 +897,8 @@ const CONFIG_TYPES = {
     label: '告警',
     addLabel: '新增告警',
     empty: '暂无告警规则',
+    searchPlaceholder: '名称 / 规则',
+    searchFields: ['name','rule'],
     hint: '告警规则会写入 config.json 的 watchdog 数组。',
     fields: [
       { name:'name', label:'名称', required:true, max:160 },
@@ -923,18 +928,48 @@ function configItems(){
   if(!Array.isArray(S.admin.config[key])) S.admin.config[key] = [];
   return S.admin.config[key];
 }
+function activeConfigQuery(){
+  return S.admin.queries[S.admin.selectedType] || '';
+}
+function filteredConfigItems(items, def){
+  const terms = activeConfigQuery().trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return items.map((item, index) => ({ item, index })).filter(({ item }) => {
+    if(!terms.length) return true;
+    const haystack = def.searchFields.map(field => String(item?.[field] ?? '')).join('\n').toLocaleLowerCase();
+    return terms.every(term => haystack.includes(term));
+  });
+}
 function renderConfigList(){
   const list = $('configItemList');
   const def = activeConfigDef();
   const items = configItems();
+  const visibleItems = filteredConfigItems(items, def);
+  const query = activeConfigQuery();
+  const lockedHeight = query.trim() ? S.admin.queryHeights[S.admin.selectedType] : 0;
   if(S.admin.selectedIndex >= items.length) S.admin.selectedIndex = -1;
   $('addConfigItemBtn').textContent = def.addLabel;
+  const search = $('configSearch');
+  search.disabled = !S.admin.connected;
+  search.placeholder = def.searchPlaceholder;
+  if(search.value !== query) search.value = query;
+  $('configSearchCount').textContent = query.trim() ? `匹配 ${visibleItems.length} / 共 ${items.length} 项` : `共 ${items.length} 项`;
+  list.style.height = lockedHeight > 0 ? `${lockedHeight}px` : '';
   document.querySelectorAll('#configTypeTabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.type === S.admin.selectedType));
-  list.innerHTML = items.map((item, index) => {
+  list.innerHTML = visibleItems.map(({ item, index }) => {
     const badge = def.badge(item, index);
     return `<div class="config-row${S.admin.selectedIndex === index ? ' active' : ''}" data-index="${index}"><div><div class="name">${esc(def.title(item, index))}</div><div class="meta">${esc(def.meta(item, index))}</div></div><span class="badge ${badge.cls}">${esc(badge.text)}</span></div>`;
-  }).join('') || `<div class="empty-state">${def.empty}</div>`;
+  }).join('') || `<div class="empty-state">${query.trim() ? `未找到匹配的${def.label}配置` : def.empty}</div>`;
   list.querySelectorAll('.config-row').forEach(row => row.addEventListener('click', () => selectConfigItem(Number(row.dataset.index))));
+}
+function scrollConfigEditorIntoView(){
+  if(!window.matchMedia('(max-width: 980px)').matches) return;
+  const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  requestAnimationFrame(() => {
+    const editor = $('configEditorCard');
+    const topbarHeight = document.querySelector('.topbar')?.getBoundingClientRect().height || 0;
+    const top = window.scrollY + editor.getBoundingClientRect().top - topbarHeight - 10;
+    window.scrollTo({ top:Math.max(0, top), behavior });
+  });
 }
 function selectConfigItem(index){
   const item = configItems()[index];
@@ -942,6 +977,7 @@ function selectConfigItem(index){
   S.admin.selectedIndex = index;
   renderConfigList();
   renderConfigEditor(item);
+  scrollConfigEditorIntoView();
 }
 function renderConfigEditor(item){
   const def = activeConfigDef();
@@ -1065,17 +1101,26 @@ function bindAdmin(){
     renderConfigList();
     renderConfigEditor();
   });
-  $('addConfigItemBtn').addEventListener('click', clearConfigForm);
+  $('configSearch').addEventListener('input', e => {
+    const key = S.admin.selectedType;
+    const list = $('configItemList');
+    const wasSearching = !!S.admin.queries[key].trim();
+    const isSearching = !!e.target.value.trim();
+    if(!wasSearching && isSearching) S.admin.queryHeights[key] = list.getBoundingClientRect().height;
+    if(wasSearching && !isSearching) S.admin.queryHeights[key] = 0;
+    S.admin.queries[key] = e.target.value;
+    list.scrollTop = 0;
+    renderConfigList();
+  });
+  $('addConfigItemBtn').addEventListener('click', () => {
+    clearConfigForm();
+    scrollConfigEditorIntoView();
+  });
   $('resetConfigFormBtn').addEventListener('click', clearConfigForm);
   $('resetTrafficBtn').addEventListener('click', () => resetServerTraffic(S.admin.selectedIndex));
   $('adminReload').addEventListener('click', async () => {
     try{ await api('/api/reload', { method:'POST' }); setAdminStatus('配置重载已触发。', 'ok'); }
     catch(err){ setAdminStatus('重载失败：' + err.message, 'err'); }
-  });
-  $('adminRestart').addEventListener('click', async () => {
-    if(!confirm('重启采集运行时？客户端会短暂断开后自动重连。')) return;
-    try{ await api('/api/restart', { method:'POST' }); setAdminStatus('采集运行时已在进程内重启，客户端正在自动重连。', 'ok'); }
-    catch(err){ setAdminStatus('重启失败：' + err.message, 'err'); }
   });
   $('configForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -1085,6 +1130,7 @@ function bindAdmin(){
     const index = S.admin.selectedIndex;
     try{
       await saveConfigItem(key, index, item);
+      if(index < 0) S.admin.queries[key] = '';
       S.admin.selectedIndex = index >= 0 ? index : configItems().length - 1;
       renderConfigList();
       renderConfigEditor(configItems()[S.admin.selectedIndex]);

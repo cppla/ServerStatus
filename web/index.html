@@ -6,7 +6,7 @@
     <meta name="description" content="云监控,ServerStatus中文版,ServerStatus,ServerStatus cppla" />
     <title>云监控</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="stylesheet" href="css/app.css?v=20260720-1" />
+    <link rel="stylesheet" href="css/app.css?v=20260812-2" />
 </head>
 <body>
     <header class="topbar">
@@ -144,7 +144,6 @@
                         </div>
                         <div class="section-actions">
                             <button id="adminReload" class="icon-text">重载配置</button>
-                            <button id="adminRestart" class="danger-btn">重启服务</button>
                         </div>
                     </div>
                     <div id="adminStatus" class="admin-status">正在检测管理 API...</div>
@@ -165,13 +164,20 @@
                         <button id="addConfigItemBtn" class="primary-btn">新增节点</button>
                         <button id="refreshConfigBtn" class="icon-text">刷新配置</button>
                     </div>
+                    <div class="config-list-tools">
+                        <label class="search-field config-search-field">
+                            <span>搜索</span>
+                            <input id="configSearch" type="search" autocomplete="off" aria-controls="configItemList" placeholder="节点名 / 用户名 / 位置 / 主机名" disabled />
+                        </label>
+                        <span id="configSearchCount" class="config-search-count" aria-live="polite"></span>
+                    </div>
                     <div id="configItemList" class="config-list"></div>
                 </section>
-                <section class="admin-card">
+                <section id="configEditorCard" class="admin-card config-editor-card">
                     <div class="section-head">
                         <div>
                             <h2 id="configEditorTitle">新增节点</h2>
-                            <p class="muted" id="configEditorHint">保存后会写入 config.json，并由 Go 服务热重载。</p>
+                            <p class="muted" id="configEditorHint">保存后会写入 config.json，并由服务热重载。</p>
                         </div>
                     </div>
                     <form id="configForm" class="config-form">
@@ -201,6 +207,6 @@
         <a href="https://github.com/cppla/ServerStatus" target="_blank" rel="noopener">ServerStatus中文版</a>
     </footer>
 
-    <script src="js/app.js?v=20260723-1" defer></script>
+    <script src="js/app.js?v=20260812-4" defer></script>
 </body>
 </html>
