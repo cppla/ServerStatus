@@ -146,20 +146,62 @@ def get_cpu_model():
         return vendor
     return get_platform_cpu_arch()
 
+def is_virtual_nic(name):
+    """排除虚拟网卡和回环接口（含 Windows 虚拟适配器）"""
+    if 'lo' in name or 'tun' in name \
+            or 'docker' in name or 'veth' in name \
+            or 'br-' in name or 'vmbr' in name \
+            or 'vnet' in name or 'kube' in name \
+            or 'Loopback' in name:
+        return True
+    # VirtualBox 虚拟适配器 MAC 前缀: 0A:00:27 / 08:00:27
+    try:
+        for addr in psutil.net_if_addrs().get(name, []):
+            if addr.family.name == 'AF_LINK' and addr.address:
+                mac = addr.address.replace('-', ':').upper()
+                if mac.startswith(('08:00:27', '0A:00:27')):
+                    return True
+    except:
+        pass
+    return False
+
+_net_in = 0
+_net_out = 0
+_net_lock = threading.Lock()
+
+def _net_monitor():
+    """独立线程：唯一调用 psutil.net_io_counters 的地方，读累计值存全局并算网速"""
+    global _net_in, _net_out
+    prev_in = 0
+    prev_out = 0
+    prev_clock = 0
+    while True:
+        total_in = 0
+        total_out = 0
+        net = psutil.net_io_counters(pernic=True)
+        for k, v in net.items():
+            if is_virtual_nic(k):
+                continue
+            total_in += v[1]
+            total_out += v[0]
+        with _net_lock:
+            _net_in = total_in
+            _net_out = total_out
+        now_clock = time.time()
+        if prev_clock > 0:
+            diff = now_clock - prev_clock
+            if diff > 0:
+                netSpeed["netrx"] = int((total_in - prev_in) / diff)
+                netSpeed["nettx"] = int((total_out - prev_out) / diff)
+        prev_in = total_in
+        prev_out = total_out
+        prev_clock = now_clock
+        time.sleep(INTERVAL)
+
 def liuliang():
-    NET_IN = 0
-    NET_OUT = 0
-    net = psutil.net_io_counters(pernic=True)
-    for k, v in net.items():
-        if 'lo' in k or 'tun' in k \
-                or 'docker' in k or 'veth' in k \
-                or 'br-' in k or 'vmbr' in k \
-                or 'vnet' in k or 'kube' in k:
-            continue
-        else:
-            NET_IN += v[1]
-            NET_OUT += v[0]
-    return NET_IN, NET_OUT
+    """主循环读取：只读独立线程存下的全局值，不调 psutil"""
+    with _net_lock:
+        return _net_in, _net_out
 
 def tupd():
     '''
@@ -268,27 +310,6 @@ def _ping_thread(host, mark, port):
 
         time.sleep(INTERVAL)
 
-def _net_speed():
-    while True:
-        avgrx = 0
-        avgtx = 0
-        for name, stats in psutil.net_io_counters(pernic=True).items():
-            if "lo" in name or "tun" in name \
-                    or "docker" in name or "veth" in name \
-                    or "br-" in name or "vmbr" in name \
-                    or "vnet" in name or "kube" in name:
-                continue
-            avgrx += stats.bytes_recv
-            avgtx += stats.bytes_sent
-        now_clock = time.time()
-        netSpeed["diff"] = now_clock - netSpeed["clock"]
-        netSpeed["clock"] = now_clock
-        netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
-        netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
-        netSpeed["avgrx"] = avgrx
-        netSpeed["avgtx"] = avgtx
-        time.sleep(INTERVAL)
-
 def _disk_io():
     """
     the code is by: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
@@ -375,7 +396,7 @@ def get_realtime_data():
         }
     )
     t4 = threading.Thread(
-        target=_net_speed,
+        target=_net_monitor,
     )
     t5 = threading.Thread(
         target=_disk_io,
