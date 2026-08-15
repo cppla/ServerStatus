@@ -294,7 +294,7 @@ body.light .cards .card-spec-chip{background:color-mix(in srgb,var(--accent) 8%,
 .danger-btn:hover{background:var(--danger);color:#fff}
 th[data-sort]{cursor:pointer;user-select:none}
 th[data-sort]:after{content:"";display:inline-block;margin-left:6px;border:4px solid transparent;border-top-color:color-mix(in srgb,var(--text-dim) 70%,transparent);transform:translateY(2px);opacity:.45}
-th[data-sort].sorted-asc:after{border-top-color:transparent;border-bottom-color:var(--accent);transform:translateY(-2px)}
+th[data-sort].sorted-asc:after{border-top-color:transparent;border-bottom-color:var(--accent);transform:translateY(-2px);opacity:1}
 th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 .section-head h2{margin:0;font-size:18px}
 .section-head p{margin:.25rem 0 0}

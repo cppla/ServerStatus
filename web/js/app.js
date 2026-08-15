@@ -512,6 +512,7 @@ function renderServers(){
   document.querySelectorAll('#serversTable th[data-sort]').forEach(th => {
     th.classList.toggle('sorted-asc', th.dataset.sort === S.filters.sort && S.filters.dir === 'asc');
     th.classList.toggle('sorted-desc', th.dataset.sort === S.filters.sort && S.filters.dir === 'desc');
+    th.title = '点击排序：升序 → 降序 → 恢复配置顺序';
   });
   if(!rows.length){
     if(tbody.dataset.empty !== 'servers'){
@@ -778,8 +779,13 @@ function bindFilters(){
     renderServersViewNow();
   });
   document.querySelectorAll('#serversTable th[data-sort]').forEach(th => th.addEventListener('click', () => {
-    if(S.filters.sort === th.dataset.sort) S.filters.dir = S.filters.dir === 'desc' ? 'asc' : 'desc';
-    else S.filters.sort = th.dataset.sort;
+    if(S.filters.sort !== th.dataset.sort) {
+      S.filters.sort = th.dataset.sort; S.filters.dir = 'asc';
+    } else if(S.filters.dir === 'asc') {
+      S.filters.dir = 'desc';
+    } else {
+      S.filters.sort = 'config'; S.filters.dir = 'asc';
+    }
     syncSortControls();
     saveSortPreference();
     renderServersViewNow();
