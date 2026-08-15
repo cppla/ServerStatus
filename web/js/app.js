@@ -967,9 +967,9 @@ function clientInstallCommand(user, pass){
     ].join('\n');
   }
   return [
-    `wget -qO client-linux.py --header='Accept: application/vnd.github.raw' \\`,
-    `  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/client-linux.py?ref=master'`,
-    `nohup python3 client-linux.py SERVER=${server} PORT=${port} USER=${userS} PASSWORD=${passS} >/dev/null 2>&1 &`
+    `wget -qO install.sh --header='Accept: application/vnd.github.raw' \\`,
+    `  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/install.sh?ref=master'`,
+    `bash install.sh SERVER=${server} PORT=${port} USER=${userS} PASSWORD=${passS}`
   ].join('\n');
 }
 function activeConfigDef(){

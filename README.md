@@ -63,11 +63,13 @@ docker run -d --restart=always --name=serverstatus-client \
 ```
 
 ```bash
-# Shell Run
-wget -qO client-linux.py --header='Accept: application/vnd.github.raw' \
-  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/client-linux.py?ref=master'
-nohup python3 client-linux.py SERVER=127.0.0.1 USER=s01 PASSWORD=USER_DEFAULT_PASSWORD >/dev/null 2>&1 &
+# Shell（下载安装脚本，自动配置为 systemd 服务）
+wget -qO install.sh --header='Accept: application/vnd.github.raw' \
+  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/install.sh?ref=master'
+bash install.sh SERVER=127.0.0.1 USER=s01 PASSWORD=USER_DEFAULT_PASSWORD
 ```
+
+安装脚本会下载 `service/status-client.service` 与 `clients/client-linux.py`，写入客户端配置并注册为 systemd 服务 `status-client`（需 root 或 sudo）。
 
 `USER` 是常见的宿主机环境变量名。如果没有显式传递或传递方式错误，Compose 可能会把系统中的 `$USER` 解析成本机用户名，而不是默认的 `s01`。推荐优先级：
 
