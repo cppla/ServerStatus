@@ -28,6 +28,9 @@ const S = {
     enabled: false,
     connected: false,
     config: null,
+    agentAddr: '',
+    clientServer: '',
+    clientCmdMethod: 'shell',
     selectedType: 'servers',
     selectedIndex: -1,
     queries: { servers:'', monitors:'', sslcerts:'', watchdog:'' },
@@ -814,6 +817,7 @@ async function ensureAdminChecked(){
   try{
     const health = await api('/api/health', { auth:false });
     S.admin.enabled = !!health.enabled;
+    S.admin.agentAddr = health.agent?.address || '';
     setAdminStatus(health.enabled ? '管理 API 已启用，输入 token 后可编辑配置。' : '管理 API 未启用：请在容器环境变量设置 ADMIN_TOKEN。', health.enabled ? '' : 'err');
     if(S.admin.enabled && S.admin.token) await loadConfig();
   }catch(err){
@@ -919,6 +923,55 @@ function normalizeAdminConfig(config){
   });
   return normalized;
 }
+function agentPort(){
+  const addr = S.admin.agentAddr || '';
+  const idx = addr.lastIndexOf(':');
+  const port = idx >= 0 ? addr.slice(idx + 1) : addr;
+  return /^\d+$/.test(port) ? port : '35601';
+}
+function defaultClientServer(){
+  return window.location.hostname || '127.0.0.1';
+}
+function currentClientServer(){
+  if(!S.admin.clientServer) S.admin.clientServer = defaultClientServer();
+  return S.admin.clientServer;
+}
+function shellSafe(v){
+  const s = String(v ?? '');
+  if(!s) return "''";
+  return /^[A-Za-z0-9_@:./-]+$/.test(s) ? s : "'" + s.replace(/'/g, "'\\''") + "'";
+}
+function clientInstallCommand(user, pass){
+  const server = shellSafe(currentClientServer());
+  const port = shellSafe(agentPort());
+  const userS = shellSafe(user);
+  const passS = shellSafe(pass);
+  const method = S.admin.clientCmdMethod || 'shell';
+  if(method === 'compose'){
+    return [
+      `wget -qO docker-compose-client.yml --header='Accept: application/vnd.github.raw' \\`,
+      `  'https://api.github.com/repos/cppla/ServerStatus/contents/docker-compose-client.yml?ref=master'`,
+      `SERVER=${server} PORT=${port} USER=${userS} PASSWORD=${passS} \\`,
+      `  docker compose -f docker-compose-client.yml up -d --force-recreate`,
+    ].join('\n');
+  }
+  if(method === 'run'){
+    return [
+      `docker run -d --restart=always --name=serverstatus-client \\`,
+      `  --network=host --pid=host \\`,
+      `  -e SERVER=${server} \\`,
+      `  -e PORT=${port} \\`,
+      `  -e USER=${userS} \\`,
+      `  -e PASSWORD=${passS} \\`,
+      `  cppla/serverstatus:client`,
+    ].join('\n');
+  }
+  return [
+    `wget -qO client-linux.py --header='Accept: application/vnd.github.raw' \\`,
+    `  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/client-linux.py?ref=master'`,
+    `nohup python3 client-linux.py SERVER=${server} PORT=${port} USER=${userS} PASSWORD=${passS} >/dev/null 2>&1 &`
+  ].join('\n');
+}
 function activeConfigDef(){
   return CONFIG_TYPES[S.admin.selectedType] || CONFIG_TYPES.servers;
 }
@@ -991,6 +1044,37 @@ function renderConfigEditor(item){
   resetTrafficBtn.style.display = canResetTraffic ? '' : 'none';
   resetTrafficBtn.disabled = !canResetTraffic || S.admin.saving;
   $('deleteConfigItemBtn').disabled = !editing;
+  renderClientCmd();
+}
+function renderClientCmd(){
+  const box = $('clientCmd');
+  if(!box) return;
+  if(S.admin.selectedType !== 'servers'){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  box.innerHTML = [
+    '<div class="client-cmd-head">',
+    '<strong>客户端安装命令</strong>',
+    '<button type="button" class="icon-text" id="copyClientCmdBtn" title="复制到剪贴板">复制</button>',
+    '</div>',
+    '<div class="segmented client-cmd-methods" id="clientCmdMethods" role="group" aria-label="安装方式">',
+    '<button type="button" data-method="shell" class="active">Shell</button>',
+    '<button type="button" data-method="compose">Docker Compose</button>',
+    '<button type="button" data-method="run">Docker Run</button>',
+    '</div>',
+    '<label class="client-cmd-addr"><span>服务端地址（客户端 SERVER）</span><input id="clientCmdServer" type="text" spellcheck="false" placeholder="服务器 IP 或域名" /></label>',
+    '<pre class="client-cmd-text" id="clientCmdText"></pre>'
+  ].join('');
+  $('clientCmdServer').value = currentClientServer();
+  document.querySelectorAll('#clientCmdMethods [data-method]').forEach(btn => btn.classList.toggle('active', btn.dataset.method === (S.admin.clientCmdMethod || 'shell')));
+  refreshClientCmd();
+}
+function refreshClientCmd(){
+  const textEl = $('clientCmdText');
+  if(!textEl) return;
+  const form = $('configForm').elements;
+  const user = form.username ? form.username.value.trim() : '';
+  const pass = form.password ? form.password.value : '';
+  textEl.textContent = clientInstallCommand(user, pass);
 }
 function fieldHTML(field, item){
   const value = item[field.name] ?? field.default ?? '';
@@ -1118,6 +1202,39 @@ function bindAdmin(){
   });
   $('resetConfigFormBtn').addEventListener('click', clearConfigForm);
   $('resetTrafficBtn').addEventListener('click', () => resetServerTraffic(S.admin.selectedIndex));
+  $('clientCmd').addEventListener('input', e => {
+    if(e.target.id === 'clientCmdServer'){
+      S.admin.clientServer = e.target.value.trim();
+      refreshClientCmd();
+    }
+  });
+  $('clientCmd').addEventListener('click', async e => {
+    const methodBtn = e.target.closest('#clientCmdMethods [data-method]');
+    if(methodBtn){
+      S.admin.clientCmdMethod = methodBtn.dataset.method;
+      document.querySelectorAll('#clientCmdMethods [data-method]').forEach(b => b.classList.toggle('active', b === methodBtn));
+      refreshClientCmd();
+      return;
+    }
+    const btn = e.target.closest('#copyClientCmdBtn');
+    if(!btn) return;
+    const text = $('clientCmdText')?.textContent || '';
+    if(!text) return;
+    try{
+      await navigator.clipboard.writeText(text);
+    }catch(_err){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const prev = btn.textContent;
+    btn.textContent = '已复制';
+    setTimeout(() => { btn.textContent = prev; }, 1200);
+  });
+  $('configForm').addEventListener('input', () => { if(S.admin.selectedType === 'servers') refreshClientCmd(); });
   $('adminReload').addEventListener('click', async () => {
     try{ await api('/api/reload', { method:'POST' }); setAdminStatus('配置重载已触发。', 'ok'); }
     catch(err){ setAdminStatus('重载失败：' + err.message, 'err'); }

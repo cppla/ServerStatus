@@ -367,6 +367,16 @@ th[data-sort].sorted-desc:after{border-top-color:var(--accent);opacity:1}
 .config-form input[name=password],.config-form textarea[name=rule]{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .config-form button:disabled{opacity:.5;cursor:not-allowed}
 .config-editor-card{scroll-margin-top:70px}
+.client-cmd{display:flex;flex-direction:column;gap:.6rem;border:1px dashed var(--border);border-radius:8px;background:var(--bg);padding:.75rem}
+.client-cmd-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.client-cmd-head strong{font-size:13px}
+.client-cmd-head .icon-text{width:auto;flex:none}
+.client-cmd-addr{display:flex;flex-direction:column;gap:.3rem;color:var(--text-dim);font-size:12px}
+.client-cmd-addr input{height:36px;border:1px solid var(--border);background:var(--bg-alt);color:var(--text);border-radius:6px;padding:0 .65rem;outline:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.client-cmd-addr input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+.client-cmd-text{margin:0;padding:.6rem .7rem;border-radius:6px;background:var(--bg-alt);color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto}
+.client-cmd-methods{width:100%}
+.client-cmd-methods button{flex:1;padding:0 .4rem;white-space:nowrap}
 
 @media (min-width:981px){
 	.config-editor-card{position:sticky;top:70px;max-height:calc(100dvh - 86px);overflow-y:auto;scrollbar-gutter:stable}
