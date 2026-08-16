@@ -4,7 +4,7 @@
 # 用法: bash install.sh SERVER=服务器地址 [PORT=端口] [USER=用户名] [PASSWORD=密码]
 set -euo pipefail
 
-github_prefix="https://raw.githubusercontent.com/cppla/ServerStatus/master"
+github_prefix="https://raw.githubusercontent.com/jumploop/ServerStatus/master"
 
 client_file="/usr/local/ServerStatus/clients/client-linux.py"
 client_env="/usr/local/ServerStatus/clients/config.env"
