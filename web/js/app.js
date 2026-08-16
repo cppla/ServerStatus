@@ -1038,7 +1038,7 @@ function renderConfigEditor(item){
   const current = item || {};
   $('configEditorTitle').textContent = `${editing ? '编辑' : '新增'}${def.label}`;
   $('configEditorHint').textContent = def.hint;
-  $('configFields').innerHTML = def.fields.map(field => fieldHTML(field, current)).join('');
+  $('configFields').innerHTML = def.fields.map(field => fieldHTML(field, current, !editing)).join('');
   const resetTrafficBtn = $('resetTrafficBtn');
   const canResetTraffic = editing && S.admin.selectedType === 'servers';
   resetTrafficBtn.style.display = canResetTraffic ? '' : 'none';
@@ -1076,8 +1076,8 @@ function refreshClientCmd(){
   const pass = form.password ? form.password.value : '';
   textEl.textContent = clientInstallCommand(user, pass);
 }
-function fieldHTML(field, item){
-  const value = item[field.name] ?? field.default ?? '';
+function fieldHTML(field, item, showDefault){
+  const value = item[field.name] ?? (showDefault ? (field.default ?? '') : '');
   if(field.type === 'checkbox'){
     return `<label class="check-row"><input name="${esc(field.name)}" type="checkbox" ${value ? 'checked' : ''} /> <span>${esc(field.label)}</span></label>`;
   }
@@ -1097,6 +1097,7 @@ function clearConfigForm(){
 }
 function formConfigItem(){
   const elements = $('configForm').elements;
+  const existing = S.admin.selectedIndex >= 0 ? configItems()[S.admin.selectedIndex] : null;
   const item = {};
   activeConfigDef().fields.forEach(field => {
     const el = elements[field.name];
@@ -1110,10 +1111,13 @@ function formConfigItem(){
       if(!Number.isFinite(value)) value = field.default ?? 0;
       if(field.min != null) value = Math.max(field.min, value);
       if(field.max != null) value = Math.min(field.max, value);
+      if(existing && !(field.name in existing) && el.value === '') return;
       item[field.name] = value;
       return;
     }
-    item[field.name] = field.keepRaw ? el.value : el.value.trim();
+    const value = field.keepRaw ? el.value : el.value.trim();
+    if(existing && !(field.name in existing) && value === '') return;
+    item[field.name] = value;
   });
   return item;
 }
@@ -1127,7 +1131,9 @@ async function saveConfigItem(key, index, item){
   S.admin.saving = true;
   S.suppressStatsReloadUntil = Date.now() + 8000;
   try{
-    const data = await api(configItemPath(key, index), { method: index >= 0 ? 'PUT' : 'POST', body: JSON.stringify(item) });
+    const original = index >= 0 ? configItems()[index] : null;
+    const body = original ? { ...original, ...item } : item;
+    const data = await api(configItemPath(key, index), { method: index >= 0 ? 'PUT' : 'POST', body: JSON.stringify(body) });
     if(data.config) S.admin.config = normalizeAdminConfig(data.config);
     S.suppressStatsReloadUntil = Date.now() + 8000;
     return data;
