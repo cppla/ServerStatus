@@ -32,6 +32,8 @@ import threading
 import platform
 from queue import Queue
 
+_net_io_counters_lock = threading.Lock()
+
 def _env_str(name, default):
     value = os.getenv(name)
     if value is None or value == "":
@@ -146,10 +148,14 @@ def get_cpu_model():
         return vendor
     return get_platform_cpu_arch()
 
+def _get_net_io_counters():
+    with _net_io_counters_lock:
+        return psutil.net_io_counters(pernic=True)
+
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
-    net = psutil.net_io_counters(pernic=True)
+    net = _get_net_io_counters()
     for k, v in net.items():
         if 'lo' in k or 'tun' in k \
                 or 'docker' in k or 'veth' in k \
@@ -272,7 +278,7 @@ def _net_speed():
     while True:
         avgrx = 0
         avgtx = 0
-        for name, stats in psutil.net_io_counters(pernic=True).items():
+        for name, stats in _get_net_io_counters().items():
             if "lo" in name or "tun" in name \
                     or "docker" in name or "veth" in name \
                     or "br-" in name or "vmbr" in name \
