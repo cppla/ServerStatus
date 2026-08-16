@@ -65,7 +65,7 @@ docker run -d --restart=always --name=serverstatus-client \
 ```bash
 # Shell（下载安装脚本，自动配置为 systemd 服务）
 wget -qO install.sh --header='Accept: application/vnd.github.raw' \
-  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/install.sh?ref=master'
+  'https://api.github.com/repos/jumploop/ServerStatus/contents/clients/install.sh?ref=master'
 bash install.sh SERVER=127.0.0.1 USER=s01 PASSWORD=USER_DEFAULT_PASSWORD
 ```
 

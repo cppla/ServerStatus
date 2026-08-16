@@ -968,7 +968,7 @@ function clientInstallCommand(user, pass){
   }
   return [
     `wget -qO install.sh --header='Accept: application/vnd.github.raw' \\`,
-    `  'https://api.github.com/repos/cppla/ServerStatus/contents/clients/install.sh?ref=master'`,
+    `  'https://api.github.com/repos/jumploop/ServerStatus/contents/clients/install.sh?ref=master'`,
     `bash install.sh SERVER=${server} PORT=${port} USER=${userS} PASSWORD=${passS}`
   ].join('\n');
 }
