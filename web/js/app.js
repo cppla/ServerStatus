@@ -849,12 +849,12 @@ const CONFIG_TYPES = {
     searchFields: ['name','username','location','type','host'],
     hint: '客户端登录使用 username/password，保存后服务会热重载并让客户端自动重连。',
     fields: [
-      { name:'username', label:'用户名', required:true, max:120 },
+      { name:'username', label:'用户名', required:true, max:120, random:8 },
       { name:'name', label:'节点名', required:true, max:120 },
       { name:'type', label:'虚拟化', required:true, max:120, placeholder:'kvm / xen / vmware' },
       { name:'host', label:'主机名', required:true, max:120 },
       { name:'location', label:'位置', required:true, max:120, placeholder:'🇨🇳 / 上海 / hk-01' },
-      { name:'password', label:'密码', required:true, max:120, keepRaw:true },
+      { name:'password', label:'密码', required:true, max:120, keepRaw:true, random:12 },
       { name:'monthstart', label:'月初日', type:'number', min:1, max:28, default:1 },
       { name:'disabled', label:'禁用节点', type:'checkbox' }
     ],
@@ -1076,8 +1076,17 @@ function refreshClientCmd(){
   const pass = form.password ? form.password.value : '';
   textEl.textContent = clientInstallCommand(user, pass);
 }
+function randomToken(len){
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for(let i = 0; i < len; i++) out += chars[bytes[i] % chars.length];
+  return out;
+}
 function fieldHTML(field, item, showDefault){
-  const value = item[field.name] ?? (showDefault ? (field.default ?? '') : '');
+  let value = item[field.name];
+  if(value == null && showDefault) value = field.random ? randomToken(field.random) : (field.default ?? '');
   if(field.type === 'checkbox'){
     return `<label class="check-row"><input name="${esc(field.name)}" type="checkbox" ${value ? 'checked' : ''} /> <span>${esc(field.label)}</span></label>`;
   }
