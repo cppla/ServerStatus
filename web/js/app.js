@@ -1085,10 +1085,11 @@ function fieldHTML(field, item, showDefault){
   const min = field.min != null ? ` min="${field.min}"` : '';
   const max = field.max != null ? (field.type === 'number' ? ` max="${field.max}"` : ` maxlength="${field.max}"`) : '';
   const placeholder = field.placeholder ? ` placeholder="${esc(field.placeholder)}"` : '';
+  const autocomplete = field.type === 'password' ? ' autocomplete="new-password"' : ' autocomplete="off"';
   if(field.type === 'textarea'){
-    return `<label class="wide"><span>${esc(field.label)}</span><textarea name="${esc(field.name)}"${required}${placeholder}>${esc(value)}</textarea></label>`;
+    return `<label class="wide"><span>${esc(field.label)}</span><textarea name="${esc(field.name)}"${required}${placeholder}${autocomplete}>${esc(value)}</textarea></label>`;
   }
-  return `<label><span>${esc(field.label)}</span><input name="${esc(field.name)}" type="${field.type || 'text'}" value="${esc(value)}"${required}${min}${max}${placeholder} /></label>`;
+  return `<label><span>${esc(field.label)}</span><input name="${esc(field.name)}" type="${field.type || 'text'}" value="${esc(value)}"${required}${min}${max}${placeholder}${autocomplete} /></label>`;
 }
 function clearConfigForm(){
   S.admin.selectedIndex = -1;
