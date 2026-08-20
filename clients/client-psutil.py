@@ -148,6 +148,32 @@ def get_cpu_model():
         return vendor
     return get_platform_cpu_arch()
 
+def get_os_name():
+    try:
+        sysname = platform.system().lower()
+        if sysname.startswith('windows'):
+            return 'windows'
+        if sysname.startswith('darwin') or 'mac' in sysname:
+            return 'darwin'
+        if 'bsd' in sysname:
+            return 'bsd'
+        if sysname.startswith('linux'):
+            os_name = 'linux'
+            try:
+                with open('/etc/os-release') as f:
+                    for line in f:
+                        if line.startswith('ID='):
+                            value = line.strip().split('=', 1)[1].strip().strip('"')
+                            if value:
+                                os_name = value
+                            break
+            except Exception:
+                pass
+            return os_name
+        return sysname or 'unknown'
+    except Exception:
+        return 'unknown'
+
 def _get_net_io_counters():
     with _net_io_counters_lock:
         return psutil.net_io_counters(pernic=True)
@@ -236,6 +262,22 @@ diskIO = {
 }
 monitorServer = {}
 
+def update_net_speed(avgrx, avgtx, now_clock=None):
+    if now_clock is None:
+        now_clock = time.monotonic()
+    previous_clock = netSpeed.get("clock", 0.0)
+    previous_rx = netSpeed.get("avgrx", 0)
+    previous_tx = netSpeed.get("avgtx", 0)
+    diff = now_clock - previous_clock
+    initialized = previous_clock > 0 and diff > 0
+    netSpeed["diff"] = diff if initialized else 0.0
+    netSpeed["clock"] = now_clock
+    netSpeed["netrx"] = int((avgrx - previous_rx) / diff) if initialized and avgrx >= previous_rx else 0
+    netSpeed["nettx"] = int((avgtx - previous_tx) / diff) if initialized and avgtx >= previous_tx else 0
+    netSpeed["avgrx"] = avgrx
+    netSpeed["avgtx"] = avgtx
+    return netSpeed["netrx"], netSpeed["nettx"]
+
 def _ping_thread(host, mark, port):
     lostPacket = 0
     packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
@@ -286,13 +328,7 @@ def _net_speed():
                 continue
             avgrx += stats.bytes_recv
             avgtx += stats.bytes_sent
-        now_clock = time.time()
-        netSpeed["diff"] = now_clock - netSpeed["clock"]
-        netSpeed["clock"] = now_clock
-        netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
-        netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
-        netSpeed["avgrx"] = avgrx
-        netSpeed["avgtx"] = avgtx
+        update_net_speed(avgrx, avgtx)
         time.sleep(INTERVAL)
 
 def _disk_io():
@@ -570,31 +606,7 @@ if __name__ == '__main__':
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
                 array['io_read'] = diskIO.get("read")
                 array['io_write'] = diskIO.get("write")
-                # report OS (normalized)
-                try:
-                    sysname = platform.system().lower()
-                    if sysname.startswith('windows'):
-                        os_name = 'windows'
-                    elif sysname.startswith('darwin') or 'mac' in sysname:
-                        os_name = 'darwin'
-                    elif 'bsd' in sysname:
-                        os_name = 'bsd'
-                    elif sysname.startswith('linux'):
-                        # try distro from os-release
-                        try:
-                            with open('/etc/os-release') as f:
-                                for line in f:
-                                    if line.startswith('ID='):
-                                        val = line.strip().split('=',1)[1].strip().strip('"')
-                                        if val: os_name = val
-                                        break
-                        except Exception:
-                            os_name = 'linux'
-                    else:
-                        os_name = sysname or 'unknown'
-                except Exception:
-                    os_name = 'unknown'
-                array['os'] = os_name
+                array['os'] = get_os_name()
                 items = []
                 for _n, st in monitorServer.items():
                     key = str(_n)

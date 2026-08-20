@@ -11,7 +11,7 @@ CLIENT_DIR = Path(__file__).resolve().parent
 
 class ClientArgumentTests(unittest.TestCase):
     def test_password_with_user_text_does_not_replace_username(self):
-        if importlib.util.find_spec("psutil") is None:
+        if "psutil" not in sys.modules and importlib.util.find_spec("psutil") is None:
             sys.modules["psutil"] = types.ModuleType("psutil")
 
         arguments = [

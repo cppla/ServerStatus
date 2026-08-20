@@ -304,6 +304,8 @@ Systemd 示例位于 `service/status-server.service`。一键脚本 `status.sh` 
 
 ## 构建和测试
 
+Go 测试需要 Go `1.25+`；WebUI 行为测试需要 Node.js `20+` 和 pnpm。
+
 ```bash
 # Go 单元、协议、API、TLS 和回调测试
 cd server
@@ -311,17 +313,32 @@ go test ./...
 go test -race ./...
 go vet ./...
 
-# Docker 镜像
+# Python 客户端指标、参数与平台识别测试
 cd ..
+python3 -m unittest discover -s clients -p 'test_*.py'
+
+# WebUI Chromium 行为测试
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
+pnpm test:webui
+
+# Docker 镜像
 docker build -f Dockerfile.server -t cppla/serverstatus:server .
 docker build -f Dockerfile.client -t cppla/serverstatus:client .
+
+# 服务端与客户端真实连接、认证和指标上报
+SERVER_IMAGE=cppla/serverstatus:server \
+CLIENT_IMAGE=cppla/serverstatus:client \
+tests/docker-smoke.sh
 
 # Compose 配置
 docker compose -f docker-compose-server.yml config
 docker compose -f docker-compose-client.yml config
 ```
 
-CI 还会检查 Go 格式、Python 客户端、Shell 脚本、WebUI JavaScript、服务端/客户端 Compose 文件和两个 Docker 镜像。
+Docker 联通测试在 Linux 上覆盖客户端的 `host` 网络和 `pid` 模式；Docker Desktop 未启用 Host Networking 时会明确提示并使用隔离 bridge 完成本地协议测试。
+
+CI 还会运行 Chromium 行为测试、Docker 服务端/客户端联通测试，并验证客户端镜像可同时构建为 AMD64 和 ARM64。
 
 ## 从旧服务端迁移
 

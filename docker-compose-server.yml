@@ -15,18 +15,9 @@ services:
       ADMIN_TOKEN: "${ADMIN_TOKEN:-}"
       HTTP_ADDR: ":80"
       AGENT_ADDR: ":35601"
-    networks:
-      serverstatus-network:
-        ipv4_address: 172.23.0.2
     volumes:
       - ./server/config.json:/app/config/config.json
       - ./web/json:/app/data
     ports:
       - 35601:35601
       - 8080:80
-
-networks:
-  serverstatus-network:
-    ipam:
-      config:
-        - subnet: 172.23.0.0/24

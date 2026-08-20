@@ -1,0 +1,17 @@
+{
+  "servers": [
+    {
+      "username": "s01",
+      "name": "fixture-node",
+      "type": "kvm",
+      "host": "fixture-host",
+      "location": "CN",
+      "password": "fixture-password",
+      "monthstart": 1,
+      "disabled": false
+    }
+  ],
+  "monitors": [],
+  "sslcerts": [],
+  "watchdog": []
+}

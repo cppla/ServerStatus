@@ -208,6 +208,34 @@ def get_cpu_model():
         return vendor
     return normalize_cpu_model(lscpu.get('architecture') or platform.machine() or platform.processor())
 
+def get_os_name():
+    try:
+        sysname = platform.system().lower()
+        if sysname.startswith('linux'):
+            os_name = 'linux'
+            try:
+                with open('/etc/os-release') as f:
+                    for line in f:
+                        if line.startswith('ID='):
+                            value = line.strip().split('=', 1)[1].strip().strip('"')
+                            if value:
+                                os_name = value
+                            break
+            except Exception:
+                pass
+            return os_name
+        if sysname.startswith('darwin'):
+            return 'darwin'
+        if sysname.startswith('freebsd'):
+            return 'freebsd'
+        if sysname.startswith('openbsd'):
+            return 'openbsd'
+        if sysname.startswith('netbsd'):
+            return 'netbsd'
+        return sysname or 'unknown'
+    except Exception:
+        return 'unknown'
+
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
@@ -276,6 +304,22 @@ diskIO = {
 }
 monitorServer = {}
 
+def update_net_speed(avgrx, avgtx, now_clock=None):
+    if now_clock is None:
+        now_clock = time.monotonic()
+    previous_clock = netSpeed.get("clock", 0.0)
+    previous_rx = netSpeed.get("avgrx", 0)
+    previous_tx = netSpeed.get("avgtx", 0)
+    diff = now_clock - previous_clock
+    initialized = previous_clock > 0 and diff > 0
+    netSpeed["diff"] = diff if initialized else 0.0
+    netSpeed["clock"] = now_clock
+    netSpeed["netrx"] = int((avgrx - previous_rx) / diff) if initialized and avgrx >= previous_rx else 0
+    netSpeed["nettx"] = int((avgtx - previous_tx) / diff) if initialized and avgtx >= previous_tx else 0
+    netSpeed["avgrx"] = avgrx
+    netSpeed["avgtx"] = avgtx
+    return netSpeed["netrx"], netSpeed["nettx"]
+
 def _ping_thread(host, mark, port):
     lostPacket = 0
     packet_queue = Queue(maxsize=PING_PACKET_HISTORY_LEN)
@@ -330,13 +374,7 @@ def _net_speed():
                 dev = dev[1].split()
                 avgrx += int(dev[0])
                 avgtx += int(dev[8])
-            now_clock = time.time()
-            netSpeed["diff"] = now_clock - netSpeed["clock"]
-            netSpeed["clock"] = now_clock
-            netSpeed["netrx"] = int((avgrx - netSpeed["avgrx"]) / netSpeed["diff"])
-            netSpeed["nettx"] = int((avgtx - netSpeed["avgtx"]) / netSpeed["diff"])
-            netSpeed["avgrx"] = avgrx
-            netSpeed["avgtx"] = avgtx
+            update_net_speed(avgrx, avgtx)
         time.sleep(INTERVAL)
 
 def _disk_io():
@@ -617,34 +655,7 @@ if __name__ == '__main__':
                 array['tcp'], array['udp'], array['process'], array['thread'] = tupd()
                 array['io_read'] = diskIO.get("read")
                 array['io_write'] = diskIO.get("write")
-                # report OS (normalized)
-                try:
-                    sysname = platform.system().lower()
-                    if sysname.startswith('linux'):
-                        os_name = 'linux'
-                        # try distro from os-release
-                        try:
-                            with open('/etc/os-release') as f:
-                                for line in f:
-                                    if line.startswith('ID='):
-                                        val = line.strip().split('=',1)[1].strip().strip('"')
-                                        if val: os_name = val
-                                        break
-                        except Exception:
-                            pass
-                    elif sysname.startswith('darwin'):
-                        os_name = 'darwin'
-                    elif sysname.startswith('freebsd'):
-                        os_name = 'freebsd'
-                    elif sysname.startswith('openbsd'):
-                        os_name = 'openbsd'
-                    elif sysname.startswith('netbsd'):
-                        os_name = 'netbsd'
-                    else:
-                        os_name = sysname or 'unknown'
-                except Exception:
-                    os_name = 'unknown'
-                array['os'] = os_name
+                array['os'] = get_os_name()
                 items = []
                 for _n, st in monitorServer.items():
                     key = str(_n)
