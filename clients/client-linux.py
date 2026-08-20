@@ -236,6 +236,16 @@ def get_os_name():
     except Exception:
         return 'unknown'
 
+def is_ignored_network_interface(name):
+    name = str(name or '').strip().lower()
+    is_loopback = (
+        name == 'lo'
+        or (name.startswith('lo') and name[2:].isdigit())
+        or name.startswith('loopback')
+    )
+    virtual_prefixes = ('tun', 'docker', 'veth', 'br-', 'vmbr', 'vnet', 'kube')
+    return not name or is_loopback or name.startswith(virtual_prefixes)
+
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
@@ -243,11 +253,7 @@ def liuliang():
         for line in f.readlines():
             netinfo = re.findall(r'([^\s]+):[\s]{0,}(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)', line)
             if netinfo:
-                if netinfo[0][0] == 'lo' or 'tun' in netinfo[0][0] \
-                        or 'docker' in netinfo[0][0] or 'veth' in netinfo[0][0] \
-                        or 'br-' in netinfo[0][0] or 'vmbr' in netinfo[0][0] \
-                        or 'vnet' in netinfo[0][0] or 'kube' in netinfo[0][0] \
-                        or netinfo[0][1]=='0' or netinfo[0][9]=='0':
+                if is_ignored_network_interface(netinfo[0][0]):
                     continue
                 else:
                     NET_IN += int(netinfo[0][1])
@@ -366,10 +372,7 @@ def _net_speed():
             avgtx = 0
             for dev in net_dev[2:]:
                 dev = dev.split(':')
-                if "lo" in dev[0] or "tun" in dev[0] \
-                        or "docker" in dev[0] or "veth" in dev[0] \
-                        or "br-" in dev[0] or "vmbr" in dev[0] \
-                        or "vnet" in dev[0] or "kube" in dev[0]:
+                if is_ignored_network_interface(dev[0]):
                     continue
                 dev = dev[1].split()
                 avgrx += int(dev[0])

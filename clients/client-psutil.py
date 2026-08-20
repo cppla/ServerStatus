@@ -178,15 +178,22 @@ def _get_net_io_counters():
     with _net_io_counters_lock:
         return psutil.net_io_counters(pernic=True)
 
+def is_ignored_network_interface(name):
+    name = str(name or '').strip().lower()
+    is_loopback = (
+        name == 'lo'
+        or (name.startswith('lo') and name[2:].isdigit())
+        or name.startswith('loopback')
+    )
+    virtual_prefixes = ('tun', 'docker', 'veth', 'br-', 'vmbr', 'vnet', 'kube')
+    return not name or is_loopback or name.startswith(virtual_prefixes)
+
 def liuliang():
     NET_IN = 0
     NET_OUT = 0
     net = _get_net_io_counters()
     for k, v in net.items():
-        if 'lo' in k or 'tun' in k \
-                or 'docker' in k or 'veth' in k \
-                or 'br-' in k or 'vmbr' in k \
-                or 'vnet' in k or 'kube' in k:
+        if is_ignored_network_interface(k):
             continue
         else:
             NET_IN += v[1]
@@ -321,10 +328,7 @@ def _net_speed():
         avgrx = 0
         avgtx = 0
         for name, stats in _get_net_io_counters().items():
-            if "lo" in name or "tun" in name \
-                    or "docker" in name or "veth" in name \
-                    or "br-" in name or "vmbr" in name \
-                    or "vnet" in name or "kube" in name:
+            if is_ignored_network_interface(name):
                 continue
             avgrx += stats.bytes_recv
             avgtx += stats.bytes_sent

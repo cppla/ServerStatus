@@ -55,12 +55,13 @@ class ClientMetricTests(unittest.TestCase):
         values = {
             "eth0": counters(500, 1000),
             "ens5": counters(300, 700),
+            "wlo1": counters(200, 400),
             "lo": counters(9000, 9000),
             "docker0": counters(8000, 8000),
             "veth123": counters(7000, 7000),
         }
         with mock.patch.object(client["psutil"], "net_io_counters", return_value=values, create=True):
-            self.assertEqual(client["liuliang"](), (1700, 800))
+            self.assertEqual(client["liuliang"](), (2100, 1000))
 
     def test_linux_totals_read_proc_and_exclude_virtual_interfaces(self):
         client = load_client("client-linux.py")
@@ -68,11 +69,36 @@ class ClientMetricTests(unittest.TestCase):
  face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
   eth0: 1000 10 0 0 0 0 0 0 500 5 0 0 0 0 0 0
   ens5: 700 7 0 0 0 0 0 0 300 3 0 0 0 0 0 0
+  wlo1: 400 4 0 0 0 0 0 0 200 2 0 0 0 0 0 0
     lo: 9000 9 0 0 0 0 0 0 9000 9 0 0 0 0 0 0
 veth123: 8000 8 0 0 0 0 0 0 8000 8 0 0 0 0 0 0
 """
         with mock.patch("builtins.open", mock.mock_open(read_data=proc_net_dev)):
-            self.assertEqual(client["liuliang"](), (1700, 800))
+            self.assertEqual(client["liuliang"](), (2100, 1000))
+
+    def test_interface_filter_keeps_wlo_and_excludes_virtual_interfaces(self):
+        ignored = (
+            "lo", "lo0", "Loopback Pseudo-Interface 1", "tun0", "docker0",
+            "veth123", "br-test", "vmbr0", "vnet0", "kube-ipvs0",
+        )
+        included = ("wlo1", "eth0", "enp3s0", "bond0")
+
+        for filename in ("client-linux.py", "client-psutil.py"):
+            with self.subTest(client=filename):
+                client = load_client(filename)
+                predicate = client["is_ignored_network_interface"]
+                self.assertTrue(all(predicate(name) for name in ignored))
+                self.assertTrue(all(not predicate(name) for name in included))
+
+    def test_linux_totals_keep_one_way_interfaces(self):
+        client = load_client("client-linux.py")
+        proc_net_dev = """Inter-|   Receive                                                |  Transmit
+ face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+  eth0: 1000 10 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  ens5: 0 0 0 0 0 0 0 0 300 3 0 0 0 0 0 0
+"""
+        with mock.patch("builtins.open", mock.mock_open(read_data=proc_net_dev)):
+            self.assertEqual(client["liuliang"](), (1000, 300))
 
     def test_network_speed_starts_and_resets_at_zero(self):
         for filename in ("client-linux.py", "client-psutil.py"):
