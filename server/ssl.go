@@ -33,12 +33,16 @@ func (a *App) reconcileCerts(configs []SSLCertConfig) {
 	next := make(map[string]*CertState, len(configs))
 	for _, config := range configs {
 		key := certKey(config)
+		// A reload requests a fresh check, even when the config is unchanged.
+		// Replace the state so an in-flight check cannot publish an old result.
+		state := &CertState{Config: config}
 		if existing := a.certs[key]; existing != nil {
-			existing.Config = config
-			next[key] = existing
-		} else {
-			next[key] = &CertState{Config: config}
+			state.LastAlarm7 = existing.LastAlarm7
+			state.LastAlarm3 = existing.LastAlarm3
+			state.LastAlarm1 = existing.LastAlarm1
+			state.LastAlarmMismatch = existing.LastAlarmMismatch
 		}
+		next[key] = state
 	}
 	a.certs = next
 }
@@ -60,8 +64,8 @@ func (a *App) sslLoop() {
 func (a *App) runDueSSLChecks() {
 	now := time.Now()
 	type dueCheck struct {
-		key    string
-		config SSLCertConfig
+		key   string
+		state *CertState
 	}
 	due := make([]dueCheck, 0)
 	a.certMu.Lock()
@@ -69,17 +73,18 @@ func (a *App) runDueSSLChecks() {
 		interval := secondsDuration(state.Config.Interval)
 		if !state.Checking && (state.LastCheck.IsZero() || now.Sub(state.LastCheck) >= interval) {
 			state.Checking = true
-			due = append(due, dueCheck{key: key, config: state.Config})
+			due = append(due, dueCheck{key: key, state: state})
 		}
 	}
 	a.certMu.Unlock()
 	for _, check := range due {
 		check := check
-		go a.executeSSLCheck(check.key, check.config)
+		go a.executeSSLCheck(check.key, check.state)
 	}
 }
 
-func (a *App) executeSSLCheck(key string, config SSLCertConfig) {
+func (a *App) executeSSLCheck(key string, state *CertState) {
+	config := state.Config
 	expireTS, mismatch, err := checkCertificate(config)
 	now := time.Now()
 	type notification struct {
@@ -88,14 +93,15 @@ func (a *App) executeSSLCheck(key string, config SSLCertConfig) {
 	alerts := make([]notification, 0, 2)
 
 	a.certMu.Lock()
-	state := a.certs[key]
-	if state == nil {
+	if a.certs[key] != state {
 		a.certMu.Unlock()
 		return
 	}
 	state.Checking = false
 	state.LastCheck = now
 	if err != nil {
+		state.ExpireTS = 0
+		state.Mismatch = false
 		state.LastError = err.Error()
 		a.certMu.Unlock()
 		return

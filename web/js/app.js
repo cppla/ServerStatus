@@ -336,12 +336,12 @@ function renderOverview(){
   const total = S.servers.length;
   const online = S.servers.filter(s => metrics(s).online).length;
   const alerts = alertStats();
-  const sslWarn = S.ssl.filter(c => c.mismatch || c.expire_days <= 7).length;
+  const sslWarn = S.ssl.filter(c => sslStatus(c).cls !== 'ok').length;
   const monthDown = S.servers.reduce((sum, s) => sum + metrics(s).monthIn, 0);
   const monthUp = S.servers.reduce((sum, s) => sum + metrics(s).monthOut, 0);
   $('overviewCards').innerHTML = [
     card('在线主机', `${online}/${total}`, '当前在线节点', online === total ? 'ok' : 'warn'),
-    card('证书风险', sslWarn, sslWarn ? '过期或域名不匹配' : '证书正常', sslWarn ? 'warn' : 'ok'),
+    card('证书风险', sslWarn, sslWarn ? '异常、临期或待检测' : '证书正常', sslWarn ? 'warn' : 'ok'),
     card('本月上行', humanMinMBFromB(monthUp), '上传累计', 'traffic-up'),
     card('本月下行', humanMinMBFromB(monthDown), '下载累计', 'traffic-down'),
     card('活跃告警', alerts.total, `离线 ${alerts.offline} / 异常 ${alerts.abnormal} / 被墙 ${alerts.blocked}`, alerts.total ? (alerts.offline || alerts.blocked ? 'err' : 'warn') : 'ok')
@@ -584,23 +584,31 @@ function renderMonitorsCards(){
   const wrap = $('monitorsCards');
   wrap.innerHTML = S.servers.map(s => `<div class="card"><div class="card-header"><div class="card-title">${esc(s.name || '-')} <span class="tag">${esc(s.location || '-')}</span></div>${protoPill(s)}</div><div class="kvlist"><div><span class="key">监测内容</span><span class="mon-items">${monitorItems(s)}</span></div></div></div>`).join('') || '<div class="empty-state">无数据</div>';
 }
+function sslStatus(c){
+  if(c.error) return { cls: 'err', status: '检测失败' };
+  if(!c.expire_ts) return { cls: 'warn', status: '待检测' };
+  if(c.mismatch) return { cls: 'err', status: '域名不匹配' };
+  if(c.expire_days <= 0) return { cls: 'err', status: '已过期' };
+  if(c.expire_days <= 7) return { cls: 'warn', status: '将到期' };
+  return { cls: 'ok', status: '正常' };
+}
 function renderSSL(){
   $('sslBody').innerHTML = S.ssl.map(c => {
-    const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
-    const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
-    const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().replace('T',' ').replace(/\.\d+Z/,'') : '-';
+    const { cls, status } = sslStatus(c);
+    const hasExpiry = !c.error && !!c.expire_ts;
+    const dt = hasExpiry ? new Date(c.expire_ts * 1000).toISOString().replace('T',' ').replace(/\.\d+Z/,'') : '-';
     const alertClass = cls === 'err' ? 'alert-critical' : cls === 'warn' ? 'alert-warning' : '';
-    return `<tr class="${alertClass}"><td>${esc(c.name || '-')}</td><td>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</td><td>${esc(c.port || 443)}</td><td><span class="badge ${cls}">${esc(c.expire_days ?? '-')}</span></td><td>${dt}</td><td><span class="badge ${cls}">${status}</span></td></tr>`;
+    return `<tr class="${alertClass}"><td>${esc(c.name || '-')}</td><td>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</td><td>${esc(c.port || 443)}</td><td><span class="badge ${cls}">${esc(hasExpiry ? c.expire_days : '-')}</span></td><td>${dt}</td><td><span class="badge ${cls}" title="${esc(c.error || '')}">${status}</span></td></tr>`;
   }).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:1rem;">无证书数据</td></tr>`;
 }
 function renderSSLCards(){
   const wrap = $('sslCards');
   wrap.innerHTML = S.ssl.map(c => {
-    const cls = c.mismatch || c.expire_days <= 0 ? 'err' : c.expire_days <= 7 ? 'warn' : 'ok';
-    const status = c.mismatch ? '域名不匹配' : c.expire_days <= 0 ? '已过期' : c.expire_days <= 7 ? '将到期' : '正常';
-    const dt = c.expire_ts ? new Date(c.expire_ts * 1000).toISOString().slice(0,10) : '-';
+    const { cls, status } = sslStatus(c);
+    const hasExpiry = !c.error && !!c.expire_ts;
+    const dt = hasExpiry ? new Date(c.expire_ts * 1000).toISOString().slice(0,10) : '-';
     const alertClass = cls === 'err' ? ' alert-critical' : cls === 'warn' ? ' alert-warning' : '';
-    return `<div class="card${alertClass}"><div class="card-header"><div class="card-title">${esc(c.name || '-')}</div><span class="status-pill ${cls === 'err' ? 'off' : 'on'}">${status}</span></div><div class="kvlist"><div><span class="key">域名</span><span>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</span></div><div><span class="key">端口</span><span>${esc(c.port || 443)}</span></div><div><span class="key">剩余</span><span>${esc(c.expire_days ?? '-')} 天</span></div><div><span class="key">到期</span><span>${dt}</span></div></div></div>`;
+    return `<div class="card${alertClass}"><div class="card-header"><div class="card-title">${esc(c.name || '-')}</div><span class="badge ${cls}" title="${esc(c.error || '')}">${status}</span></div><div class="kvlist"><div><span class="key">域名</span><span>${esc(String(c.domain || '').replace(/^https?:\/\//,''))}</span></div><div><span class="key">端口</span><span>${esc(c.port || 443)}</span></div><div><span class="key">剩余</span><span>${hasExpiry ? `${esc(c.expire_days)} 天` : '-'}</span></div><div><span class="key">到期</span><span>${dt}</span></div></div></div>`;
   }).join('') || '<div class="empty-state">无证书数据</div>';
 }
 
